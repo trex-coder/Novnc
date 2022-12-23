@@ -286,6 +286,7 @@ export default class RFB extends EventTargetMixin {
         this.focusOnClick = true;
 
         this._viewOnly = false;
+        this._remoteCursor = false;
         this._clipViewport = false;
         this._scaleViewport = false;
         this._resizeSession = false;
@@ -313,6 +314,16 @@ export default class RFB extends EventTargetMixin {
             } else {
                 this._keyboard.grab();
             }
+        }
+    }
+
+    get remoteCursor() { return this._remoteCursor; }
+    set remoteCursor(remoteCursor) {
+        this._remoteCursor = remoteCursor;
+
+        this._cursor.setVisibility(!remoteCursor);
+        if (this._rfbConnectionState === "connected") {
+            this._sendEncodings();
         }
     }
 
@@ -2150,7 +2161,7 @@ export default class RFB extends EventTargetMixin {
         encs.push(encodings.pseudoEncodingDesktopName);
         encs.push(encodings.pseudoEncodingExtendedClipboard);
 
-        if (this._fbDepth == 24) {
+        if (this._fbDepth == 24 && !this._remoteCursor) {
             encs.push(encodings.pseudoEncodingVMwareCursor);
             encs.push(encodings.pseudoEncodingCursor);
         }
