@@ -14,6 +14,7 @@ import { dragThreshold, supportsWebCodecsH264Decode } from './util/browser.js';
 import { clientToElement } from './util/element.js';
 import { setCapture } from './util/events.js';
 import EventTargetMixin from './util/eventtarget.js';
+import Audio from "./audio.js";
 import Display from "./display.js";
 import Inflator from "./inflator.js";
 import Deflator from "./deflator.js";
@@ -157,10 +158,7 @@ export default class RFB extends EventTargetMixin {
         this._qemuAudioSupported = false;
         this._page_had_user_interaction = false;
         this._audio_enable = false;
-        this._audio_next_start = 0;
-        this._audio_sample_rate = 44100;
-        this._audio_channels = 2;
-        this._audio_context = null;
+        this._audio = new Audio(44100, 2);
 
         this._extendedPointerEventSupported = false;
 
@@ -2696,7 +2694,7 @@ export default class RFB extends EventTargetMixin {
 
             case encodings.pseudoEncodingQEMUAudioEvent:
                 if (!this._qemuAudioSupported) {
-                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio_channels, this._audio_sample_rate);
+                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.channels, this._audio.sample_rate);
                     this._qemuAudioSupported = true;
                 }
                 return true;
@@ -2738,16 +2736,11 @@ export default class RFB extends EventTargetMixin {
 
         switch (operation) {
             case 0: {
-                this._audio_context = null;
-                this._audio_next_start = 0;
+                this._audio.stop();
                 return true;
             }
             case 1: {
-                this._audio_context = new AudioContext({
-                    latencyHint: "interactive",
-                    sampleRate: this._audio_sample_rate,
-                });
-                this._audio_next_start = 0;
+                this._audio.start();
                 return true;
             }
             case 2: break;
@@ -2763,47 +2756,21 @@ export default class RFB extends EventTargetMixin {
 
         const length = this._sock.rQshift32();
 
+        if (length === 0) {
+            return false;
+        }
+
         if (this._sock.rQwait("audio payload", length, 8)) {
             return false;
         }
 
-        if (length !== 0) {
-            let payload = this._sock.rQshiftBytes(length, false);
+        let payload = this._sock.rQshiftBytes(length, false);
 
-            if (this._audio_context === null) {
-                return false;
-            }
-
-            let sample_bytes = 2*this._audio_channels;
-            let buffer = this._audio_context.createBuffer(this._audio_channels, length/sample_bytes, this._audio_sample_rate);
-
-            for (let ch = 0; ch < this._audio_channels; ch++) {
-                const channel = buffer.getChannelData(ch);
-                let channel_offset = ch*2;
-                for (let i = 0; i < buffer.length; i++) {
-                    let p = i*sample_bytes + channel_offset;
-                    let value = payload[p] + payload[p+1]*256;
-                    channel[i] = (value / 32768.0) - 1.0;
-                }
-            }
-
-            if (this._page_had_user_interaction && this._audio_enable) {
-                let ctime = this._audio_context.currentTime;
-                if (ctime > this._audio_next_start) {
-                    this._audio_next_start = ctime;
-                }
-                let start_time = this._audio_next_start;
-
-                this._audio_next_start += buffer.duration;
-
-                let source = this._audio_context.createBufferSource();
-                source.buffer = buffer;
-                source.connect(this._audio_context.destination);
-                source.start(start_time);
-            }
+        if (!this._page_had_user_interaction || !this._audio_enable) {
+            return true;
         }
 
-        return true;
+        return this._audio.play(payload);
     }
 
     enable_audio(value) {
@@ -2811,7 +2778,7 @@ export default class RFB extends EventTargetMixin {
             this._audio_enable = value;
             if (this._qemuAudioSupported) {
                 if (this._audio_enable) {
-                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio_channels, this._audio_sample_rate);
+                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.channels, this._audio.sample_rate);
                 } else {
                     RFB.messages.disableQemuAudioUpdates(this._sock);
                 }
