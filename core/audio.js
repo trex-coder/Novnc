@@ -72,14 +72,14 @@ export default class Audio {
         let sample_bytes = 2*this._nchannels;
 
         if ((time_offset < this._jitter) && (this._resample_trigger !== 5*this._jitter)) {
-            Log.Warn("Stop resampling because audio is in sync (delay = " + time_offset + " sec)");
+            Log.Debug("Stop resampling because audio is in sync (delay = " + time_offset + " sec)");
             this._resample_trigger = 5*this._jitter;
         }
 
         let buffer = null;
         if (time_offset > this._resample_trigger && (payload.length > (100*sample_bytes))) {
             if (this._resample_trigger !== this._jitter) {
-                Log.Warn("Start resampling to re-sync audio (delay = " + time_offset + " sec)");
+                Log.Debug("Start resampling to re-sync audio (delay = " + time_offset + " sec)");
                 this._resample_trigger = this._jitter;
             }
             buffer = this._pitchScale(payload, 1.01); // increase pitch by 1%
@@ -89,7 +89,7 @@ export default class Audio {
 
         if (this._next_start > 0) {
             if (time_offset < -buffer.duration) {
-                Log.Warn("Skip delayed audio frame1 (delay = " + (-time_offset) + " sec)");
+                Log.Warn("Skip delayed audio frame (delay = " + (-time_offset) + " sec)");
                 this._next_start = ctime + this._jitter;
                 return true; // do not play delayed frame - skip it!
             }
