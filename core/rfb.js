@@ -997,6 +997,7 @@ export default class RFB extends EventTargetMixin {
             Log.Warn("handleMessage called on an empty receive queue");
             return;
         }
+
         switch (this._rfbConnectionState) {
             case 'disconnected':
                 Log.Error("Got data while disconnected");
