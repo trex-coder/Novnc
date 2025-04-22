@@ -26,7 +26,7 @@ import * as Log from './util/logging.js';
 // We use/expect Qemu U16 audio data
 
 export default class Audio {
-    constructor(sample_rate, channels) {
+    constructor(sample_rate, nchannels) {
         this._next_start = 0;
         this._context = null;
         this._jitter = 0.02;
@@ -35,12 +35,12 @@ export default class Audio {
 
         // ===== PROPERTIES =====
         this._sample_rate = sample_rate;
-        this._channels = channels;
+        this._nchannels = nchannels;
     }
 
     // ===== PROPERTIES =====
     get sample_rate() { return this._sample_rate; }
-    get channels() { return this._channels; }
+    get nchannels() { return this._nchannels; }
 
     // ===== PUBLIC METHODS =====
 
@@ -69,7 +69,7 @@ export default class Audio {
 
         let time_offset = this._next_start - ctime;
 
-        let sample_bytes = 2*this._channels;
+        let sample_bytes = 2*this._nchannels;
 
         if ((time_offset < this._jitter) && (this._resample_trigger !== 5*this._jitter)) {
             Log.Warn("Stop resampling because audio is in sync (delay = " + time_offset + " sec)");
@@ -123,11 +123,11 @@ export default class Audio {
 
     // see: https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling
     _pitchScale(payload, factor) {
-        let sample_bytes = 2*this._channels;
+        let sample_bytes = 2*this._nchannels;
         let new_length = Math.ceil(payload.length/(factor*sample_bytes));
 
-        let buffer = this._context.createBuffer(this._channels, new_length, this._sample_rate);
-        for (let ch = 0; ch < this._channels; ch++) {
+        let buffer = this._context.createBuffer(this._nchannels, new_length, this._sample_rate);
+        for (let ch = 0; ch < this._nchannels; ch++) {
             const channel = buffer.getChannelData(ch);
             let channel_offset = ch*2;
             for (let i = 0; i < buffer.length; i++) {
@@ -150,11 +150,11 @@ export default class Audio {
     }
 
     _createBuffer(payload) {
-        let sample_bytes = 2*this._channels;
+        let sample_bytes = 2*this._nchannels;
         let buffer = this._context.createBuffer(
-            this._channels, payload.length/sample_bytes, this._sample_rate);
+            this._nchannels, payload.length/sample_bytes, this._sample_rate);
 
-        for (let ch = 0; ch < this._channels; ch++) {
+        for (let ch = 0; ch < this._nchannels; ch++) {
             const channel = buffer.getChannelData(ch);
             let channel_offset = ch*2;
             for (let i = 0; i < buffer.length; i++) {

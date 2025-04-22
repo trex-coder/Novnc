@@ -2695,7 +2695,7 @@ export default class RFB extends EventTargetMixin {
 
             case encodings.pseudoEncodingQEMUAudioEvent:
                 if (!this._qemuAudioSupported) {
-                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.channels, this._audio.sample_rate);
+                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.nchannels, this._audio.sample_rate);
                     this._qemuAudioSupported = true;
                 }
                 return true;
@@ -2779,7 +2779,7 @@ export default class RFB extends EventTargetMixin {
             this._audio_enable = value;
             if (this._qemuAudioSupported) {
                 if (this._audio_enable) {
-                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.channels, this._audio.sample_rate);
+                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.nchannels, this._audio.sample_rate);
                 } else {
                     RFB.messages.disableQemuAudioUpdates(this._sock);
                 }
@@ -3400,7 +3400,7 @@ RFB.messages = {
         sock.flush();
     },
 
-    disableQemuAudioUpdates(sock, channels, sample_rate) {
+    disableQemuAudioUpdates(sock, nchannels, sample_rate) {
         sock.sQpush8(255); // msg-type
         sock.sQpush8(1); // submessage-type
         sock.sQpush16(1); // disable audio
@@ -3408,13 +3408,13 @@ RFB.messages = {
         sock.flush();
     },
 
-    enableQemuAudioUpdates(sock, channels, sample_rate) {
+    enableQemuAudioUpdates(sock, nchannels, sample_rate) {
 
         sock.sQpush8(255); // msg-type
         sock.sQpush8(1); // submessage-type
         sock.sQpush16(2); // set sample format
         sock.sQpush8(2); // format U16
-        sock.sQpush8(channels);
+        sock.sQpush8(nchannels);
         sock.sQpush32(sample_rate); // audio frequency
 
         sock.sQpush8(255); // msg-type
