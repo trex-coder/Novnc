@@ -2774,15 +2774,26 @@ export default class RFB extends EventTargetMixin {
         return this._audio.play(payload);
     }
 
-    enable_audio(value) {
-        if (this._audio_enable !== value) {
-            this._audio_enable = value;
+    enable_audio(enable, nchannels, sample_rate) {
+        if (this._audio_enable == enable && this._audio.nchannels == nchannels && this._audio.sample_rate == sample_rate) {
+            return;
+        }
+
+        if (this._audio_enable) {
+            // audio parameter changed - stop current audio stream
+            Log.Debug("Disable audio");
+            this._audio_enable = false;
             if (this._qemuAudioSupported) {
-                if (this._audio_enable) {
-                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.nchannels, this._audio.sample_rate);
-                } else {
-                    RFB.messages.disableQemuAudioUpdates(this._sock);
-                }
+                RFB.messages.disableQemuAudioUpdates(this._sock);
+            }
+        }
+
+        if (enable) {
+            Log.Debug("Enable audio - nchannels: " + nchannels + " sample-rate: " + sample_rate);
+            this._audio_enable = true;
+            this._audio = new Audio(sample_rate, nchannels);
+            if (this._qemuAudioSupported) {
+                RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.nchannels, this._audio.sample_rate);
             }
         }
     }

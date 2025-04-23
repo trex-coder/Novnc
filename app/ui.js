@@ -190,6 +190,8 @@ const UI = {
         UI.initSetting('reconnect', false);
         UI.initSetting('reconnect_delay', 5000);
         UI.initSetting('enable_audio', true);
+        UI.initSetting('audio_stereo', true);
+        UI.initSetting('audio_sample_rate', 44100);
     },
     // Adds a link to the label elements on the corresponding input elements
     setupSettingLabels() {
@@ -387,7 +389,12 @@ const UI = {
         UI.addSettingChangeHandler('reconnect');
         UI.addSettingChangeHandler('reconnect_delay');
         UI.addSettingChangeHandler('enable_audio');
-        UI.addSettingChangeHandler('enable_audio', UI.updateEnableAudio);
+        UI.addSettingChangeHandler('enable_audio', UI.updateAudio);
+        UI.addSettingChangeHandler('audio_stereo');
+        UI.addSettingChangeHandler('audio_stereo', UI.updateAudio);
+        UI.addSettingChangeHandler('audio_sample_rate');
+        UI.addSettingChangeHandler('audio_sample_rate', UI.updateAudio);
+
     },
 
     addFullscreenHandlers() {
@@ -902,6 +909,8 @@ const UI = {
         UI.updateSetting('reconnect');
         UI.updateSetting('reconnect_delay');
         UI.updateSetting('enable_audio');
+        UI.updateSetting('audio_stereo');
+        UI.updateSetting('audio_sample_rate');
 
         document.getElementById('noVNC_settings')
             .classList.add("noVNC_open");
@@ -1113,7 +1122,7 @@ const UI = {
         UI.rfb.showDotCursor = UI.getSetting('show_dot');
 
         UI.updateViewOnly(); // requires UI.rfb
-        UI.updateEnableAudio(); // requires UI.rfb
+        UI.updateAudio(); // requires UI.rfb
 
     },
 
@@ -1807,9 +1816,12 @@ const UI = {
         selectbox.options.add(optn);
     },
 
-    updateEnableAudio() {
+    updateAudio() {
         if (!UI.rfb) return;
-        UI.rfb.enable_audio(UI.getSetting('enable_audio'));
+        UI.rfb.enable_audio(
+            UI.getSetting('enable_audio'),
+            UI.getSetting('audio_stereo') ? 2 : 1,
+            UI.getSetting('audio_sample_rate'));
     },
 
 /* ------^-------
