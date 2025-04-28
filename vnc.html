@@ -219,6 +219,13 @@
                             View only
                         </label>
                     </li>
+                    <li>
+                        <label>
+                            <input id="noVNC_setting_enable_audio" type="checkbox"
+                                   class="toggle">
+                            Enable Audio
+                        </label>
+                    </li>
                     <li><hr></li>
                     <li>
                         <label>
@@ -246,6 +253,24 @@
                             <li>
                                 <label for="noVNC_setting_compression">Compression level:</label>
                                 <input id="noVNC_setting_compression" type="range" min="0" max="9" value="2">
+                            </li>
+                            <li><hr></li>
+                            <li>
+                                <label>
+                                    <input id="noVNC_setting_audio_stereo" type="checkbox"
+                                           class="toggle">
+                                    Stereo Audio
+                                </label>
+                            </li>
+                            <li>
+                                <label for="noVNC_setting_audio_sample_rate">Audio sample rate:</label>
+                                <select id="noVNC_setting_audio_sample_rate">
+                                    <option value="48000">48000</option>
+                                    <option value="44100">44100</option>
+                                    <option value="22050">22050</option>
+                                    <option value="11025">11025</option>
+                                    <option value="8000">8000</option>
+                                </select>
                             </li>
                             <li><hr></li>
                             <li>

@@ -14,6 +14,7 @@ import { dragThreshold, supportsWebCodecsH264Decode } from './util/browser.js';
 import { clientToElement } from './util/element.js';
 import { setCapture } from './util/events.js';
 import EventTargetMixin from './util/eventtarget.js';
+import Audio from "./audio.js";
 import Display from "./display.js";
 import Inflator from "./inflator.js";
 import Deflator from "./deflator.js";
@@ -153,6 +154,11 @@ export default class RFB extends EventTargetMixin {
         this._lastResize = 0;
 
         this._qemuExtKeyEventSupported = false;
+
+        this._qemuAudioSupported = false;
+        this._page_had_user_interaction = false;
+        this._audio_enable = false;
+        this._audio = new Audio(44100, 2);
 
         this._extendedPointerEventSupported = false;
 
@@ -2256,6 +2262,7 @@ export default class RFB extends EventTargetMixin {
         encs.push(encodings.pseudoEncodingDesktopSize);
         encs.push(encodings.pseudoEncodingLastRect);
         encs.push(encodings.pseudoEncodingQEMUExtendedKeyEvent);
+        encs.push(encodings.pseudoEncodingQEMUAudioEvent);
         encs.push(encodings.pseudoEncodingQEMULedEvent);
         encs.push(encodings.pseudoEncodingExtendedDesktopSize);
         encs.push(encodings.pseudoEncodingXvp);
@@ -2611,6 +2618,9 @@ export default class RFB extends EventTargetMixin {
             case 250:  // XVP
                 return this._handleXvpMsg();
 
+            case 255: // Qemu Server Message
+                return this._handleQemuAudioEvent();
+
             default:
                 this._fail("Unexpected server message (type " + msgType + ")");
                 Log.Debug("sock.rQpeekBytes(30): " + this._sock.rQpeekBytes(30));
@@ -2683,6 +2693,13 @@ export default class RFB extends EventTargetMixin {
                 this._qemuExtKeyEventSupported = true;
                 return true;
 
+            case encodings.pseudoEncodingQEMUAudioEvent:
+                if (!this._qemuAudioSupported) {
+                    RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.nchannels, this._audio.sample_rate);
+                    this._qemuAudioSupported = true;
+                }
+                return true;
+
             case encodings.pseudoEncodingDesktopName:
                 return this._handleDesktopName();
 
@@ -2703,6 +2720,86 @@ export default class RFB extends EventTargetMixin {
             default:
                 return this._handleDataRect();
         }
+    }
+
+    _handleQemuAudioEvent() {
+        if (this._sock.rQwait("Qemu Audio Event", 3, 1)) {
+            return false;
+        }
+
+        const submsg = this._sock.rQshift8();
+        if (submsg !== 1) {
+            Log.Warn("The given qemu message type " + submsg + " is not supported.");
+            return false;
+        }
+
+        const operation = this._sock.rQshift16();
+
+        switch (operation) {
+            case 0: {
+                this._audio.stop();
+                return true;
+            }
+            case 1: {
+                this._audio.start();
+                return true;
+            }
+            case 2: break;
+            default: {
+                Log.Warn("The given qemu audio opertaion " + opertaion + " is not supported.");
+                return false;
+            }
+        }
+
+        if (this._sock.rQwait("Qemu Audio payload length", 4, 4)) {
+            return false;
+        }
+
+        const length = this._sock.rQshift32();
+
+        if (length === 0) {
+            return false;
+        }
+
+        if (this._sock.rQwait("audio payload", length, 8)) {
+            return false;
+        }
+
+        let payload = this._sock.rQshiftBytes(length, false);
+
+        if (!this._page_had_user_interaction || !this._audio_enable) {
+            return true;
+        }
+
+        return this._audio.play(payload);
+    }
+
+    enable_audio(enable, nchannels, sample_rate) {
+        if (this._audio_enable == enable && this._audio.nchannels == nchannels && this._audio.sample_rate == sample_rate) {
+            return;
+        }
+
+        if (this._audio_enable) {
+            // audio parameter changed - stop current audio stream
+            Log.Debug("Disable audio");
+            this._audio_enable = false;
+            if (this._qemuAudioSupported) {
+                RFB.messages.disableQemuAudioUpdates(this._sock);
+            }
+        }
+
+        if (enable) {
+            Log.Debug("Enable audio - nchannels: " + nchannels + " sample-rate: " + sample_rate);
+            this._audio_enable = true;
+            this._audio = new Audio(sample_rate, nchannels);
+            if (this._qemuAudioSupported) {
+                RFB.messages.enableQemuAudioUpdates(this._sock, this._audio.nchannels, this._audio.sample_rate);
+            }
+        }
+    }
+
+    allow_audio() {
+        this._page_had_user_interaction = true;
     }
 
     _handleVMwareCursor() {
@@ -3310,6 +3407,30 @@ RFB.messages = {
         sock.sQpush16(y);
         sock.sQpush16(width);
         sock.sQpush16(height);
+
+        sock.flush();
+    },
+
+    disableQemuAudioUpdates(sock, nchannels, sample_rate) {
+        sock.sQpush8(255); // msg-type
+        sock.sQpush8(1); // submessage-type
+        sock.sQpush16(1); // disable audio
+
+        sock.flush();
+    },
+
+    enableQemuAudioUpdates(sock, nchannels, sample_rate) {
+
+        sock.sQpush8(255); // msg-type
+        sock.sQpush8(1); // submessage-type
+        sock.sQpush16(2); // set sample format
+        sock.sQpush8(2); // format U16
+        sock.sQpush8(nchannels);
+        sock.sQpush32(sample_rate); // audio frequency
+
+        sock.sQpush8(255); // msg-type
+        sock.sQpush8(1); // submessage-type
+        sock.sQpush16(0); // enable audio
 
         sock.flush();
     },
