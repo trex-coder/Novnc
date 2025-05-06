@@ -442,7 +442,7 @@
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css" rel="stylesheet">
     <!-- Include noVNC script and dependencies directly - hardcoded versions that work -->
-    <script src="https://cdn.jsdelivr.net/gh/novnc/noVNC@v1.3.0/core/rfb.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/novnc/noVNC@v1.3.0/vnc_lite.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 </head>
 <body>
@@ -727,7 +727,7 @@
             rfb.scaleViewport = (scalingMode === 'scale');
             rfb.resizeSession = (scalingMode === 'remote');
             console.log("RFB initialized successfully.");
-            
+
         }
     </script>
 </body>
