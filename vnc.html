@@ -700,73 +700,34 @@
         let rfb = null;
     
         function initRFB() {
-            try {
-                console.log("Initializing RFB...");
-                // Extract connection parameters from URL
-                const urlParams = new URLSearchParams(window.location.search);
-                const host = urlParams.get('host') || window.location.hostname;
-                const port = urlParams.get('port') || window.location.port || 5900;
-                const path = urlParams.get('path') || 'websockify';
-                const password = urlParams.get('password') || '';
-    
-                // Determine WebSocket scheme
-                const scheme = window.location.protocol === "https:" ? "wss" : "ws";
-                const url = `${scheme}://${host}:${port}/${path}`;
-                console.log("WebSocket URL:", url);
-    
-                // Initialize RFB connection
-                rfb = new RFB(document.getElementById('vnc-canvas'), url, {
-                    credentials: { password: password }
-                });
-    
-                // Attach event listeners for connection status
-                rfb.addEventListener("connect", onConnect);
-                rfb.addEventListener("disconnect", onDisconnect);
-                rfb.addEventListener("credentialsrequired", onCredentialsRequired);
-    
-                // Apply initial settings
-                rfb.viewOnly = document.getElementById('viewonly-toggle').checked;
-                rfb.clipViewport = document.getElementById('cliptowindow-toggle').checked;
-                rfb.showDotCursor = document.getElementById('dotcursor-toggle').checked;
-    
-                const scalingMode = document.getElementById('scaling-mode').value;
-                rfb.scaleViewport = (scalingMode === 'scale');
-                rfb.resizeSession = (scalingMode === 'remote');
-                console.log("RFB initialized successfully.");
-            } catch (error) {
-                console.error("Failed to initialize RFB:", error);
-                document.getElementById('loading-status').textContent = "Error initializing connection.";
-            }
+            console.log("Initializing RFB...");
+            const urlParams = new URLSearchParams(window.location.search);
+            const host = urlParams.get('host') || window.location.hostname;
+            const port = urlParams.get('port') || window.location.port || 5900;
+            const path = urlParams.get('path') || 'websockify';
+            const password = urlParams.get('password') || '';
+
+            const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+            const url = `${scheme}://${host}:${port}/${path}`;
+            console.log("WebSocket URL:", url);
+
+            rfb = new RFB(document.getElementById('vnc-canvas'), url, {
+                credentials: { password: password }
+            });
+
+            rfb.addEventListener("connect", onConnect);
+            rfb.addEventListener("disconnect", onDisconnect);
+            rfb.addEventListener("credentialsrequired", onCredentialsRequired);
+
+            rfb.viewOnly = document.getElementById('viewonly-toggle').checked;
+            rfb.clipViewport = document.getElementById('cliptowindow-toggle').checked;
+            rfb.showDotCursor = document.getElementById('dotcursor-toggle').checked;
+
+            const scalingMode = document.getElementById('scaling-mode').value;
+            rfb.scaleViewport = (scalingMode === 'scale');
+            rfb.resizeSession = (scalingMode === 'remote');
+            console.log("RFB initialized successfully.");
         }
-    
-        // Event handler: Connection established
-        function onConnect() {
-            console.log("Connected to VNC server");
-            document.getElementById('status-indicator').className = 'status-indicator connected';
-            document.getElementById('connection-status-text').textContent = 'Connected';
-            document.getElementById('disconnected-screen').style.display = 'none';
-        }
-    
-        // Event handler: Connection lost
-        function onDisconnect(e) {
-            console.error("Disconnected from VNC server:", e.detail.reason);
-            document.getElementById('status-indicator').className = 'status-indicator disconnected';
-            document.getElementById('connection-status-text').textContent = 'Disconnected';
-            document.getElementById('disconnected-screen').style.display = 'flex';
-        }
-    
-        // Event handler: Credentials required
-        function onCredentialsRequired() {
-            console.warn("VNC server requires credentials");
-            const password = prompt("Enter VNC password:");
-            rfb.sendCredentials({ password: password });
-        }
-    
-        // Initialize RFB on page load
-        window.addEventListener('load', function () {
-            console.log("Page loaded. Starting loading simulation...");
-            simulateLoading();
-        });
     </script>
 </body>
 </html>
