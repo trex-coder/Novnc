@@ -604,17 +604,19 @@
         const progressBar = document.getElementById('progress-bar');
         const loadingStatus = document.getElementById('loading-status');
         const loadingScreen = document.getElementById('loading-screen');
-        
+    
         function updateProgress(value, status) {
+            console.log(`Updating progress: ${value}% - ${status}`);
             progressValue = value;
             progressBar.style.width = `${value}%`;
             if (status) {
                 loadingStatus.textContent = status;
             }
         }
-        
+    
         // Simulate loading progress
         function simulateLoading() {
+            console.log("Starting loading simulation...");
             const loadingSteps = [
                 { value: 10, status: "Loading core components..." },
                 { value: 25, status: "Establishing connection..." },
@@ -624,9 +626,9 @@
                 { value: 90, status: "Finalizing setup..." },
                 { value: 100, status: "Ready to connect!" }
             ];
-            
+    
             let stepIndex = 0;
-            
+    
             const loadingInterval = setInterval(() => {
                 if (stepIndex < loadingSteps.length) {
                     const step = loadingSteps[stepIndex];
@@ -634,23 +636,27 @@
                     stepIndex++;
                 } else {
                     clearInterval(loadingInterval);
-                    
+    
                     // Hide loading screen after a short delay
                     setTimeout(() => {
+                        console.log("Loading complete. Hiding loading screen...");
                         loadingScreen.style.display = 'none';
+                        console.log("Initializing RFB...");
+                        initRFB(); // Ensure this is called
                     }, 500);
                 }
             }, 700); // Update every 700ms
         }
-        
+    
         // Toggle sidebar
         function toggleSidebar() {
+            console.log("Toggling sidebar...");
             const sidebar = document.getElementById('sidebar');
             const fullLogo = document.getElementById('full-logo');
             const logoIcon = document.getElementById('logo-icon');
-            
+    
             sidebar.classList.toggle('sidebar-collapsed');
-            
+    
             if (sidebar.classList.contains('sidebar-collapsed')) {
                 fullLogo.style.display = 'none';
                 logoIcon.style.display = 'block';
@@ -661,12 +667,14 @@
         }
     
         // Mobile sidebar toggle
-        document.getElementById('menu-toggle').addEventListener('click', function() {
+        document.getElementById('menu-toggle').addEventListener('click', function () {
+            console.log("Toggling mobile sidebar...");
             document.getElementById('sidebar').classList.toggle('open');
         });
     
         // Screenshot functionality
-        document.getElementById('screenshot-btn').addEventListener('click', function() {
+        document.getElementById('screenshot-btn').addEventListener('click', function () {
+            console.log("Attempting to take a screenshot...");
             const canvas = document.querySelector('#vnc-canvas canvas');
             if (canvas) {
                 try {
@@ -675,47 +683,59 @@
                     link.href = dataURL;
                     link.download = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-') + '.png';
                     link.click();
+                    console.log("Screenshot taken successfully.");
                 } catch (e) {
                     console.error("Screenshot failed:", e);
                     alert("Could not take screenshot. This may be due to security restrictions.");
                 }
+            } else {
+                console.warn("No canvas found for screenshot.");
             }
         });
     </script>
+    
     <script>
         // Initialize RFB (Remote Frame Buffer) for VNC connectivity
         let rfb = null;
     
         function initRFB() {
-            // Extract connection parameters from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const host = urlParams.get('host') || window.location.hostname;
-            const port = urlParams.get('port') || window.location.port || 5900;
-            const path = urlParams.get('path') || 'websockify';
-            const password = urlParams.get('password') || '';
+            try {
+                console.log("Initializing RFB...");
+                // Extract connection parameters from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const host = urlParams.get('host') || window.location.hostname;
+                const port = urlParams.get('port') || window.location.port || 5900;
+                const path = urlParams.get('path') || 'websockify';
+                const password = urlParams.get('password') || '';
     
-            // Determine WebSocket scheme
-            const scheme = window.location.protocol === "https:" ? "wss" : "ws";
-            const url = `${scheme}://${host}:${port}/${path}`;
+                // Determine WebSocket scheme
+                const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+                const url = `${scheme}://${host}:${port}/${path}`;
+                console.log("WebSocket URL:", url);
     
-            // Initialize RFB connection
-            rfb = new RFB(document.getElementById('vnc-canvas'), url, {
-                credentials: { password: password }
-            });
+                // Initialize RFB connection
+                rfb = new RFB(document.getElementById('vnc-canvas'), url, {
+                    credentials: { password: password }
+                });
     
-            // Attach event listeners for connection status
-            rfb.addEventListener("connect", onConnect);
-            rfb.addEventListener("disconnect", onDisconnect);
-            rfb.addEventListener("credentialsrequired", onCredentialsRequired);
+                // Attach event listeners for connection status
+                rfb.addEventListener("connect", onConnect);
+                rfb.addEventListener("disconnect", onDisconnect);
+                rfb.addEventListener("credentialsrequired", onCredentialsRequired);
     
-            // Apply initial settings
-            rfb.viewOnly = document.getElementById('viewonly-toggle').checked;
-            rfb.clipViewport = document.getElementById('cliptowindow-toggle').checked;
-            rfb.showDotCursor = document.getElementById('dotcursor-toggle').checked;
+                // Apply initial settings
+                rfb.viewOnly = document.getElementById('viewonly-toggle').checked;
+                rfb.clipViewport = document.getElementById('cliptowindow-toggle').checked;
+                rfb.showDotCursor = document.getElementById('dotcursor-toggle').checked;
     
-            const scalingMode = document.getElementById('scaling-mode').value;
-            rfb.scaleViewport = (scalingMode === 'scale');
-            rfb.resizeSession = (scalingMode === 'remote');
+                const scalingMode = document.getElementById('scaling-mode').value;
+                rfb.scaleViewport = (scalingMode === 'scale');
+                rfb.resizeSession = (scalingMode === 'remote');
+                console.log("RFB initialized successfully.");
+            } catch (error) {
+                console.error("Failed to initialize RFB:", error);
+                document.getElementById('loading-status').textContent = "Error initializing connection.";
+            }
         }
     
         // Event handler: Connection established
@@ -741,41 +761,10 @@
             rfb.sendCredentials({ password: password });
         }
     
-        // Toggle settings dynamically
-        document.getElementById('viewonly-toggle').addEventListener('change', function () {
-            rfb.viewOnly = this.checked;
-        });
-    
-        document.getElementById('cliptowindow-toggle').addEventListener('change', function () {
-            rfb.clipViewport = this.checked;
-        });
-    
-        document.getElementById('scaling-mode').addEventListener('change', function () {
-            const mode = this.value;
-            rfb.scaleViewport = (mode === 'scale');
-            rfb.resizeSession = (mode === 'remote');
-        });
-    
-        document.getElementById('dotcursor-toggle').addEventListener('change', function () {
-            rfb.showDotCursor = this.checked;
-        });
-    
-        // Action buttons
-        document.getElementById('disconnect-btn').addEventListener('click', function () {
-            rfb.disconnect();
-        });
-    
-        document.getElementById('reconnect-btn').addEventListener('click', function () {
-            initRFB();
-        });
-    
-        document.getElementById('ctrlaltdel-btn').addEventListener('click', function () {
-            rfb.sendCtrlAltDel();
-        });
-    
         // Initialize RFB on page load
         window.addEventListener('load', function () {
-            initRFB();
+            console.log("Page loaded. Starting loading simulation...");
+            simulateLoading();
         });
     </script>
 </body>
