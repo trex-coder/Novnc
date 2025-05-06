@@ -467,8 +467,8 @@
         <div class="sidebar-content">
             <div class="connection-info">
                 <div class="connection-status">
-                    <div class="status-indicator disconnected" id="status-indicator"></div>
-                    <span id="connection-status-text">Disconnected</span>
+                    <div class="status-indicator connecting" id="status-indicator"></div>
+                    <span id="connection-status-text">Connecting...</span>
                 </div>
                 <div class="connection-detail">
                     <span>Host</span>
@@ -599,6 +599,12 @@
     </div>
 
     <script>
+        // Start execution when DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Begin loading simulation immediately
+            simulateLoading();
+        });
+
         // noVNC essential components and utilities - mocked version for demo
         const KeyTable = {
             XK_F5: 0xffc2,
@@ -634,6 +640,9 @@
                 
                 // Mock connection state
                 this._connected = false;
+                
+                // Auto-connect on initialization
+                this.connect(this.url, this.options);
             }
             
             addEventListener(event, callback) {
@@ -651,6 +660,17 @@
             }
             
             connect(url, options) {
+                // Update status indicator while connecting
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('connection-status-text');
+                
+                if (statusIndicator) {
+                    statusIndicator.className = 'status-indicator connecting';
+                }
+                if (statusText) {
+                    statusText.textContent = 'Connecting...';
+                }
+                
                 const connectingTime = Math.random() * 2000 + 1000; // Random time between 1-3 seconds
                 
                 setTimeout(() => {
@@ -844,6 +864,8 @@
                 // Update connection info
                 document.getElementById('host-value').textContent = host;
                 document.getElementById('port-value').textContent = port;
+                
+                console.log("Connected to VNC server!");
             });
             
             rfb.addEventListener("disconnect", (e) => {
@@ -856,6 +878,14 @@
                 disconnectedScreen.style.display = 'flex';
                 
                 console.log("Disconnected: " + e.detail.reason);
+                
+                // Auto-reconnect if enabled
+                if (document.getElementById('autoreconnect-toggle').checked) {
+                    setTimeout(() => {
+                        console.log("Attempting to reconnect...");
+                        rfb.connect(url, { password: urlParams.get('password') || "" });
+                    }, 3000);
+                }
             });
             
             // Toggle buttons
