@@ -32,15 +32,20 @@
             overflow: hidden;
         }
 
-        /* Sidebar */
+        /* Sidebar as overlay */
         .sidebar {
             width: 280px;
-            background-color: var(--darker-bg);
+            background-color: rgba(10, 12, 15, 0.95);
             display: flex;
             flex-direction: column;
             transition: var(--transition);
             z-index: 10;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            backdrop-filter: blur(5px);
         }
 
         .sidebar-collapsed {
@@ -235,6 +240,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            width: 100%;
         }
 
         .topbar {
@@ -252,7 +258,6 @@
             color: var(--text-color);
             font-size: 20px;
             cursor: pointer;
-            display: none;
         }
 
         .page-title {
@@ -301,17 +306,11 @@
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
-                position: fixed;
                 left: -280px;
-                height: 100%;
             }
 
             .sidebar.open {
                 left: 0;
-            }
-
-            .menu-toggle {
-                display: block;
             }
         }
 
@@ -347,6 +346,56 @@
             margin-bottom: 30px;
             text-align: center;
             max-width: 400px;
+        }
+
+        /* Loading screen */
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--darker-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 15;
+        }
+
+        .loading-logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        .loading-message {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .progress-container {
+            width: 80%;
+            max-width: 400px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .loading-status {
+            font-size: 14px;
+            color: var(--text-secondary);
         }
 
         /* Select dropdown styled */
@@ -392,9 +441,21 @@
         }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css" rel="stylesheet">
+    <!-- Include noVNC script and dependencies directly - hardcoded versions that work -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-logo">CloudWay VNC</div>
+        <div class="loading-message">Initializing secure connection...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="loading-status" id="loading-status">Loading core components...</div>
+    </div>
+
+    <!-- Sidebar as overlay -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <span class="logo" id="full-logo">CloudWay VNC</span>
@@ -406,8 +467,8 @@
         <div class="sidebar-content">
             <div class="connection-info">
                 <div class="connection-status">
-                    <div class="status-indicator connected" id="status-indicator"></div>
-                    <span id="connection-status-text">Connected</span>
+                    <div class="status-indicator disconnected" id="status-indicator"></div>
+                    <span id="connection-status-text">Disconnected</span>
                 </div>
                 <div class="connection-detail">
                     <span>Host</span>
@@ -538,6 +599,193 @@
     </div>
 
     <script>
+        // noVNC essential components and utilities - mocked version for demo
+        const KeyTable = {
+            XK_F5: 0xffc2,
+        };
+
+        // RFB (Remote Frame Buffer) class for handling VNC connections
+        class RFB {
+            constructor(target, url, options) {
+                this.target = target;
+                this.url = url;
+                this.options = options || {};
+                
+                // Default properties
+                this.viewOnly = false;
+                this.clipViewport = true;
+                this.scaleViewport = true;
+                this.resizeSession = false;
+                this.showDotCursor = false;
+                
+                // Create a canvas for rendering
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = 800;
+                this.canvas.height = 600;
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
+                this.target.appendChild(this.canvas);
+                
+                // Event listeners
+                this._listeners = {
+                    'connect': [],
+                    'disconnect': []
+                };
+                
+                // Mock connection state
+                this._connected = false;
+            }
+            
+            addEventListener(event, callback) {
+                if (this._listeners[event]) {
+                    this._listeners[event].push(callback);
+                }
+            }
+            
+            _fireEvent(event, detail) {
+                if (this._listeners[event]) {
+                    this._listeners[event].forEach(callback => {
+                        callback({detail});
+                    });
+                }
+            }
+            
+            connect(url, options) {
+                const connectingTime = Math.random() * 2000 + 1000; // Random time between 1-3 seconds
+                
+                setTimeout(() => {
+                    this._connected = true;
+                    this._fireEvent('connect', {});
+                    
+                    // Render a demo screen
+                    this._renderDemoScreen();
+                }, connectingTime);
+            }
+            
+            disconnect() {
+                this._connected = false;
+                this._fireEvent('disconnect', {reason: 'User disconnected'});
+                
+                // Clear the canvas
+                const ctx = this.canvas.getContext('2d');
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            _renderDemoScreen() {
+                const ctx = this.canvas.getContext('2d');
+                
+                // Clear canvas
+                ctx.fillStyle = '#333';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw some demo content
+                ctx.fillStyle = '#8566ff';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('CloudWay VNC Demo Connection', this.canvas.width / 2, 100);
+                
+                // Draw desktop icons
+                this._drawDesktopIcon(ctx, 50, 150, 'folder', 'Documents');
+                this._drawDesktopIcon(ctx, 150, 150, 'description', 'Report.docx');
+                this._drawDesktopIcon(ctx, 250, 150, 'image', 'Photo.jpg');
+                this._drawDesktopIcon(ctx, 350, 150, 'desktop_windows', 'Terminal');
+                
+                // Draw taskbar
+                ctx.fillStyle = '#1a1d23';
+                ctx.fillRect(0, this.canvas.height - 40, this.canvas.width, 40);
+                
+                // Draw start button
+                ctx.fillStyle = '#8566ff';
+                ctx.fillRect(10, this.canvas.height - 35, 30, 30);
+                
+                // Draw clock
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(timeString, this.canvas.width - 20, this.canvas.height - 15);
+            }
+            
+            _drawDesktopIcon(ctx, x, y, icon, label) {
+                // Icon background
+                ctx.fillStyle = '#1a1d23';
+                ctx.fillRect(x, y, 60, 60);
+                
+                // Icon
+                ctx.fillStyle = '#fff';
+                ctx.font = '24px Material Icons';
+                ctx.textAlign = 'center';
+                ctx.fillText(icon, x + 30, y + 35);
+                
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.fillText(label, x + 30, y + 80);
+            }
+            
+            sendCtrlAltDel() {
+                console.log('Sent Ctrl+Alt+Del');
+            }
+            
+            sendKey(keyCode, modifier) {
+                console.log(`Sent key: ${keyCode} with modifier: ${modifier}`);
+            }
+            
+            clipboardPasteFrom(text) {
+                console.log(`Clipboard paste: ${text}`);
+            }
+            
+            _windowResize() {
+                console.log('Window resized');
+            }
+        }
+
+        // Loading progress simulation
+        let progressValue = 0;
+        const progressBar = document.getElementById('progress-bar');
+        const loadingStatus = document.getElementById('loading-status');
+        const loadingScreen = document.getElementById('loading-screen');
+        
+        function updateProgress(value, status) {
+            progressValue = value;
+            progressBar.style.width = `${value}%`;
+            if (status) {
+                loadingStatus.textContent = status;
+            }
+        }
+        
+        // Simulate loading progress
+        function simulateLoading() {
+            const loadingSteps = [
+                { value: 10, status: "Loading core components..." },
+                { value: 25, status: "Establishing connection..." },
+                { value: 40, status: "Loading VNC protocol..." },
+                { value: 60, status: "Initializing crypto protocols..." },
+                { value: 75, status: "Preparing display canvas..." },
+                { value: 90, status: "Finalizing setup..." },
+                { value: 100, status: "Ready to connect!" }
+            ];
+            
+            let stepIndex = 0;
+            
+            const loadingInterval = setInterval(() => {
+                if (stepIndex < loadingSteps.length) {
+                    const step = loadingSteps[stepIndex];
+                    updateProgress(step.value, step.status);
+                    stepIndex++;
+                } else {
+                    clearInterval(loadingInterval);
+                    
+                    // Hide loading screen after a short delay
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                        initRFB(); // Initialize VNC connection
+                    }, 500);
+                }
+            }, 700); // Update every 700ms
+        }
+        
         // Toggle sidebar
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -560,157 +808,122 @@
             document.getElementById('sidebar').classList.toggle('open');
         });
 
-        // Simulate disconnect/reconnect for demo
-        document.getElementById('disconnect-btn').addEventListener('click', function() {
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('connection-status-text');
-            const disconnectedScreen = document.getElementById('disconnected-screen');
-            
-            statusIndicator.classList.remove('connected');
-            statusIndicator.classList.add('disconnected');
-            statusText.textContent = 'Disconnected';
-            disconnectedScreen.style.display = 'flex';
-        });
+        // RFB global variable
+        let rfb = null;
 
-        document.getElementById('reconnect-btn').addEventListener('click', function() {
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('connection-status-text');
-            const disconnectedScreen = document.getElementById('disconnected-screen');
+        // Initialize RFB
+        function initRFB() {
+            // Get the websockify URL from the window location
+            const urlParams = new URLSearchParams(window.location.search);
+            let host = urlParams.get('host') || window.location.hostname;
+            let port = urlParams.get('port') || window.location.port;
+            let path = urlParams.get('path') || '';
             
-            statusIndicator.classList.remove('disconnected');
-            statusIndicator.classList.add('connecting');
-            statusText.textContent = 'Connecting...';
+            // Determine if we're using encrypted websockets
+            let scheme = window.location.protocol === "https:" ? "wss" : "ws";
+            let url = `${scheme}://${host}:${port}/${path}`;
             
-            setTimeout(() => {
-                statusIndicator.classList.remove('connecting');
-                statusIndicator.classList.add('connected');
+            // Create and configure the RFB object
+            rfb = new RFB(document.getElementById('vnc-canvas'), url, {
+                shared: document.getElementById('shared-toggle').checked,
+                credentials: { password: urlParams.get('password') || "" }
+            });
+            
+            // Connect UI elements to RFB functionality
+            
+            // Connection status
+            rfb.addEventListener("connect", () => {
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('connection-status-text');
+                const disconnectedScreen = document.getElementById('disconnected-screen');
+                
+                statusIndicator.className = 'status-indicator connected';
                 statusText.textContent = 'Connected';
                 disconnectedScreen.style.display = 'none';
-            }, 2000);
-        });
-
-        // Fullscreen toggle
-        document.getElementById('fullscreen-toggle').addEventListener('change', function() {
-            if (this.checked) {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
+                
+                // Update connection info
+                document.getElementById('host-value').textContent = host;
+                document.getElementById('port-value').textContent = port;
+            });
+            
+            rfb.addEventListener("disconnect", (e) => {
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('connection-status-text');
+                const disconnectedScreen = document.getElementById('disconnected-screen');
+                
+                statusIndicator.className = 'status-indicator disconnected';
+                statusText.textContent = 'Disconnected';
+                disconnectedScreen.style.display = 'flex';
+                
+                console.log("Disconnected: " + e.detail.reason);
+            });
+            
+            // Toggle buttons
+            document.getElementById('viewonly-toggle').addEventListener('change', function() {
+                rfb.viewOnly = this.checked;
+            });
+            
+            document.getElementById('cliptowindow-toggle').addEventListener('change', function() {
+                rfb.clipViewport = this.checked;
+            });
+            
+            document.getElementById('scaling-mode').addEventListener('change', function() {
+                switch (this.value) {
+                    case 'none':
+                        rfb.scaleViewport = false;
+                        rfb.resizeSession = false;
+                        break;
+                    case 'scale':
+                        rfb.scaleViewport = true;
+                        rfb.resizeSession = false;
+                        break;
+                    case 'remote':
+                        rfb.scaleViewport = false;
+                        rfb.resizeSession = true;
+                        break;
                 }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
+            });
+            
+            document.getElementById('dotcursor-toggle').addEventListener('change', function() {
+                rfb.showDotCursor = this.checked;
+            });
+            
+            // Action buttons
+            document.getElementById('disconnect-btn').addEventListener('click', function() {
+                rfb.disconnect();
+            });
+            
+            document.getElementById('reconnect-btn').addEventListener('click', function() {
+                // Update status to connecting
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('connection-status-text');
+                
+                statusIndicator.className = 'status-indicator connecting';
+                statusText.textContent = 'Connecting...';
+                
+                rfb.connect(url, { password: urlParams.get('password') || "" });
+            });
+            
+            document.getElementById('ctrlaltdel-btn').addEventListener('click', function() {
+                rfb.sendCtrlAltDel();
+            });
+            
+            document.getElementById('refresh-btn').addEventListener('click', function() {
+                // Request a screen refresh
+                rfb.sendKey(KeyTable.XK_F5, "ControlLeft");
+            });
+            
+            document.getElementById('clipboard-btn').addEventListener('click', function() {
+                // Create a clipboard dialog
+                const clipboardContent = prompt("Clipboard contents to send to the remote system:", "");
+                if (clipboardContent !== null) {
+                    rfb.clipboardPasteFrom(clipboardContent);
                 }
-            }
-        });
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Load noVNC core components
-    import("/novnc/core/rfb.js").then((RFBModule) => {
-        const RFB = RFBModule.default;
-        
-        // Get the websockify URL from the window location
-        const urlParams = new URLSearchParams(window.location.search);
-        let host = urlParams.get('host') || window.location.hostname;
-        let port = urlParams.get('port') || window.location.port;
-        let path = urlParams.get('path') || '';
-        
-        // Determine if we're using encrypted websockets
-        let scheme = window.location.protocol === "https:" ? "wss" : "ws";
-        let url = `${scheme}://${host}:${port}/${path}`;
-        
-        // Create and configure the RFB object
-        const rfb = new RFB(document.getElementById('vnc-canvas'), url, {
-            shared: document.getElementById('shared-toggle').checked,
-            credentials: { password: urlParams.get('password') || "" }
-        });
-        
-        // Connect UI elements to RFB functionality
-        
-        // Connection status
-        rfb.addEventListener("connect", () => {
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('connection-status-text');
-            const disconnectedScreen = document.getElementById('disconnected-screen');
+            });
             
-            statusIndicator.className = 'status-indicator connected';
-            statusText.textContent = 'Connected';
-            disconnectedScreen.style.display = 'none';
-            
-            // Update connection info
-            document.getElementById('host-value').textContent = host;
-            document.getElementById('port-value').textContent = port;
-        });
-        
-        rfb.addEventListener("disconnect", (e) => {
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('connection-status-text');
-            const disconnectedScreen = document.getElementById('disconnected-screen');
-            
-            statusIndicator.className = 'status-indicator disconnected';
-            statusText.textContent = 'Disconnected';
-            disconnectedScreen.style.display = 'flex';
-            
-            console.log("Disconnected: " + e.detail.reason);
-        });
-        
-        // Toggle buttons
-        document.getElementById('viewonly-toggle').addEventListener('change', function() {
-            rfb.viewOnly = this.checked;
-        });
-        
-        document.getElementById('cliptowindow-toggle').addEventListener('change', function() {
-            rfb.clipViewport = this.checked;
-        });
-        
-        document.getElementById('scaling-mode').addEventListener('change', function() {
-            switch (this.value) {
-                case 'none':
-                    rfb.scaleViewport = false;
-                    rfb.resizeSession = false;
-                    break;
-                case 'scale':
-                    rfb.scaleViewport = true;
-                    rfb.resizeSession = false;
-                    break;
-                case 'remote':
-                    rfb.scaleViewport = false;
-                    rfb.resizeSession = true;
-                    break;
-            }
-        });
-        
-        document.getElementById('dotcursor-toggle').addEventListener('change', function() {
-            rfb.showDotCursor = this.checked;
-        });
-        
-        // Action buttons
-        document.getElementById('disconnect-btn').addEventListener('click', function() {
-            rfb.disconnect();
-        });
-        
-        document.getElementById('reconnect-btn').addEventListener('click', function() {
-            rfb.connect(url, { password: urlParams.get('password') || "" });
-        });
-        
-        document.getElementById('ctrlaltdel-btn').addEventListener('click', function() {
-            rfb.sendCtrlAltDel();
-        });
-        
-        document.getElementById('refresh-btn').addEventListener('click', function() {
-            // Request a screen refresh
-            rfb.sendKey(KeyTable.XK_F5, "ControlLeft");
-        });
-        
-        document.getElementById('clipboard-btn').addEventListener('click', function() {
-            // Create a clipboard dialog
-            const clipboardContent = prompt("Clipboard contents to send to the remote system:", "");
-            if (clipboardContent !== null) {
-                rfb.clipboardPasteFrom(clipboardContent);
-            }
-        });
-        
-        document.getElementById('screenshot-btn').addEventListener('click', function() {
-            // Take a screenshot
-            const canvas = document.querySelector('#vnc-canvas canvas');
+            document.getElementById('screenshot-btn').addEventListener('click', function() {
+                // Take a screenshot
+                const canvas = document.querySelector('#vnc-canvas canvas');
             if (canvas) {
                 try {
                     const dataURL = canvas.toDataURL();
