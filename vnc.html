@@ -48,16 +48,7 @@
 
     <script type="module" crossorigin="anonymous">
         import UI from './app/ui.js';
-        const defaults = {
-            host: window.location.hostname || 'localhost',
-            port: window.location.port || '5900',
-            path: 'websockify',
-            autoconnect: true,
-            resize: 'scale',
-            shared: true
-        };
-
-        UI.start({ settings: { defaults: defaults } });
+        UI.start();
     </script>
 </head>
 

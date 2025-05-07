@@ -1,15 +1,17 @@
 {
     "autoconnect": true,
+    "reconnect": true,
+    "reconnect_delay": 5000,
     "resize": "scale",
     "shared": true,
     "view_clip": false,
+    "view_only": false,
+    "show_dot": false,
     "bell": "off",
-    "encrypt": true,
-    "quality": 8,
-    "compression": 3,
-    "reconnect": true,
-    "reconnect_delay": 2000,
-    "host": "localhost",
-    "port": 5900,
-    "path": "websockify"
+    "path": "websockify",
+    "repeaterID": "",
+    "encrypt": false,
+    "quality": 6,
+    "compression": 2,
+    "logging": "warn"
 }

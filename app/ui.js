@@ -830,22 +830,28 @@ const UI = {
 
     // Initial page load read/initialization of settings
     initSetting(name, defVal) {
-        // Has the user overridden the default value?
-        if (name in UI.customSettings.defaults) {
-            defVal = UI.customSettings.defaults[name];
-        }
-        // Check Query string followed by cookie
+        // First check URL parameters
         let val = WebUtil.getConfigVar(name);
+        
+        // Then check custom defaults if no URL parameter
+        if (val === null && name in UI.customSettings.defaults) {
+            val = UI.customSettings.defaults[name];
+        }
+        
+        // Finally fall back to provided default
         if (val === null) {
             val = WebUtil.readSetting(name, defVal);
         }
+
         WebUtil.setSetting(name, val);
         UI.updateSetting(name);
-        // Has the user forced a value?
+        
+        // Handle mandatory settings
         if (name in UI.customSettings.mandatory) {
             val = UI.customSettings.mandatory[name];
             UI.forceSetting(name, val);
         }
+        
         return val;
     },
 

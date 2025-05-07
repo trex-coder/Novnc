@@ -60,13 +60,19 @@ export function getHashVar(name, defVal) {
 // Fragment takes precedence
 export function getConfigVar(name, defVal) {
     "use strict";
-    const val = getHashVar(name);
-
-    if (val === null) {
-        return getQueryVar(name, defVal);
+    // First check hash fragment
+    const hashVal = getHashVar(name);
+    if (hashVal !== null) {
+        return hashVal;
+    }
+    
+    // Then check query string
+    const queryVal = getQueryVar(name);
+    if (queryVal !== null) {
+        return queryVal;
     }
 
-    return val;
+    return defVal;
 }
 
 /*
