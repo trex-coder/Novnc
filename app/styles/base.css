@@ -290,7 +290,10 @@ textarea:focus {
 
     transition: 0.5s ease-in-out;
 
-    background-color: var(--novnc-blue);
+    background-color: rgba(37, 99, 235, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0 12px 12px 0;
 
     user-select: none;
@@ -468,11 +471,13 @@ textarea:focus {
 
     padding: 15px;
 
-    background: #fff;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     border-radius: 12px;
     color: #000;
-    border: 2px solid #E0E0E0;
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
 }
 .noVNC_panel.noVNC_open {
     visibility: visible;
@@ -869,7 +874,9 @@ textarea:focus {
     left: 0;
     bottom: 0;
     right: 0;
-    background: var(--novnc-gray-900);
+    background: rgba(17, 24, 39, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 50;
     align-items: center;
     justify-content: center;
@@ -1016,4 +1023,75 @@ textarea:focus {
     #noVNC_logo {
         font-size: 90px;
     }
+}
+
+/* Modern toggle switches */
+input[type="checkbox"].toggle {
+    appearance: none;
+    width: 48px;
+    height: 24px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type="checkbox"].toggle:checked {
+    background: var(--novnc-primary);
+}
+
+input[type="checkbox"].toggle::before {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    background: white;
+    transition: transform 0.3s ease;
+}
+
+input[type="checkbox"].toggle:checked::before {
+    transform: translateX(24px);
+}
+
+/* Modern range inputs */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--novnc-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    background: var(--novnc-secondary);
+}
+
+/* Modern select dropdowns */
+select {
+    appearance: none;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 32px 8px 12px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 12 12'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 5l3 3 3-3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
 }

@@ -1175,6 +1175,17 @@ const UI = {
         UI.showStatus(msg);
         UI.updateVisualState('connected');
 
+        // Auto-enter fullscreen mode
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (!document.mozFullScreenElement && document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+        } else if (!document.webkitFullscreenElement && document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        } else if (!document.msFullscreenElement && document.body.msRequestFullscreen) {
+            document.body.msRequestFullscreen();
+        }
+
         // Do this last because it can only be used on rendered elements
         UI.rfb.focus();
     },
