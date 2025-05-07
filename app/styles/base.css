@@ -692,60 +692,29 @@ textarea:focus {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 100;
+    z-index: 10000; /* Ensure it's always on top */
     transform: translateY(-100%);
-
     cursor: pointer;
-
     transition: 0.5s ease-in-out;
-
     visibility: hidden;
     opacity: 0;
-
-    padding: 5px;
-
+    padding: 12px;  /* Increased padding */
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-content: center;
-
     line-height: 1.6;
     word-wrap: break-word;
     color: #fff;
-
+    font-weight: 500;  /* Make text more visible */
     border-bottom: 1px solid rgba(0, 0, 0, 0.9);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);  /* Add shadow for better visibility */
 }
+
 #noVNC_status.noVNC_open {
     transform: translateY(0);
     visibility: visible;
     opacity: 1;
-}
-
-#noVNC_status::before {
-    content: "";
-    display: inline-block;
-    width: 25px;
-    height: 25px;
-    margin-right: 5px;
-}
-
-#noVNC_status.noVNC_status_normal {
-    background: rgba(128,128,128,0.9);
-}
-#noVNC_status.noVNC_status_normal::before {
-    content: url("../images/info.svg") " ";
-}
-#noVNC_status.noVNC_status_error {
-    background: rgba(200,55,55,0.9);
-}
-#noVNC_status.noVNC_status_error::before {
-    content: url("../images/error.svg") " ";
-}
-#noVNC_status.noVNC_status_warn {
-    background: rgba(180,180,30,0.9);
-}
-#noVNC_status.noVNC_status_warn::before {
-    content: url("../images/warning.svg") " ";
 }
 
 /* ----------------------------------------
@@ -867,9 +836,10 @@ textarea:focus {
     left: 0;
     right: 0;
     bottom: 0;
-    height: 120px;
-    background: rgba(17, 24, 39, 0.98);
-    z-index: 50;
+    top: 0;  /* Add top: 0 to cover full screen */
+    height: 100vh;  /* Change to full viewport height */
+    background: rgba(17, 24, 39, 0.95); /* Slightly more opaque */
+    z-index: 1001; /* Above everything including fullscreen */
     padding: 0;
     justify-content: center;
     align-items: center;

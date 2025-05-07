@@ -502,11 +502,13 @@ const UI = {
             statusType = 'normal';
         }
 
-        // Don't overwrite more severe visible statuses and never
-        // errors. Only shows the first error.
+        // Don't overwrite more severe visible statuses
         if (statusElem.classList.contains("noVNC_open")) {
             if (statusElem.classList.contains("noVNC_status_error")) {
-                return;
+                // Only allow updating an error if it's another error
+                if (statusType !== 'error') {
+                    return;
+                }
             }
             if (statusElem.classList.contains("noVNC_status_warn") &&
                 statusType === 'normal') {
@@ -515,6 +517,10 @@ const UI = {
         }
 
         clearTimeout(UI.statusTimeout);
+        
+        // Ensure visibility in fullscreen
+        statusElem.style.position = 'fixed';
+        statusElem.style.zIndex = '100000';
 
         switch (statusType) {
             case 'error':
@@ -540,15 +546,19 @@ const UI = {
         statusElem.textContent = text;
         statusElem.classList.add("noVNC_open");
 
-        // If no time was specified, show the status for 1.5 seconds
+        // If no time was specified, show the status for longer (3 seconds)
         if (typeof time === 'undefined') {
-            time = 1500;
+            time = 3000;
         }
 
-        // Error messages do not timeout
-        if (statusType !== 'error') {
-            UI.statusTimeout = window.setTimeout(UI.hideStatus, time);
+        // Error messages and warnings stay visible longer
+        if (statusType === 'error') {
+            time = 10000;
+        } else if (statusType === 'warning' || statusType === 'warn') {
+            time = 5000;
         }
+
+        UI.statusTimeout = window.setTimeout(UI.hideStatus, time);
     },
 
     hideStatus() {
