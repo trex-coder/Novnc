@@ -72,7 +72,7 @@ const UI = {
             });
         }
 
-        // Additional check to ensure critical elements exist
+        // Critical elements check
         const criticalElements = [
             'noVNC_control_bar',
             'noVNC_status',
@@ -148,15 +148,8 @@ const UI = {
 
         document.documentElement.classList.remove("noVNC_loading");
 
-        let autoconnect = UI.getSetting('autoconnect');
-        if (autoconnect === 'true' || autoconnect == '1') {
-            autoconnect = true;
-            UI.connect();
-        } else {
-            autoconnect = false;
-            // Show the connect panel on first load unless autoconnecting
-            UI.openConnectPanel();
-        }
+        // Force autoconnect
+        UI.connect();
     },
 
     initFullscreen() {

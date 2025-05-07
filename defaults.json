@@ -1,1 +1,11 @@
-{}
+{
+    "autoconnect": true,
+    "bell": "on",
+    "shared": true,
+    "view_only": false,
+    "resize": "scale",
+    "quality": 6,
+    "compression": 2,
+    "reconnect": true,
+    "reconnect_delay": 5000
+}

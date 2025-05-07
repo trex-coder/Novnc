@@ -627,14 +627,8 @@ textarea:focus {
 :root:not(.noVNC_connected) #noVNC_power_button {
     display: none;
 }
-#noVNC_power {
-}
 #noVNC_power_buttons {
     display: none;
-}
-
-#noVNC_power input[type=button] {
-    width: 100%;
 }
 
 /* Clipboard */
@@ -654,8 +648,6 @@ textarea:focus {
 }
 
 /* Settings */
-#noVNC_settings {
-}
 #noVNC_settings ul {
     list-style: none;
     padding: 0px;
@@ -804,22 +796,25 @@ textarea:focus {
 }
 #noVNC_connect_button {
     width: 100%;
-    padding: 6px 30px;
-    cursor: pointer;
-    border-color: transparent;
-    border-radius: 12px;
-    background-color: var(--novnc-blue);
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--novnc-primary);
     color: white;
-
     display: flex;
     justify-content: center;
-    place-items: center;
-    gap: 4px;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-#noVNC_connect_button img {
-    vertical-align: bottom;
-    height: 1.3em;
+#noVNC_connect_button:hover {
+    background-color: var(--novnc-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 /* ----------------------------------------
@@ -874,7 +869,7 @@ textarea:focus {
     left: 0;
     bottom: 0;
     right: 0;
-    background: #1a1a1a;
+    background: var(--novnc-gray-900);
     z-index: 50;
     align-items: center;
     justify-content: center;
@@ -891,15 +886,15 @@ textarea:focus {
 
 /* Loading screen logo */
 #noVNC_transition .noVNC_logo {
-    font-size: 3rem;
-    color: #00c2ff;
+    font-size: 2.5rem;
+    color: var(--novnc-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
     margin-bottom: 2rem;
-    text-shadow: none;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 #noVNC_transition .noVNC_logo span {
-    color: #fff;
+    color: white;
 }
 
 #noVNC_transition_text {
@@ -911,9 +906,9 @@ textarea:focus {
 /* Modern loading bar */
 .loading-bar {
     width: 280px;
-    height: 3px;
+    height: 4px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
     position: relative;
 }
@@ -925,9 +920,9 @@ textarea:focus {
     top: 0;
     height: 100%;
     width: 40%;
-    background: #00c2ff;
+    background: var(--novnc-primary);
     animation: loading 1s infinite ease-in-out;
-    border-radius: 3px;
+    border-radius: 4px;
 }
 
 @keyframes loading {
