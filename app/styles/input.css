@@ -626,3 +626,11 @@ select[size]:not([size="1"]) option, select[multiple] option {
     text-overflow: ellipsis;
     padding: 4px var(--input-xpadding);
 }
+
+/* Virtual Keyboard */
+.noVNC_keyboard {
+    position: absolute;
+    left: -2000px; /* Move off-screen */
+    width: 1px;
+    height: 1px;
+}
