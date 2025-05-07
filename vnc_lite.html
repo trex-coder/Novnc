@@ -1,14 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="noVNC_loading">
 <head>
-    <!--
-    noVNC example: lightweight example using minimal UI and features
-    Copyright (C) 2019 The noVNC authors
-    noVNC is licensed under the MPL 2.0 (see LICENSE.txt)
-    This file is licensed under the 2-Clause BSD license (see LICENSE.txt).
-    -->
     <title>noVNC</title>
     <meta charset="utf-8">
+    
+    <!-- Apple iOS Safari settings -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="app/styles/base.css">
+
     <style>
         body {
             margin: 0;
@@ -35,47 +38,77 @@
             overflow: hidden;
         }
     </style>
+
     <script type="module" crossorigin="anonymous">
-        // RFB holds the API to connect and communicate with a VNC server
         import RFB from './core/rfb.js';
+        import * as Log from './core/util/logging.js';
+        import WebUtil from './app/webutil.js';
 
         let rfb;
         let desktopName;
+        let connected = false;
+        let disconnecting = false;
+        
+        // Load default settings
+        async function loadSettings() {
+            let defaults = {};
+            let mandatory = {};
 
-        // When this function is called we have
-        // successfully connected to a server
+            try {
+                const response = await fetch('./defaults.json');
+                if (!response.ok) {
+                    throw Error("" + response.status + " " + response.statusText);
+                }
+                defaults = await response.json();
+            } catch (err) {
+                Log.Error("Couldn't fetch defaults.json: " + err);
+            }
+
+            try {
+                const response = await fetch('./mandatory.json');
+                if (!response.ok) {
+                    throw Error("" + response.status + " " + response.statusText);
+                }
+                mandatory = await response.json();
+            } catch (err) {
+                Log.Error("Couldn't fetch mandatory.json: " + err);
+            }
+
+            return { defaults, mandatory };
+        }
+
+        // When this function is called we have successfully connected to a server
         function connectedToServer(e) {
+            connected = true;
             status("Connected to " + desktopName);
         }
 
         // This function is called when we are disconnected
         function disconnectedFromServer(e) {
+            connected = false;
             if (e.detail.clean) {
                 status("Disconnected");
             } else {
                 status("Something went wrong, connection is closed");
             }
+
+            // If we disconnected unexpectedly and reconnect is enabled, attempt to reconnect
+            if (!disconnecting && rfb && rfb.get_settings().reconnect) {
+                status("Reconnecting...");
+                setTimeout(connect, rfb.get_settings().reconnect_delay || 5000);
+            }
         }
 
-        // When this function is called, the server requires
-        // credentials to authenticate
+        // When this function is called, the server requires credentials to authenticate
         function credentialsAreRequired(e) {
             const password = prompt("Password required:");
             rfb.sendCredentials({ password: password });
         }
 
-        // When this function is called we have received
-        // a desktop name from the server
+        // When this function is called we have received a desktop name from the server
         function updateDesktopName(e) {
             desktopName = e.detail.name;
-        }
-
-        // Since most operating systems will catch Ctrl+Alt+Del
-        // before they get a chance to be intercepted by the browser,
-        // we provide a way to emulate this key sequence.
-        function sendCtrlAltDel() {
-            rfb.sendCtrlAltDel();
-            return false;
+            document.title = desktopName + " - noVNC";
         }
 
         // Show a status text in the top bar
@@ -103,18 +136,24 @@
             return defaultValue;
         }
 
-        // Read parameters specified in the URL query string
-        // By default, use the host and port of server that served this file
-        const host = readQueryVariable('host', window.location.hostname);
-        let port = readQueryVariable('port', window.location.port || '5900');
-        const password = readQueryVariable('password');
-        const path = readQueryVariable('path', 'websockify');
-        
-        // Automatically connect on page load
-        window.addEventListener('load', () => {
+        async function connect() {
+            disconnecting = false;
+
+            const { defaults, mandatory } = await loadSettings();
+
+            // Read parameters specified in the URL query string
+            // By default, use the host and port of server that served this file
+            const host = readQueryVariable('host', window.location.hostname);
+            const port = readQueryVariable('port', window.location.port || defaults.port || '5900');
+            const password = readQueryVariable('password', defaults.password);
+            const path = readQueryVariable('path', defaults.path || 'websockify');
+            const encrypt = readQueryVariable('encrypt', window.location.protocol === "https:");
+            const shared = readQueryVariable('shared', defaults.shared || true);
+            const view_only = readQueryVariable('view_only', defaults.view_only || false);
+            
             // Build the websocket URL used to connect
             let url;
-            if (window.location.protocol === "https:") {
+            if (encrypt) {
                 url = 'wss';
             } else {
                 url = 'ws';
@@ -130,8 +169,12 @@
             // Creating a new RFB object will start a new connection
             rfb = new RFB(document.getElementById('screen'), url,
                         { credentials: { password: password },
-                          shared: true,
-                          reconnect: true });
+                          shared: shared,
+                          viewOnly: view_only,
+                          wsProtocols: ['binary', 'base64'],
+                          reconnect: true,
+                          reconnect_delay: 5000,
+                          showDotCursor: defaults.show_dot || false });
 
             // Add listeners to important events from the RFB module
             rfb.addEventListener("connect",  connectedToServer);
@@ -139,14 +182,41 @@
             rfb.addEventListener("credentialsrequired", credentialsAreRequired);
             rfb.addEventListener("desktopname", updateDesktopName);
 
-            // Set parameters that can be changed on an active connection
-            rfb.viewOnly = readQueryVariable('view_only', false);
-            rfb.scaleViewport = readQueryVariable('scale', true);
-        });
+            // Enable by default
+            rfb.scaleViewport = true;
+            rfb.resizeSession = false;
 
-        // Set up the main button
-        document.getElementById('sendCtrlAltDelButton')
-            .onclick = sendCtrlAltDel;
+            document.getElementById('sendCtrlAltDelButton').disabled = false;
+        }
+
+        function disconnect() {
+            disconnecting = true;
+            if (rfb) {
+                rfb.disconnect();
+            }
+            document.getElementById('sendCtrlAltDelButton').disabled = true;
+        }
+
+        function sendCtrlAltDel() {
+            if (rfb) rfb.sendCtrlAltDel();
+            return false;
+        }
+
+        // Wait for window load before connecting
+        window.addEventListener('load', () => {
+            // Set up the main button
+            document.getElementById('sendCtrlAltDelButton').onclick = sendCtrlAltDel;
+            document.getElementById('sendCtrlAltDelButton').disabled = true;
+
+            // Show initial status
+            status("Loading noVNC...");
+
+            // Automatically connect on load
+            connect();
+
+            // Remove the loading class to hide the loading indicator
+            document.documentElement.classList.remove("noVNC_loading");
+        });
     </script>
 </head>
 
@@ -154,7 +224,7 @@
     <div id="top_bar">
         <div id="status">Loading</div>
         <div style="float: right">
-            <button id="sendCtrlAltDelButton">Send CtrlAltDel</button>
+            <button id="sendCtrlAltDelButton" disabled>Send CtrlAltDel</button>
         </div>
     </div>
     <div id="screen">

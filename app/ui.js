@@ -127,6 +127,9 @@ const UI = {
             });
         }
 
+        // Initialize all settings first
+        UI.initSettings();
+
         // Critical elements check
         const criticalElements = [
             'noVNC_control_bar',
@@ -143,46 +146,6 @@ const UI = {
             }
         }
 
-        UI.initSettings();
-
-        // Translate the DOM
-        l10n.translateDOM();
-
-        // We rely on modern APIs which might not be available in an
-        // insecure context
-        if (!window.isSecureContext) {
-            UI.showStatus(_("Running without HTTPS is not recommended, crashes or other issues are likely."), 'error');
-        }
-
-        // Try to fetch version number
-        try {
-            const response = await fetch('./package.json');
-            if (!response.ok) {
-                throw Error("" + response.status + " " + response.statusText);
-            }
-            const packageInfo = await response.json();
-            Array.from(document.getElementsByClassName('noVNC_version'))
-                .forEach(el => el.innerText = packageInfo.version);
-        } catch (err) {
-            Log.Error("Couldn't fetch package.json: " + err);
-            Array.from(document.getElementsByClassName('noVNC_version_wrapper'))
-                .concat(Array.from(document.getElementsByClassName('noVNC_version_separator')))
-                .forEach(el => el.style.display = 'none');
-        }
-
-        // Adapt the interface for touch screen devices
-        if (isTouchDevice) {
-            // Remove the address bar
-            setTimeout(() => window.scrollTo(0, 1), 100);
-        }
-
-        // Restore control bar position
-        if (WebUtil.readSetting('controlbar_pos') === 'right') {
-            UI.toggleControlbarSide();
-        }
-
-        UI.initFullscreen();
-
         // Setup event handlers
         UI.addControlbarHandlers();
         UI.addTouchSpecificHandlers();
@@ -191,6 +154,7 @@ const UI = {
         UI.addConnectionControlHandlers();
         UI.addClipboardHandlers();
         UI.addSettingsHandlers();
+        
         document.getElementById("noVNC_status")
             .addEventListener('click', UI.hideStatus);
 
@@ -203,8 +167,14 @@ const UI = {
 
         document.documentElement.classList.remove("noVNC_loading");
 
-        // Force autoconnect
-        UI.connect();
+        // Only try to connect if autoconnect is enabled
+        if (UI.getSetting('autoconnect', true)) {
+            UI.inhibitReconnect = false;
+            // Small delay to ensure everything is initialized
+            setTimeout(() => {
+                UI.connect();
+            }, 100);
+        }
     },
 
     initFullscreen() {
