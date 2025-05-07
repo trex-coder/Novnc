@@ -45,19 +45,13 @@
     line-height: 1.6;
 }
 
-body {
+/* Root level background settings */
+html, body {
     margin: 0;
     padding: 0;
-    background-color: var(--novnc-gray-900);
-    background-repeat: no-repeat;
-    background-position: right bottom;
     height: 100%;
-    touch-action: none;
+    background: var(--novnc-gray-900);
     color: var(--novnc-gray-100);
-}
-
-html {
-    height:100%;
 }
 
 .noVNC_only_touch.noVNC_hidden {
@@ -873,10 +867,8 @@ textarea:focus {
     left: 0;
     right: 0;
     bottom: 0;
-    height: 120px; /* Increased from 80px */
-    background: rgba(17, 24, 39, 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    height: 120px;
+    background: rgba(17, 24, 39, 0.98);
     z-index: 50;
     padding: 0;
     justify-content: center;
@@ -974,7 +966,7 @@ textarea:focus {
 #noVNC_container {
     width: 100%;
     height: 100%;
-    background-color: var(--novnc-gray-900); /* Modern dark background */
+    background: transparent; /* Remove the gray background */
     position: relative;
     overflow: hidden;
     user-select: none;

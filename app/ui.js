@@ -1239,6 +1239,11 @@ const UI = {
     },
 
     securityFailed(e) {
+        // Ignore non-critical security messages if the connection is still proceeding
+        if (UI.rfb && UI.rfb._rfbConnectionState === 'connecting') {
+            return;
+        }
+
         let msg = "";
         // On security failures we might get a string with a reason
         // directly from the server. Note that we can't control if
