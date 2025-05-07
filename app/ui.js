@@ -245,13 +245,19 @@ const UI = {
         UI.initSetting('quality', 6);
         UI.initSetting('compression', 2);
         UI.initSetting('shared', true);
-        UI.initSetting('bell', 'on');
+        UI.initSetting('bell', 'off');
         UI.initSetting('view_only', false);
         UI.initSetting('show_dot', false);
         UI.initSetting('path', 'websockify');
         UI.initSetting('repeaterID', '');
         UI.initSetting('reconnect', false);
         UI.initSetting('reconnect_delay', 5000);
+
+        // If autoconnect is enabled, inhibit reconnect until first connection
+        if (UI.getSetting('autoconnect', true)) {
+            UI.inhibitReconnect = false;
+            UI.connect();
+        }
     },
     // Adds a link to the label elements on the corresponding input elements
     setupSettingLabels() {
