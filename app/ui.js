@@ -335,19 +335,32 @@ const UI = {
     },
 
     addConnectionControlHandlers() {
-        document.getElementById("noVNC_disconnect_button")
-            .addEventListener('click', UI.disconnect);
-        document.getElementById("noVNC_connect_button")
-            .addEventListener('click', UI.connect);
-        document.getElementById("noVNC_cancel_reconnect_button")
-            .addEventListener('click', UI.cancelReconnect);
+        // Add null checks for all elements
+        const disconnectBtn = document.getElementById("noVNC_disconnect_button");
+        const connectBtn = document.getElementById("noVNC_connect_button");
+        const cancelReconnectBtn = document.getElementById("noVNC_cancel_reconnect_button");
+        const approveServerBtn = document.getElementById("noVNC_approve_server_button");
+        const rejectServerBtn = document.getElementById("noVNC_reject_server_button");
+        const credentialsBtn = document.getElementById("noVNC_credentials_button");
 
-        document.getElementById("noVNC_approve_server_button")
-            .addEventListener('click', UI.approveServer);
-        document.getElementById("noVNC_reject_server_button")
-            .addEventListener('click', UI.rejectServer);
-        document.getElementById("noVNC_credentials_button")
-            .addEventListener('click', UI.setCredentials);
+        if (disconnectBtn) {
+            disconnectBtn.addEventListener('click', UI.disconnect);
+        }
+        if (connectBtn) {
+            connectBtn.addEventListener('click', UI.connect);
+        }
+        if (cancelReconnectBtn) {
+            cancelReconnectBtn.addEventListener('click', UI.cancelReconnect);
+        }
+        if (approveServerBtn) {
+            approveServerBtn.addEventListener('click', UI.approveServer);
+        }
+        if (rejectServerBtn) {
+            rejectServerBtn.addEventListener('click', UI.rejectServer);
+        }
+        if (credentialsBtn) {
+            credentialsBtn.addEventListener('click', UI.setCredentials);
+        }
     },
 
     addClipboardHandlers() {
@@ -1239,20 +1252,39 @@ const UI = {
             // The same fingerprint format as RealVNC
             fingerprint = Array.from(new Uint8Array(fingerprint).slice(0, 8)).map(
                 x => x.toString(16).padStart(2, '0')).join('-');
-            document.getElementById('noVNC_verify_server_dlg').classList.add('noVNC_open');
-            document.getElementById('noVNC_fingerprint').innerHTML = fingerprint;
+            
+            const dlg = document.getElementById('noVNC_verify_server_dlg');
+            const fingerprintElem = document.getElementById('noVNC_fingerprint');
+            
+            // Add null checks for required elements
+            if (!dlg || !fingerprintElem) {
+                Log.Error("Unable to find server verification dialog elements");
+                UI.disconnect();
+                return;
+            }
+            
+            dlg.classList.add('noVNC_open');
+            fingerprintElem.innerHTML = fingerprint;
         }
     },
 
     approveServer(e) {
         e.preventDefault();
-        document.getElementById('noVNC_verify_server_dlg').classList.remove('noVNC_open');
-        UI.rfb.approveServer();
+        const dlg = document.getElementById('noVNC_verify_server_dlg');
+        if (dlg) {
+            dlg.classList.remove('noVNC_open');
+        }
+        if (UI.rfb) {
+            UI.rfb.approveServer();
+        }
     },
 
     rejectServer(e) {
         e.preventDefault();
-        document.getElementById('noVNC_verify_server_dlg').classList.remove('noVNC_open');
+        const dlg = document.getElementById('noVNC_verify_server_dlg');
+        if (dlg) {
+            dlg.classList.remove('noVNC_open');
+        }
         UI.disconnect();
     },
 
