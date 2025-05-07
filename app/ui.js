@@ -1239,11 +1239,8 @@ const UI = {
     },
 
     securityFailed(e) {
-        // Ignore non-critical security messages if the connection is still proceeding
-        if (UI.rfb && UI.rfb._rfbConnectionState === 'connecting') {
-            return;
-        }
-
+        // Always show security messages since they are important,
+        // regardless of fullscreen state
         let msg = "";
         // On security failures we might get a string with a reason
         // directly from the server. Note that we can't control if
@@ -1254,7 +1251,15 @@ const UI = {
         } else {
             msg = _("New connection has been rejected");
         }
+        
+        // Force the status to be visible even in fullscreen
+        const statusElem = document.getElementById('noVNC_status');
+        statusElem.style.zIndex = "10000"; // Ensure it's above fullscreen elements
         UI.showStatus(msg, 'error');
+
+        // Keep the status visible longer for security messages
+        clearTimeout(UI.statusTimeout);
+        UI.statusTimeout = window.setTimeout(UI.hideStatus, 5000);
     },
 
 /* ------^-------

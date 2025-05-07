@@ -875,6 +875,21 @@ textarea:focus {
     align-items: center;
 }
 
+/* Show transition screen when needed */
+:root.noVNC_loading #noVNC_transition {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out;
+}
+
+:root.noVNC_connecting #noVNC_transition,
+:root.noVNC_disconnecting #noVNC_transition,
+:root.noVNC_reconnecting #noVNC_transition {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease-in-out;
+}
+
 .loading_content {
     display: flex;
     flex-direction: column;
@@ -904,6 +919,7 @@ textarea:focus {
     border-radius: 6px; /* Increased from 4px */
     overflow: hidden;
     position: relative;
+    transition: all 0.3s ease-in-out;
 }
 
 .loading-bar::after {
@@ -932,21 +948,14 @@ textarea:focus {
 
 .loading-bar.connected::after {
     width: 100%;
+    opacity: 0;
+    visibility: hidden;
 }
 
 #noVNC_loading_message {
     font-size: 0.9rem; /* Increased from 0.75rem */
     color: rgba(255, 255, 255, 0.6); /* Increased opacity */
     margin-top: 10px; /* Increased from 6px */
-}
-
-/* Show transition screen when needed */
-:root.noVNC_loading #noVNC_transition,
-:root.noVNC_connecting #noVNC_transition,
-:root.noVNC_disconnecting #noVNC_transition,
-:root.noVNC_reconnecting #noVNC_transition {
-    opacity: 1;
-    visibility: visible;
 }
 
 /* Loading screen logo */
@@ -956,33 +965,8 @@ textarea:focus {
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 2rem;
-}
-
-#noVNC_transition .noVNC_logo span {
-    color: white;
-}
-
-/* Main container */
-#noVNC_container {
-    width: 100%;
-    height: 100%;
-    background: transparent; /* Remove the gray background */
-    position: relative;
-    overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-#noVNC_keyboardinput {
-    width: 1px;
-    height: 1px;
-    background-color: #fff;
-    color: #fff;
-    border: 0;
-    position: absolute;
-    left: -40px;
-    z-index: -1;
-    ime-mode: disabled;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
 }
 
 /*Default noVNC logo.*/
