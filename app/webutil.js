@@ -20,25 +20,16 @@ export function initLogging(level) {
 }
 
 // Read a query string variable
-// A URL with a query parameter can look like this (But will most probably get logged on the http server):
-// https://www.example.com?myqueryparam=myvalue
-//
-// For privacy (Using a hastag #, the parameters will not be sent to the server)
-// the url can be requested in the following way:
-// https://www.example.com#myqueryparam=myvalue&password=secretvalue
-//
-// Even mixing public and non public parameters will work:
-// https://www.example.com?nonsecretparam=example.com#password=secretvalue
 export function getQueryVar(name, defVal) {
     "use strict";
     const re = new RegExp('.*[?&]' + name + '=([^&#]*)'),
-          match = document.location.href.match(re);
+        match = document.location.href.match(re);
     if (typeof defVal === 'undefined') { defVal = null; }
-
+    
     if (match) {
         return decodeURIComponent(match[1]);
     }
-
+    
     return defVal;
 }
 
@@ -46,7 +37,7 @@ export function getQueryVar(name, defVal) {
 export function getHashVar(name, defVal) {
     "use strict";
     const re = new RegExp('.*[&#]' + name + '=([^&]*)'),
-          match = document.location.hash.match(re);
+        match = document.location.hash.match(re);
     if (typeof defVal === 'undefined') { defVal = null; }
 
     if (match) {
@@ -60,19 +51,13 @@ export function getHashVar(name, defVal) {
 // Fragment takes precedence
 export function getConfigVar(name, defVal) {
     "use strict";
-    // First check hash fragment
-    const hashVal = getHashVar(name);
-    if (hashVal !== null) {
-        return hashVal;
-    }
-    
-    // Then check query string
-    const queryVal = getQueryVar(name);
-    if (queryVal !== null) {
-        return queryVal;
+    const val = getHashVar(name);
+
+    if (val === null) {
+        return getQueryVar(name, defVal);
     }
 
-    return defVal;
+    return val;
 }
 
 /*
@@ -128,15 +113,53 @@ export function eraseCookie(name) {
  */
 
 let settings = {};
+let settingsLoaded = false;
 
-export function initSettings() {
-    if (!window.chrome || !window.chrome.storage) {
-        settings = {};
+export async function initSettings() {
+    if (settingsLoaded) {
         return Promise.resolve();
     }
 
-    return new Promise(resolve => window.chrome.storage.sync.get(resolve))
-        .then((cfg) => { settings = cfg; });
+    settings = {};
+
+    // First try to load defaults.json
+    try {
+        const response = await fetch('./defaults.json');
+        if (response.ok) {
+            const defaults = await response.json();
+            for (const [key, value] of Object.entries(defaults)) {
+                settings[key] = value;
+            }
+        }
+    } catch (err) {
+        Log.Error("Failed to load defaults.json: " + err);
+    }
+
+    // Then try to load from storage
+    if (window.chrome && window.chrome.storage) {
+        const chromeSettings = await new Promise(resolve => window.chrome.storage.sync.get(resolve));
+        settings = { ...settings, ...chromeSettings };
+    } else {
+        // Load from localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            try {
+                const value = localStorage.getItem(key);
+                if (value !== null) {
+                    settings[key] = value;
+                }
+            } catch (e) {
+                if (e instanceof DOMException) {
+                    Log.Warn("Could not read setting from localStorage: " + e);
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    settingsLoaded = true;
+    return Promise.resolve();
 }
 
 // Update the settings cache, but do not write to permanent storage
@@ -149,108 +172,61 @@ export function writeSetting(name, value) {
     "use strict";
     if (settings[name] === value) return;
     settings[name] = value;
+    
     if (window.chrome && window.chrome.storage) {
-        window.chrome.storage.sync.set(settings);
+        const setting = {};
+        setting[name] = value;
+        window.chrome.storage.sync.set(setting);
     } else {
-        localStorageSet(name, value);
+        try {
+            localStorage.setItem(name, value);
+        } catch (e) {
+            if (e instanceof DOMException) {
+                Log.Warn("Could not write setting to localStorage: " + e);
+            } else {
+                throw e;
+            }
+        }
     }
 }
 
 export function readSetting(name, defaultValue) {
     "use strict";
-    let value;
-    if ((name in settings) || (window.chrome && window.chrome.storage)) {
-        value = settings[name];
-    } else {
-        value = localStorageGet(name);
-        settings[name] = value;
-    }
-    if (typeof value === "undefined") {
-        value = null;
+    // First check our settings cache
+    if (name in settings) {
+        return settings[name];
     }
 
-    if (value === null && typeof defaultValue !== "undefined") {
+    // Then check URL parameters
+    const urlValue = getConfigVar(name);
+    if (urlValue !== null) {
+        settings[name] = urlValue;
+        return urlValue;
+    }
+
+    // Finally use default
+    if (typeof defaultValue !== "undefined") {
+        settings[name] = defaultValue;
         return defaultValue;
     }
-
-    return value;
+    
+    return null;
 }
 
 export function eraseSetting(name) {
     "use strict";
-    // Deleting here means that next time the setting is read when using local
-    // storage, it will be pulled from local storage again.
-    // If the setting in local storage is changed (e.g. in another tab)
-    // between this delete and the next read, it could lead to an unexpected
-    // value change.
     delete settings[name];
     if (window.chrome && window.chrome.storage) {
         window.chrome.storage.sync.remove(name);
     } else {
-        localStorageRemove(name);
-    }
-}
-
-let loggedMsgs = [];
-function logOnce(msg, level = "warn") {
-    if (!loggedMsgs.includes(msg)) {
-        switch (level) {
-            case "error":
-                Log.Error(msg);
-                break;
-            case "warn":
-                Log.Warn(msg);
-                break;
-            case "debug":
-                Log.Debug(msg);
-                break;
-            default:
-                Log.Info(msg);
-        }
-        loggedMsgs.push(msg);
-    }
-}
-
-let cookiesMsg = "Couldn't access noVNC settings, are cookies disabled?";
-
-function localStorageGet(name) {
-    let r;
-    try {
-        r = localStorage.getItem(name);
-    } catch (e) {
-        if (e instanceof DOMException) {
-            logOnce(cookiesMsg);
-            logOnce("'localStorage.getItem(" + name + ")' failed: " + e,
-                    "debug");
-        } else {
-            throw e;
-        }
-    }
-    return r;
-}
-function localStorageSet(name, value) {
-    try {
-        localStorage.setItem(name, value);
-    } catch (e) {
-        if (e instanceof DOMException) {
-            logOnce(cookiesMsg);
-            logOnce("'localStorage.setItem(" + name + "," + value +
-                    ")' failed: " + e, "debug");
-        } else {
-            throw e;
-        }
-    }
-}
-function localStorageRemove(name) {
-    try {
-        localStorage.removeItem(name);
-    } catch (e) {
-        if (e instanceof DOMException) {
-            logOnce(cookiesMsg);
-            logOnce("'localStorage.removeItem(" + name + ")' failed: " + e,
-                    "debug");
-        } else {
-            throw e;
+        try {
+            localStorage.removeItem(name);
+        } catch (e) {
+            if (e instanceof DOMException) {
+                Log.Warn("Could not erase setting from localStorage: " + e);
+            } else {
+                throw e;
+            }
         }
     }
 }
