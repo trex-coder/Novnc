@@ -420,32 +420,42 @@ const UI = {
 
     // Disable/enable controls depending on connection state
     updateVisualState(state) {
-
         document.documentElement.classList.remove("noVNC_connecting");
         document.documentElement.classList.remove("noVNC_connected");
         document.documentElement.classList.remove("noVNC_disconnecting");
         document.documentElement.classList.remove("noVNC_reconnecting");
 
         const transitionElem = document.getElementById("noVNC_transition_text");
+        const loadingBar = document.querySelector(".loading-bar");
+
+        // Remove all progress states
+        loadingBar.classList.remove("initializing", "loading", "connecting", "connected");
+
         switch (state) {
             case 'init':
+                loadingBar.classList.add("initializing");
                 break;
             case 'connecting':
                 transitionElem.textContent = _("Connecting...");
                 document.documentElement.classList.add("noVNC_connecting");
+                loadingBar.classList.add("connecting");
                 break;
             case 'connected':
                 document.documentElement.classList.add("noVNC_connected");
+                loadingBar.classList.add("connected");
                 break;
             case 'disconnecting':
                 transitionElem.textContent = _("Disconnecting...");
                 document.documentElement.classList.add("noVNC_disconnecting");
+                loadingBar.classList.add("loading");
                 break;
             case 'disconnected':
+                loadingBar.classList.add("initializing");
                 break;
             case 'reconnecting':
                 transitionElem.textContent = _("Reconnecting...");
                 document.documentElement.classList.add("noVNC_reconnecting");
+                loadingBar.classList.add("connecting");
                 break;
             default:
                 Log.Error("Invalid visual state: " + state);

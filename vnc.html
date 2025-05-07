@@ -191,6 +191,9 @@
                     title="Full screen">
 
                 <!-- Settings panel with modern styling -->
+                <input type="image" alt="Settings" src="app/images/settings.svg"
+                    id="noVNC_settings_button" class="noVNC_button"
+                    title="Settings">
                 <div class="noVNC_vcenter">
                     <div id="noVNC_settings" class="noVNC_panel">
                         <div class="noVNC_heading">
@@ -383,9 +386,13 @@
 
     <!-- Transition screens -->
     <div id="noVNC_transition">
-        <div id="noVNC_transition_text"></div>
-        <div class="loading-bar"></div>
-        <div id="noVNC_loading_message">Loading core components...</div>
+        <div class="loading_content">
+            <div id="noVNC_transition_text"></div>
+            <div class="loading-bar-wrapper">
+                <div class="loading-bar"></div>
+            </div>
+            <div id="noVNC_loading_message">Loading core components...</div>
+        </div>
     </div>
 
     <!-- This is where the RFB elements will attach -->
