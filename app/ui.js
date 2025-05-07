@@ -110,43 +110,22 @@ const UI = {
             UI.customSettings.mandatory = {};
         }
 
-        // Set up translations
         try {
             await l10n.setup(LINGUAS, "app/locale/");
         } catch (err) {
             Log.Error("Failed to load translations: " + err);
         }
 
-        // Initialize setting storage
         await WebUtil.initSettings();
 
-        // Ensure DOM is fully loaded before proceeding
+        // Ensure DOM is fully loaded
         if (document.readyState === "loading") {
-            await new Promise((resolve) => {
-                document.addEventListener('DOMContentLoaded', resolve, { once: true });
-            });
+            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
         }
 
-        // Initialize all settings first
         UI.initSettings();
 
-        // Critical elements check
-        const criticalElements = [
-            'noVNC_control_bar',
-            'noVNC_status',
-            'noVNC_settings',
-            'noVNC_settings_button',
-            'noVNC_connect_button',
-            'noVNC_control_bar_handle'
-        ];
-
-        for (const elementId of criticalElements) {
-            if (!document.getElementById(elementId)) {
-                throw new Error(`Required element #${elementId} not found in DOM`);
-            }
-        }
-
-        // Setup event handlers
+        // Add event listeners
         UI.addControlbarHandlers();
         UI.addTouchSpecificHandlers();
         UI.addExtraKeysHandlers();
@@ -155,25 +134,16 @@ const UI = {
         UI.addClipboardHandlers();
         UI.addSettingsHandlers();
         
-        document.getElementById("noVNC_status")
-            .addEventListener('click', UI.hideStatus);
-
-        // Bootstrap fallback input handler
-        UI.keyboardinputReset();
+        document.getElementById("noVNC_status").addEventListener('click', UI.hideStatus);
 
         UI.openControlbar();
-
         UI.updateVisualState('init');
 
         document.documentElement.classList.remove("noVNC_loading");
 
-        // Only try to connect if autoconnect is enabled
+        // If autoconnect is enabled, connect now
         if (UI.getSetting('autoconnect', true)) {
-            UI.inhibitReconnect = false;
-            // Small delay to ensure everything is initialized
-            setTimeout(() => {
-                UI.connect();
-            }, 100);
+            UI.connect();
         }
     },
 
