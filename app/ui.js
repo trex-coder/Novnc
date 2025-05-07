@@ -1056,14 +1056,13 @@ const UI = {
     },
 
     connect(event, password) {
-
         // Ignore when rfb already exists
         if (typeof UI.rfb !== 'undefined') {
             return;
         }
 
-        const host = UI.getSetting('host');
-        const port = UI.getSetting('port');
+        const host = UI.getSetting('host', window.location.hostname);
+        const port = UI.getSetting('port', window.location.port || '5900');
         const path = UI.getSetting('path');
 
         if (typeof password === 'undefined') {
