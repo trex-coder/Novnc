@@ -387,22 +387,10 @@
     <!-- Transition screens -->
     <div id="noVNC_transition">
         <div class="loading_content">
-            <div id="noVNC_transition_text"></div>
-            <div class="loading-bar-wrapper">
-                <div class="loading-bar"></div>
-            </div>
-            <div id="noVNC_loading_message">Loading core components...</div>
+            <div id="noVNC_tips">Pro Tip: Cloud PCs offer seamless collaboration with your team members across different time zones</div>
+            <div id="noVNC_transition_text">Initializing connection...</div>
+            <div class="loading-bar"></div>
         </div>
-    </div>
-
-    <!-- This is where the RFB elements will attach -->
-    <div id="noVNC_container">
-        <!-- Note that Google Chrome on Android doesn't respect any of these,
-             html attributes which attempt to disable text suggestions on the
-             on-screen keyboard. Let's hope Chrome implements the ime-mode
-             style for example -->
-        <textarea id="noVNC_keyboardinput" autocapitalize="off"
-            autocomplete="off" spellcheck="false" tabindex="-1"></textarea>
     </div>
 
     <audio id="noVNC_bell">

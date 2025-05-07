@@ -828,68 +828,65 @@ textarea:focus {
 
 /* Transition screen */
 #noVNC_transition {
-    transition: 0.5s ease-in-out;
     display: flex;
-    opacity: 0;
-    visibility: hidden;
     position: fixed;
     left: 0;
     right: 0;
+    top: 0;
     bottom: 0;
-    top: 0;  /* Add top: 0 to cover full screen */
-    height: 100vh;  /* Change to full viewport height */
-    background: rgba(17, 24, 39, 0.95); /* Slightly more opaque */
-    z-index: 1001; /* Above everything including fullscreen */
-    padding: 0;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Show transition screen when needed */
-:root.noVNC_loading #noVNC_transition {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out;
-}
-
-:root.noVNC_connecting #noVNC_transition,
-:root.noVNC_disconnecting #noVNC_transition,
-:root.noVNC_reconnecting #noVNC_transition {
+    background: #111827;
+    z-index: 50;
     opacity: 1;
     visibility: visible;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+:root.noVNC_connected #noVNC_transition {
+    opacity: 0;
+    visibility: hidden;
     transition: opacity 0.3s ease-in-out;
 }
 
 .loading_content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 0 16px;
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+#noVNC_tips {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 15px;
+    margin-bottom: 25px;
+    font-weight: 400;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    animation: fadeTips 12s infinite;
+}
+
+@keyframes fadeTips {
+    0%, 100% { opacity: 0; }
+    20%, 80% { opacity: 1; }
 }
 
 #noVNC_transition_text {
-    font-size: 1.1rem; /* Increased from 0.9rem */
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 12px; /* Increased from 8px */
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    margin-bottom: 15px;
     font-weight: 500;
 }
 
-.loading-bar-wrapper {
-    width: 70%;
-    max-width: 800px;
-    margin: 0 auto;
-}
-
 .loading-bar {
-    width: 100%;
-    height: 6px; /* Increased from 3px */
+    width: 320px;
+    height: 4px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px; /* Increased from 4px */
+    border-radius: 2px;
     overflow: hidden;
     position: relative;
-    transition: all 0.3s ease-in-out;
+    margin: 0 auto;
 }
 
 .loading-bar::after {
@@ -899,17 +896,13 @@ textarea:focus {
     top: 0;
     height: 100%;
     width: 0;
-    background: var(--novnc-primary);
-    border-radius: 6px; /* Increased to match container */
+    background: #2563eb;
+    border-radius: 2px;
     transition: width 0.5s ease-out;
 }
 
 .loading-bar.initializing::after {
     width: 30%;
-}
-
-.loading-bar.loading::after {
-    width: 75%;
 }
 
 .loading-bar.connecting::after {
@@ -918,25 +911,12 @@ textarea:focus {
 
 .loading-bar.connected::after {
     width: 100%;
-    opacity: 0;
-    visibility: hidden;
 }
 
-#noVNC_loading_message {
-    font-size: 0.9rem; /* Increased from 0.75rem */
-    color: rgba(255, 255, 255, 0.6); /* Increased opacity */
-    margin-top: 10px; /* Increased from 6px */
-}
-
-/* Loading screen logo */
-#noVNC_transition .noVNC_logo {
-    font-size: 2.5rem;
-    color: var(--novnc-primary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 2rem;
-    opacity: 1;
-    transition: opacity 0.3s ease-in-out;
+#noVNC_container {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 /*Default noVNC logo.*/

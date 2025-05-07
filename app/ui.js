@@ -46,6 +46,35 @@ const UI = {
     reconnectCallback: null,
     reconnectPassword: null,
 
+    // Tips for cloud PC usage
+    _cloudTips: [
+        "Cloud PCs offer seamless collaboration with your team members across different time zones",
+        "Access your development environment from anywhere with full IDE capabilities",
+        "Never worry about hardware limitations - scale your cloud PC as needed",
+        "Keep your work secure with automatic backups and enterprise-grade security",
+        "Reduce IT costs and maintenance with cloud-based workstations",
+        "Experience consistent performance regardless of your local device",
+        "Set up new development environments in minutes instead of hours",
+        "Collaborate in real-time with screen sharing and pair programming",
+        "Access specialized software without installing it locally",
+        "Work from any device while maintaining the same powerful development environment"
+    ],
+
+    _rotateTips() {
+        const tipElement = document.getElementById('noVNC_tips');
+        if (!tipElement) return;
+        
+        let currentTip = 0;
+        setInterval(() => {
+            tipElement.style.opacity = '0';
+            setTimeout(() => {
+                currentTip = (currentTip + 1) % UI._cloudTips.length;
+                tipElement.textContent = UI._cloudTips[currentTip];
+                tipElement.style.opacity = '1';
+            }, 1000);
+        }, 12000);
+    },
+
     async start(options={}) {
         UI.customSettings = options.settings || {};
         if (UI.customSettings.defaults === undefined) {
@@ -425,74 +454,58 @@ const UI = {
         document.documentElement.classList.remove("noVNC_disconnecting");
         document.documentElement.classList.remove("noVNC_reconnecting");
 
-        const transitionElem = document.getElementById("noVNC_transition_text");
+        const transitionElem = document.getElementById("noVNC_transition");
+        const transitionText = document.getElementById("noVNC_transition_text");
         const loadingBar = document.querySelector(".loading-bar");
 
         // Remove all progress states
-        loadingBar.classList.remove("initializing", "loading", "connecting", "connected");
+        if (loadingBar) {
+            loadingBar.classList.remove("initializing", "loading", "connecting", "connected");
+        }
+
+        // Start tips rotation when showing transition screen
+        if (state === 'init') {
+            UI._rotateTips();
+        }
 
         switch (state) {
             case 'init':
-                loadingBar.classList.add("initializing");
+                if (loadingBar) loadingBar.classList.add("initializing");
+                if (transitionText) transitionText.textContent = "Initializing connection...";
                 break;
             case 'connecting':
-                transitionElem.textContent = _("Connecting...");
                 document.documentElement.classList.add("noVNC_connecting");
-                loadingBar.classList.add("connecting");
+                if (loadingBar) loadingBar.classList.add("connecting");
+                if (transitionText) transitionText.textContent = "Establishing secure connection...";
                 break;
             case 'connected':
                 document.documentElement.classList.add("noVNC_connected");
-                loadingBar.classList.add("connected");
+                if (loadingBar) loadingBar.classList.add("connected");
+                if (transitionText) transitionText.textContent = "Connection established!";
+                transitionElem.style.display = 'none';
                 break;
             case 'disconnecting':
-                transitionElem.textContent = _("Disconnecting...");
                 document.documentElement.classList.add("noVNC_disconnecting");
-                loadingBar.classList.add("loading");
+                if (loadingBar) loadingBar.classList.add("loading");
+                if (transitionText) transitionText.textContent = "Disconnecting...";
+                transitionElem.style.display = 'flex';
                 break;
             case 'disconnected':
-                loadingBar.classList.add("initializing");
+                if (loadingBar) loadingBar.classList.add("initializing");
+                if (transitionText) transitionText.textContent = "Disconnected.";
+                transitionElem.style.display = 'flex';
                 break;
             case 'reconnecting':
-                transitionElem.textContent = _("Reconnecting...");
                 document.documentElement.classList.add("noVNC_reconnecting");
-                loadingBar.classList.add("connecting");
+                if (loadingBar) loadingBar.classList.add("connecting");
+                if (transitionText) transitionText.textContent = "Reconnecting...";
+                transitionElem.style.display = 'flex';
                 break;
             default:
                 Log.Error("Invalid visual state: " + state);
                 UI.showStatus(_("Internal error"), 'error');
                 return;
         }
-
-        if (UI.connected) {
-            UI.updateViewClip();
-
-            UI.disableSetting('encrypt');
-            UI.disableSetting('shared');
-            UI.disableSetting('host');
-            UI.disableSetting('port');
-            UI.disableSetting('path');
-            UI.disableSetting('repeaterID');
-
-            // Hide the controlbar after 2 seconds
-            UI.closeControlbarTimeout = setTimeout(UI.closeControlbar, 2000);
-        } else {
-            UI.enableSetting('encrypt');
-            UI.enableSetting('shared');
-            UI.enableSetting('host');
-            UI.enableSetting('port');
-            UI.enableSetting('path');
-            UI.enableSetting('repeaterID');
-            UI.updatePowerButton();
-            UI.keepControlbar();
-        }
-
-        // State change closes dialogs as they may not be relevant
-        // anymore
-        UI.closeAllPanels();
-        document.getElementById('noVNC_verify_server_dlg')
-            .classList.remove('noVNC_open');
-        document.getElementById('noVNC_credentials_dlg')
-            .classList.remove('noVNC_open');
     },
 
     showStatus(text, statusType, time) {
