@@ -14,12 +14,12 @@
         http://example.com/#host=HOST&port=PORT&encrypt=1
     -->
     <title>noVNC</title>
-    <meta charset="utf-8">
+
     <link rel="icon" type="image/x-icon" href="app/images/icons/novnc.ico">
     <meta name="theme-color" content="#313131">
 
     <!-- Apple iOS Safari settings -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -46,78 +46,60 @@
     <link rel="preload" as="image" href="app/images/error.svg">
     <link rel="preload" as="image" href="app/images/warning.svg">
 
-    <style>
-        body {
-            margin: 0;
-            background-color: dimgrey;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        html {
-            height: 100%;
-        }
-        #top_bar {
-            background-color: #6e84a3;
-            color: white;
-            font: bold 12px Helvetica;
-            padding: 6px 5px 4px 5px;
-            border-bottom: 1px outset;
-        }
-        #status {
-            text-align: center;
-        }
-        #screen {
-            flex: 1; /* fill remaining space */
-            overflow: hidden;
-        }
-    </style>
+    <script type="module" crossorigin="anonymous" src="app/error-handler.js"></script>
 
-    <script type="module" crossorigin="anonymous">
-        import UI from './app/ui.js';
-        UI.start();
-    </script>
+    <script type="module">
+        import UI from "./app/ui.js";
+        import * as Log from './core/util/logging.js';
 
-    <script type="module" crossorigin="anonymous">
-        import RFB from './core/rfb.js';
+        let response;
 
-        let rfb;
-        let connected = false;
+        let defaults = {};
+        let mandatory = {};
 
-        window.addEventListener('load', () => {
-            const host = window.location.hostname;
-            const port = window.location.port || '5900';
-            const path = 'websockify';
+        // Default settings will be loaded from defaults.json. Mandatory
+        // settings will be loaded from mandatory.json, which the user
+        // cannot change.
 
-            // Build the websocket URL
-            let url = (window.location.protocol === "https:" ? 'wss' : 'ws');
-            url += '://' + host;
-            if (port) {
-                url += ':' + port;
+        try {
+            response = await fetch('./defaults.json');
+            if (!response.ok) {
+                throw Error("" + response.status + " " + response.statusText);
             }
-            url += '/' + path;
 
-            // Create a new RFB object
-            rfb = new RFB(document.getElementById('screen'), url, {
-                credentials: { },
-                shared: true,
-                wsProtocols: ['binary', 'base64']
-            });
+            defaults = await response.json();
+        } catch (err) {
+            Log.Error("Couldn't fetch defaults.json: " + err);
+        }
 
-            // Remove loading indicator
-            document.documentElement.classList.remove("noVNC_loading");
-        });
+        try {
+            response = await fetch('./mandatory.json');
+            if (!response.ok) {
+                throw Error("" + response.status + " " + response.statusText);
+            }
+
+            mandatory = await response.json();
+        } catch (err) {
+            Log.Error("Couldn't fetch mandatory.json: " + err);
+        }
+
+        // You can also override any defaults you need here:
+        //
+        // defaults['host'] = 'vnc.example.com';
+
+        // Or force a specific setting, preventing the user from
+        // changing it:
+        //
+        // mandatory['view_only'] = true;
+
+        // See docs/EMBEDDING.md for a list of possible settings.
+
+        UI.start({ settings: { defaults: defaults,
+                               mandatory: mandatory } });
     </script>
 </head>
 
 <body>
-    <div id="top_bar">
-        <div id="status">Loading</div>
-    </div>
-    <div id="screen">
-        <!-- This is where the remote screen will appear -->
-    </div>
-
     <div id="noVNC_fallback_error" class="noVNC_center">
         <div>
             <div>Connection Error</div>
@@ -415,8 +397,5 @@
         <source src="app/sounds/bell.oga" type="audio/ogg">
         <source src="app/sounds/bell.mp3" type="audio/mpeg">
     </audio>
-
-    <!-- Hidden input for virtual keyboard -->
-    <input id="noVNC_keyboardinput" class="noVNC_keyboard" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
-</body>
+ </body>
 </html>
