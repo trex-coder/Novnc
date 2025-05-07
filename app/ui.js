@@ -62,9 +62,35 @@ const UI = {
 
     _rotateTips() {
         const tipElement = document.getElementById('noVNC_tips');
-        if (!tipElement) return;
-        
+        if (!tipElement) {
+            // If tips element doesn't exist yet, wait for DOM to be ready
+            const initTips = () => {
+                const el = document.getElementById('noVNC_tips');
+                if (el) {
+                    this._initializeTips(el);
+                }
+            };
+
+            // Check if document is already loaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initTips);
+            } else {
+                // Try initializing now if document is already loaded
+                initTips();
+            }
+            return;
+        }
+
+        this._initializeTips(tipElement);
+    },
+
+    _initializeTips(tipElement) {
         let currentTip = 0;
+        // Set initial tip
+        tipElement.textContent = UI._cloudTips[currentTip];
+        tipElement.style.opacity = '1';
+
+        // Start rotation
         setInterval(() => {
             tipElement.style.opacity = '0';
             setTimeout(() => {
