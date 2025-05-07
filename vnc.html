@@ -46,13 +46,78 @@
     <link rel="preload" as="image" href="app/images/error.svg">
     <link rel="preload" as="image" href="app/images/warning.svg">
 
+    <style>
+        body {
+            margin: 0;
+            background-color: dimgrey;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        html {
+            height: 100%;
+        }
+        #top_bar {
+            background-color: #6e84a3;
+            color: white;
+            font: bold 12px Helvetica;
+            padding: 6px 5px 4px 5px;
+            border-bottom: 1px outset;
+        }
+        #status {
+            text-align: center;
+        }
+        #screen {
+            flex: 1; /* fill remaining space */
+            overflow: hidden;
+        }
+    </style>
+
     <script type="module" crossorigin="anonymous">
         import UI from './app/ui.js';
         UI.start();
     </script>
+
+    <script type="module" crossorigin="anonymous">
+        import RFB from './core/rfb.js';
+
+        let rfb;
+        let connected = false;
+
+        window.addEventListener('load', () => {
+            const host = window.location.hostname;
+            const port = window.location.port || '5900';
+            const path = 'websockify';
+
+            // Build the websocket URL
+            let url = (window.location.protocol === "https:" ? 'wss' : 'ws');
+            url += '://' + host;
+            if (port) {
+                url += ':' + port;
+            }
+            url += '/' + path;
+
+            // Create a new RFB object
+            rfb = new RFB(document.getElementById('screen'), url, {
+                credentials: { },
+                shared: true,
+                wsProtocols: ['binary', 'base64']
+            });
+
+            // Remove loading indicator
+            document.documentElement.classList.remove("noVNC_loading");
+        });
+    </script>
 </head>
 
 <body>
+    <div id="top_bar">
+        <div id="status">Loading</div>
+    </div>
+    <div id="screen">
+        <!-- This is where the remote screen will appear -->
+    </div>
+
     <div id="noVNC_fallback_error" class="noVNC_center">
         <div>
             <div>Connection Error</div>
