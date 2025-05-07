@@ -30,19 +30,30 @@
  */
 
 :root {
-    font-family: sans-serif;
+    /* Modern color variables */
+    --novnc-primary: #2563eb;         /* Modern blue */
+    --novnc-secondary: #1e40af;       /* Darker blue */
+    --novnc-success: #10b981;         /* Modern green */
+    --novnc-warning: #f59e0b;         /* Modern yellow */
+    --novnc-error: #ef4444;           /* Modern red */
+    --novnc-gray-100: #f3f4f6;        /* Light gray */
+    --novnc-gray-200: #e5e7eb;        /* Border gray */
+    --novnc-gray-700: #374151;        /* Dark gray */
+    --novnc-gray-900: #111827;        /* Nearly black */
+    
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     line-height: 1.6;
 }
 
 body {
-    margin:0;
-    padding:0;
-    /*Background image with light grey curve.*/
-    background-color:#494949;
-    background-repeat:no-repeat;
-    background-position:right bottom;
-    height:100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--novnc-gray-900);
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    height: 100%;
     touch-action: none;
+    color: var(--novnc-gray-100);
 }
 
 html {
@@ -56,7 +67,44 @@ html {
 .noVNC_disabled {
     color: var(--novnc-grey);
 }
+/* Modern input styling */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+select,
+textarea {
+    background: var(--novnc-gray-100);
+    border: 1px solid var(--novnc-gray-200);
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    color: var(--novnc-gray-900);
+}
 
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--novnc-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+/* Modern button styling */
+.noVNC_button {
+    background: var(--novnc-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+}
+
+.noVNC_button:hover {
+    background: var(--novnc-secondary);
+    transform: translateY(-1px);
+}
 /* ----------------------------------------
  * Spinner
  * ----------------------------------------
