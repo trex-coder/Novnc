@@ -65,11 +65,27 @@ const UI = {
         // Initialize setting storage
         await WebUtil.initSettings();
 
-        // Wait for the page to load
-        if (document.readyState !== "interactive" && document.readyState !== "complete") {
-            await new Promise((resolve, reject) => {
-                document.addEventListener('DOMContentLoaded', resolve);
+        // Ensure DOM is fully loaded before proceeding
+        if (document.readyState === "loading") {
+            await new Promise((resolve) => {
+                document.addEventListener('DOMContentLoaded', resolve, { once: true });
             });
+        }
+
+        // Additional check to ensure critical elements exist
+        const criticalElements = [
+            'noVNC_control_bar',
+            'noVNC_status',
+            'noVNC_settings',
+            'noVNC_settings_button',
+            'noVNC_connect_button',
+            'noVNC_control_bar_handle'
+        ];
+
+        for (const elementId of criticalElements) {
+            if (!document.getElementById(elementId)) {
+                throw new Error(`Required element #${elementId} not found in DOM`);
+            }
         }
 
         UI.initSettings();
@@ -80,19 +96,18 @@ const UI = {
         // We rely on modern APIs which might not be available in an
         // insecure context
         if (!window.isSecureContext) {
-            // FIXME: This gets hidden when connecting
             UI.showStatus(_("Running without HTTPS is not recommended, crashes or other issues are likely."), 'error');
         }
 
         // Try to fetch version number
         try {
-            let response = await fetch('./package.json');
+            const response = await fetch('./package.json');
             if (!response.ok) {
                 throw Error("" + response.status + " " + response.statusText);
             }
-
-            let packageInfo = await response.json();
-            Array.from(document.getElementsByClassName('noVNC_version')).forEach(el => el.innerText = packageInfo.version);
+            const packageInfo = await response.json();
+            Array.from(document.getElementsByClassName('noVNC_version'))
+                .forEach(el => el.innerText = packageInfo.version);
         } catch (err) {
             Log.Error("Couldn't fetch package.json: " + err);
             Array.from(document.getElementsByClassName('noVNC_version_wrapper'))
