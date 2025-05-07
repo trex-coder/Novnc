@@ -8,5 +8,8 @@
     "quality": 8,
     "compression": 3,
     "reconnect": true,
-    "reconnect_delay": 2000
+    "reconnect_delay": 2000,
+    "host": "localhost",
+    "port": 5900,
+    "path": "websockify"
 }

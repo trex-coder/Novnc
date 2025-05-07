@@ -235,13 +235,13 @@ const UI = {
         UI.setupSettingLabels();
 
         /* Populate the controls if defaults are provided in the URL */
-        UI.initSetting('host', '');
-        UI.initSetting('port', 0);
+        UI.initSetting('host', window.location.hostname || 'localhost');
+        UI.initSetting('port', window.location.port || 5900);
         UI.initSetting('encrypt', (window.location.protocol === "https:"));
         UI.initSetting('password');
-        UI.initSetting('autoconnect', false);
+        UI.initSetting('autoconnect', true);
         UI.initSetting('view_clip', false);
-        UI.initSetting('resize', 'off');
+        UI.initSetting('resize', 'scale');
         UI.initSetting('quality', 6);
         UI.initSetting('compression', 2);
         UI.initSetting('shared', true);
