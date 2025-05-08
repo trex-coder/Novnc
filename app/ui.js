@@ -927,6 +927,266 @@ const UI = {
         if (credDlg) credDlg.classList.remove('noVNC_open');
     },
 
+    updateViewOnly() {
+        if (!UI.rfb) return;
+        UI.rfb.viewOnly = UI.getSetting('view_only');
+        // Hide input related buttons in view only mode
+        if (UI.rfb.viewOnly) {
+            document.getElementById('noVNC_keyboard_button')?.classList.add('noVNC_hidden');
+            document.getElementById('noVNC_toggle_extra_keys_button')?.classList.add('noVNC_hidden');
+            document.getElementById('noVNC_clipboard_button')?.classList.add('noVNC_hidden');
+        } else {
+            document.getElementById('noVNC_keyboard_button')?.classList.remove('noVNC_hidden');
+            document.getElementById('noVNC_toggle_extra_keys_button')?.classList.remove('noVNC_hidden');
+            document.getElementById('noVNC_clipboard_button')?.classList.remove('noVNC_hidden');
+        }
+    },
+    updateShowDotCursor() {
+        if (!UI.rfb) return;
+        UI.rfb.showDotCursor = UI.getSetting('show_dot');
+    },
+    updateViewClip() {
+        if (!UI.rfb) return;
+        const scaling = UI.getSetting('resize') === 'scale';
+        let brokenScrollbars = false;
+        if (!hasScrollbarGutter) {
+            if (isIOS() || isAndroid() || isMac() || isChromeOS()) {
+                brokenScrollbars = true;
+            }
+        }
+        if (scaling) {
+            UI.forceSetting('view_clip', false);
+            UI.rfb.clipViewport  = false;
+        } else if (brokenScrollbars) {
+            UI.forceSetting('view_clip', true);
+            UI.rfb.clipViewport = true;
+        } else {
+            UI.enableSetting('view_clip');
+            UI.rfb.clipViewport = UI.getSetting('view_clip');
+        }
+        UI.updateViewDrag();
+    },
+    toggleViewDrag() {
+        if (!UI.rfb) return;
+        UI.rfb.dragViewport = !UI.rfb.dragViewport;
+        UI.updateViewDrag();
+    },
+    updateViewDrag() {
+        if (!UI.connected) return;
+        const viewDragButton = document.getElementById('noVNC_view_drag_button');
+        if ((!UI.rfb.clipViewport || !UI.rfb.clippingViewport) && UI.rfb.dragViewport) {
+            UI.rfb.dragViewport = false;
+        }
+        if (UI.rfb.dragViewport) {
+            viewDragButton?.classList.add("noVNC_selected");
+        } else {
+            viewDragButton?.classList.remove("noVNC_selected");
+        }
+        if (UI.rfb.clipViewport) {
+            viewDragButton?.classList.remove("noVNC_hidden");
+        } else {
+            viewDragButton?.classList.add("noVNC_hidden");
+        }
+        if (viewDragButton) viewDragButton.disabled = !UI.rfb.clippingViewport;
+    },
+    updateQuality() {
+        if (!UI.rfb) return;
+        UI.rfb.qualityLevel = parseInt(UI.getSetting('quality'));
+    },
+    updateCompression() {
+        if (!UI.rfb) return;
+        UI.rfb.compressionLevel = parseInt(UI.getSetting('compression'));
+    },
+    showVirtualKeyboard() {
+        if (!isTouchDevice) return;
+        const input = document.getElementById('noVNC_keyboardinput');
+        if (document.activeElement == input) return;
+        input.focus();
+        try {
+            const l = input.value.length;
+            input.setSelectionRange(l, l);
+        } catch (err) {}
+    },
+    hideVirtualKeyboard() {
+        if (!isTouchDevice) return;
+        const input = document.getElementById('noVNC_keyboardinput');
+        if (document.activeElement != input) return;
+        input.blur();
+    },
+    toggleVirtualKeyboard() {
+        if (document.getElementById('noVNC_keyboard_button')?.classList.contains("noVNC_selected")) {
+            UI.hideVirtualKeyboard();
+        } else {
+            UI.showVirtualKeyboard();
+        }
+    },
+    onfocusVirtualKeyboard(event) {
+        document.getElementById('noVNC_keyboard_button')?.classList.add("noVNC_selected");
+        if (UI.rfb) UI.rfb.focusOnClick = false;
+    },
+    onblurVirtualKeyboard(event) {
+        document.getElementById('noVNC_keyboard_button')?.classList.remove("noVNC_selected");
+        if (UI.rfb) UI.rfb.focusOnClick = true;
+    },
+    keepVirtualKeyboard(event) {
+        const input = document.getElementById('noVNC_keyboardinput');
+        if (document.activeElement != input) return;
+        if (event.target.form !== undefined) {
+            switch (event.target.type) {
+                case 'text': case 'email': case 'search': case 'password': case 'tel': case 'url': case 'textarea': case 'select-one': case 'select-multiple': return;
+            }
+        }
+        event.preventDefault();
+    },
+    keyboardinputReset() {
+        const kbi = document.getElementById('noVNC_keyboardinput');
+        kbi.value = new Array(UI.defaultKeyboardinputLen).join("_");
+        UI.lastKeyboardinput = kbi.value;
+    },
+    keyEvent(keysym, code, down) {
+        if (!UI.rfb) return;
+        UI.rfb.sendKey(keysym, code, down);
+    },
+    keyInput(event) {
+        if (!UI.rfb) return;
+        const newValue = event.target.value;
+        if (!UI.lastKeyboardinput) UI.keyboardinputReset();
+        const oldValue = UI.lastKeyboardinput;
+        let newLen;
+        try { newLen = Math.max(event.target.selectionStart, newValue.length); } catch (err) { newLen = newValue.length; }
+        const oldLen = oldValue.length;
+        let inputs = newLen - oldLen;
+        let backspaces = inputs < 0 ? -inputs : 0;
+        for (let i = 0; i < Math.min(oldLen, newLen); i++) {
+            if (newValue.charAt(i) != oldValue.charAt(i)) {
+                inputs = newLen - i;
+                backspaces = oldLen - i;
+                break;
+            }
+        }
+        for (let i = 0; i < backspaces; i++) {
+            UI.rfb.sendKey(KeyTable.XK_BackSpace, "Backspace");
+        }
+        for (let i = newLen - inputs; i < newLen; i++) {
+            UI.rfb.sendKey(keysyms.lookup(newValue.charCodeAt(i)));
+        }
+        if (newLen > 2 * UI.defaultKeyboardinputLen) {
+            UI.keyboardinputReset();
+        } else if (newLen < 1) {
+            UI.keyboardinputReset();
+            event.target.blur();
+            setTimeout(event.target.focus.bind(event.target), 0);
+        } else {
+            UI.lastKeyboardinput = newValue;
+        }
+    },
+    openExtraKeys() {
+        UI.closeAllPanels && UI.closeAllPanels();
+        UI.openControlbar && UI.openControlbar();
+        document.getElementById('noVNC_modifiers')?.classList.add("noVNC_open");
+        document.getElementById('noVNC_toggle_extra_keys_button')?.classList.add("noVNC_selected");
+    },
+    closeExtraKeys() {
+        document.getElementById('noVNC_modifiers')?.classList.remove("noVNC_open");
+        document.getElementById('noVNC_toggle_extra_keys_button')?.classList.remove("noVNC_selected");
+    },
+    toggleExtraKeys() {
+        if (document.getElementById('noVNC_modifiers')?.classList.contains("noVNC_open")) {
+            UI.closeExtraKeys();
+        } else  {
+            UI.openExtraKeys();
+        }
+    },
+    sendEsc() { UI.sendKey(KeyTable.XK_Escape, "Escape"); },
+    sendTab() { UI.sendKey(KeyTable.XK_Tab, "Tab"); },
+    toggleCtrl() {
+        const btn = document.getElementById('noVNC_toggle_ctrl_button');
+        if (btn?.classList.contains("noVNC_selected")) {
+            UI.sendKey(KeyTable.XK_Control_L, "ControlLeft", false);
+            btn.classList.remove("noVNC_selected");
+        } else {
+            UI.sendKey(KeyTable.XK_Control_L, "ControlLeft", true);
+            btn.classList.add("noVNC_selected");
+        }
+    },
+    toggleWindows() {
+        const btn = document.getElementById('noVNC_toggle_windows_button');
+        if (btn?.classList.contains("noVNC_selected")) {
+            UI.sendKey(KeyTable.XK_Super_L, "MetaLeft", false);
+            btn.classList.remove("noVNC_selected");
+        } else {
+            UI.sendKey(KeyTable.XK_Super_L, "MetaLeft", true);
+            btn.classList.add("noVNC_selected");
+        }
+    },
+    toggleAlt() {
+        const btn = document.getElementById('noVNC_toggle_alt_button');
+        if (btn?.classList.contains("noVNC_selected")) {
+            UI.sendKey(KeyTable.XK_Alt_L, "AltLeft", false);
+            btn.classList.remove("noVNC_selected");
+        } else {
+            UI.sendKey(KeyTable.XK_Alt_L, "AltLeft", true);
+            btn.classList.add("noVNC_selected");
+        }
+    },
+    sendCtrlAltDel() {
+        UI.rfb.sendCtrlAltDel();
+        UI.rfb.focus();
+        UI.idleControlbar();
+    },
+    sendKey(keysym, code, down) {
+        UI.rfb.sendKey(keysym, code, down);
+        if (document.getElementById('noVNC_keyboard_button')?.classList.contains("noVNC_selected")) {
+            document.getElementById('noVNC_keyboardinput').focus();
+        } else {
+            UI.rfb.focus();
+        }
+        UI.idleControlbar();
+    },
+    updatePowerButton() {
+        if (UI.connected && UI.rfb.capabilities.power && !UI.rfb.viewOnly) {
+            document.getElementById('noVNC_power_button')?.classList.remove("noVNC_hidden");
+        } else {
+            document.getElementById('noVNC_power_button')?.classList.add("noVNC_hidden");
+            UI.closePowerPanel();
+        }
+    },
+    toggleFullscreen() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        } else {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) {
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+            } else if (document.body.msRequestFullscreen) {
+                document.body.msRequestFullscreen();
+            }
+        }
+        UI.updateFullscreenButton();
+    },
+    updateFullscreenButton() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement ) {
+            document.getElementById('noVNC_fullscreen_button')?.classList.add("noVNC_selected");
+        } else {
+            document.getElementById('noVNC_fullscreen_button')?.classList.remove("noVNC_selected");
+        }
+    },
+    applyResizeMode() {
+        if (!UI.rfb) return;
+        UI.rfb.scaleViewport = UI.getSetting('resize') === 'scale';
+        UI.rfb.resizeSession = UI.getSetting('resize') === 'remote';
+    },
     addControlbarHandlers() {
         document.getElementById("noVNC_control_bar")
             .addEventListener('mousemove', UI.activateControlbar);
