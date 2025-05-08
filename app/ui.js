@@ -1289,6 +1289,67 @@ const UI = {
             .addEventListener('click', UI.togglePowerPanel);
     },
 
+    addConnectionControlHandlers() {
+        document.getElementById("noVNC_disconnect_button")
+            .addEventListener('click', UI.disconnect);
+        document.getElementById("noVNC_connect_button")
+            .addEventListener('click', UI.connect);
+        document.getElementById("noVNC_cancel_reconnect_button")
+            .addEventListener('click', UI.cancelReconnect);
+
+        document.getElementById("noVNC_approve_server_button")
+            .addEventListener('click', UI.approveServer);
+        document.getElementById("noVNC_reject_server_button")
+            .addEventListener('click', UI.rejectServer);
+        document.getElementById("noVNC_credentials_button")
+            .addEventListener('click', UI.setCredentials);
+    },
+
+    addClipboardHandlers() {
+        document.getElementById("noVNC_clipboard_button")
+            .addEventListener('click', UI.toggleClipboardPanel);
+        document.getElementById("noVNC_clipboard_text")
+            .addEventListener('change', UI.clipboardSend);
+    },
+
+    addSettingChangeHandler(name, changeFunc) {
+        const ctrl = document.getElementById('noVNC_setting_' + name);
+        if (!ctrl) return;
+        if (typeof changeFunc !== 'function') {
+            changeFunc = () => UI.saveSetting(name);
+        }
+        ctrl.addEventListener('change', changeFunc);
+    },
+
+    addSettingsHandlers() {
+        document.getElementById("noVNC_settings_button")
+            .addEventListener('click', UI.toggleSettingsPanel);
+
+        UI.addSettingChangeHandler('encrypt');
+        UI.addSettingChangeHandler('resize');
+        UI.addSettingChangeHandler('resize', UI.applyResizeMode);
+        UI.addSettingChangeHandler('resize', UI.updateViewClip);
+        UI.addSettingChangeHandler('quality');
+        UI.addSettingChangeHandler('quality', UI.updateQuality);
+        UI.addSettingChangeHandler('compression');
+        UI.addSettingChangeHandler('compression', UI.updateCompression);
+        UI.addSettingChangeHandler('view_clip');
+        UI.addSettingChangeHandler('view_clip', UI.updateViewClip);
+        UI.addSettingChangeHandler('shared');
+        UI.addSettingChangeHandler('view_only');
+        UI.addSettingChangeHandler('view_only', UI.updateViewOnly);
+        UI.addSettingChangeHandler('show_dot');
+        UI.addSettingChangeHandler('show_dot', UI.updateShowDotCursor);
+        UI.addSettingChangeHandler('host');
+        UI.addSettingChangeHandler('port');
+        UI.addSettingChangeHandler('path');
+        UI.addSettingChangeHandler('repeaterID');
+        UI.addSettingChangeHandler('logging');
+        UI.addSettingChangeHandler('logging', UI.updateLogging);
+        UI.addSettingChangeHandler('reconnect');
+        UI.addSettingChangeHandler('reconnect_delay');
+    },
+
     bell(e) {
         // Optionally play a sound or show a notification
         // Example: play a sound if you have one
