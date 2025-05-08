@@ -926,6 +926,39 @@ const UI = {
         const credDlg = document.getElementById('noVNC_credentials_dlg');
         if (credDlg) credDlg.classList.remove('noVNC_open');
     },
+
+    addControlbarHandlers() {
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('mousemove', UI.activateControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('mouseup', UI.activateControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('mousedown', UI.activateControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('keydown', UI.activateControlbar);
+
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('mousedown', UI.keepControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('keydown', UI.keepControlbar);
+
+        document.getElementById("noVNC_view_drag_button")
+            .addEventListener('click', UI.toggleViewDrag);
+
+        document.getElementById("noVNC_control_bar_handle")
+            .addEventListener('mousedown', UI.controlbarHandleMouseDown);
+        document.getElementById("noVNC_control_bar_handle")
+            .addEventListener('mouseup', UI.controlbarHandleMouseUp);
+        document.getElementById("noVNC_control_bar_handle")
+            .addEventListener('mousemove', UI.dragControlbarHandle);
+        // resize events aren't available for elements
+        window.addEventListener('resize', UI.updateControlbarHandle);
+
+        const exps = document.getElementsByClassName("noVNC_expander");
+        for (let i = 0;i < exps.length;i++) {
+            exps[i].addEventListener('click', UI.toggleExpander);
+        }
+    },
 };
 
 export default UI;
