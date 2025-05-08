@@ -1260,6 +1260,23 @@ const UI = {
         document.getElementById("noVNC_control_bar_handle")
             .addEventListener('touchmove', UI.dragControlbarHandle);
     },
+
+    addExtraKeysHandlers() {
+        document.getElementById("noVNC_toggle_extra_keys_button")
+            .addEventListener('click', UI.toggleExtraKeys);
+        document.getElementById("noVNC_toggle_ctrl_button")
+            .addEventListener('click', UI.toggleCtrl);
+        document.getElementById("noVNC_toggle_windows_button")
+            .addEventListener('click', UI.toggleWindows);
+        document.getElementById("noVNC_toggle_alt_button")
+            .addEventListener('click', UI.toggleAlt);
+        document.getElementById("noVNC_send_tab_button")
+            .addEventListener('click', UI.sendTab);
+        document.getElementById("noVNC_send_esc_button")
+            .addEventListener('click', UI.sendEsc);
+        document.getElementById("noVNC_send_ctrl_alt_del_button")
+            .addEventListener('click', UI.sendCtrlAltDel);
+    },
 };
 
 export default UI;
