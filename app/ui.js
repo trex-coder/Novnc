@@ -46,6 +46,8 @@ const UI = {
     reconnectCallback: null,
     reconnectPassword: null,
 
+    touchKeyboard: null,
+
     async start(options={}) {
         UI.customSettings = options.settings || {};
         if (UI.customSettings.defaults === undefined) {
@@ -753,6 +755,120 @@ const UI = {
         } else {
             this.classList.add("noVNC_open");
         }
+    },
+    closeConnectPanel() {
+        document.getElementById('noVNC_connect_dlg')
+            .classList.remove("noVNC_open");
+    },
+    openConnectPanel() {
+        document.getElementById('noVNC_connect_dlg')
+            .classList.add("noVNC_open");
+    },
+    initFullscreen() {
+        if (!isSafari() &&
+            (document.documentElement.requestFullscreen ||
+             document.documentElement.mozRequestFullScreen ||
+             document.documentElement.webkitRequestFullscreen ||
+             document.body.msRequestFullscreen)) {
+            document.getElementById('noVNC_fullscreen_button')
+                .classList.remove("noVNC_hidden");
+            UI.addFullscreenHandlers();
+        }
+    },
+    closeAllPanels() {
+        UI.closeSettingsPanel && UI.closeSettingsPanel();
+        UI.closePowerPanel && UI.closePowerPanel();
+        UI.closeClipboardPanel && UI.closeClipboardPanel();
+        UI.closeExtraKeys && UI.closeExtraKeys();
+    },
+    openSettingsPanel() {
+        UI.closeAllPanels && UI.closeAllPanels();
+        UI.openControlbar && UI.openControlbar();
+        UI.updateSetting && UI.updateSetting('encrypt');
+        UI.updateSetting && UI.updateSetting('view_clip');
+        UI.updateSetting && UI.updateSetting('resize');
+        UI.updateSetting && UI.updateSetting('quality');
+        UI.updateSetting && UI.updateSetting('compression');
+        UI.updateSetting && UI.updateSetting('shared');
+        UI.updateSetting && UI.updateSetting('view_only');
+        UI.updateSetting && UI.updateSetting('path');
+        UI.updateSetting && UI.updateSetting('repeaterID');
+        UI.updateSetting && UI.updateSetting('logging');
+        UI.updateSetting && UI.updateSetting('reconnect');
+        UI.updateSetting && UI.updateSetting('reconnect_delay');
+        document.getElementById('noVNC_settings')
+            .classList.add("noVNC_open");
+        document.getElementById('noVNC_settings_button')
+            .classList.add("noVNC_selected");
+    },
+    closeSettingsPanel() {
+        document.getElementById('noVNC_settings')
+            .classList.remove("noVNC_open");
+        document.getElementById('noVNC_settings_button')
+            .classList.remove("noVNC_selected");
+    },
+    toggleSettingsPanel() {
+        if (document.getElementById('noVNC_settings')
+            .classList.contains("noVNC_open")) {
+            UI.closeSettingsPanel();
+        } else {
+            UI.openSettingsPanel();
+        }
+    },
+    openPowerPanel() {
+        UI.closeAllPanels && UI.closeAllPanels();
+        UI.openControlbar && UI.openControlbar();
+        document.getElementById('noVNC_power')
+            .classList.add("noVNC_open");
+        document.getElementById('noVNC_power_button')
+            .classList.add("noVNC_selected");
+    },
+    closePowerPanel() {
+        document.getElementById('noVNC_power')
+            .classList.remove("noVNC_open");
+        document.getElementById('noVNC_power_button')
+            .classList.remove("noVNC_selected");
+    },
+    togglePowerPanel() {
+        if (document.getElementById('noVNC_power')
+            .classList.contains("noVNC_open")) {
+            UI.closePowerPanel();
+        } else {
+            UI.openPowerPanel();
+        }
+    },
+    openClipboardPanel() {
+        UI.closeAllPanels && UI.closeAllPanels();
+        UI.openControlbar && UI.openControlbar();
+        document.getElementById('noVNC_clipboard')
+            .classList.add("noVNC_open");
+        document.getElementById('noVNC_clipboard_button')
+            .classList.add("noVNC_selected");
+    },
+    closeClipboardPanel() {
+        document.getElementById('noVNC_clipboard')
+            .classList.remove("noVNC_open");
+        document.getElementById('noVNC_clipboard_button')
+            .classList.remove("noVNC_selected");
+    },
+    toggleClipboardPanel() {
+        if (document.getElementById('noVNC_clipboard')
+            .classList.contains("noVNC_open")) {
+            UI.closeClipboardPanel();
+        } else {
+            UI.openClipboardPanel();
+        }
+    },
+    clipboardReceive(e) {
+        Log.Debug("UI.clipboardReceive: " + (e.detail.text ? e.detail.text.substr(0, 40) : "") + "...");
+        document.getElementById('noVNC_clipboard_text').value = e.detail.text;
+        Log.Debug("<< UI.clipboardReceive");
+    },
+    clipboardSend() {
+        const text = document.getElementById('noVNC_clipboard_text').value;
+        Log.Debug("UI.clipboardSend: " + (text ? text.substr(0, 40) : "") + "...");
+        if (UI.rfb && UI.rfb.clipboardPasteFrom) UI.rfb.clipboardPasteFrom(text);
+        Log.Debug("<< UI.clipboardSend");
     },
 };
 
