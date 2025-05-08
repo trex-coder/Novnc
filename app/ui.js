@@ -558,6 +558,202 @@ const UI = {
             }
         }
     },
+
+    showStatus(text, statusType, time) {
+        const statusElem = document.getElementById('noVNC_status');
+        if (typeof statusType === 'undefined') {
+            statusType = 'normal';
+        }
+        if (statusElem.classList.contains("noVNC_open")) {
+            if (statusElem.classList.contains("noVNC_status_error")) {
+                return;
+            }
+            if (statusElem.classList.contains("noVNC_status_warn") && statusType === 'normal') {
+                return;
+            }
+        }
+        clearTimeout(UI.statusTimeout);
+        switch (statusType) {
+            case 'error':
+                statusElem.classList.remove("noVNC_status_warn");
+                statusElem.classList.remove("noVNC_status_normal");
+                statusElem.classList.add("noVNC_status_error");
+                break;
+            case 'warning':
+            case 'warn':
+                statusElem.classList.remove("noVNC_status_error");
+                statusElem.classList.remove("noVNC_status_normal");
+                statusElem.classList.add("noVNC_status_warn");
+                break;
+            case 'normal':
+            case 'info':
+            default:
+                statusElem.classList.remove("noVNC_status_error");
+                statusElem.classList.remove("noVNC_status_warn");
+                statusElem.classList.add("noVNC_status_normal");
+                break;
+        }
+        statusElem.textContent = text;
+        statusElem.classList.add("noVNC_open");
+        if (typeof time === 'undefined') {
+            time = 1500;
+        }
+        if (statusType !== 'error') {
+            UI.statusTimeout = window.setTimeout(UI.hideStatus, time);
+        }
+    },
+    hideStatus() {
+        clearTimeout(UI.statusTimeout);
+        document.getElementById('noVNC_status').classList.remove("noVNC_open");
+    },
+    activateControlbar(event) {
+        clearTimeout(UI.idleControlbarTimeout);
+        document.getElementById('noVNC_control_bar_anchor').classList.remove("noVNC_idle");
+        UI.idleControlbarTimeout = window.setTimeout(UI.idleControlbar, 2000);
+    },
+    idleControlbar() {
+        if (document.getElementById('noVNC_control_bar').contains(document.activeElement) && document.hasFocus()) {
+            UI.activateControlbar();
+            return;
+        }
+        document.getElementById('noVNC_control_bar_anchor').classList.add("noVNC_idle");
+    },
+    keepControlbar() {
+        clearTimeout(UI.closeControlbarTimeout);
+    },
+    openControlbar() {
+        document.getElementById('noVNC_control_bar').classList.add("noVNC_open");
+    },
+    closeControlbar() {
+        UI.closeAllPanels && UI.closeAllPanels();
+        document.getElementById('noVNC_control_bar').classList.remove("noVNC_open");
+        if (UI.rfb && UI.rfb.focus) UI.rfb.focus();
+    },
+    toggleControlbar() {
+        if (document.getElementById('noVNC_control_bar').classList.contains("noVNC_open")) {
+            UI.closeControlbar();
+        } else {
+            UI.openControlbar();
+        }
+    },
+    toggleControlbarSide() {
+        const bar = document.getElementById('noVNC_control_bar');
+        const barDisplayStyle = window.getComputedStyle(bar).display;
+        if (barDisplayStyle !== 'none') {
+            bar.style.transitionDuration = '0s';
+            bar.addEventListener('transitionend', () => bar.style.transitionDuration = '');
+        }
+        const anchor = document.getElementById('noVNC_control_bar_anchor');
+        if (anchor.classList.contains("noVNC_right")) {
+            WebUtil.writeSetting('controlbar_pos', 'left');
+            anchor.classList.remove("noVNC_right");
+        } else {
+            WebUtil.writeSetting('controlbar_pos', 'right');
+            anchor.classList.add("noVNC_right");
+        }
+        UI.controlbarDrag = true;
+        UI.showControlbarHint(false, false);
+    },
+    showControlbarHint(show, animate=true) {
+        const hint = document.getElementById('noVNC_control_bar_hint');
+        if (animate) {
+            hint.classList.remove("noVNC_notransition");
+        } else {
+            hint.classList.add("noVNC_notransition");
+        }
+        if (show) {
+            hint.classList.add("noVNC_active");
+        } else {
+            hint.classList.remove("noVNC_active");
+        }
+    },
+    dragControlbarHandle(e) {
+        if (!UI.controlbarGrabbed) return;
+        const ptr = getPointerEvent(e);
+        const anchor = document.getElementById('noVNC_control_bar_anchor');
+        if (ptr.clientX < (window.innerWidth * 0.1)) {
+            if (anchor.classList.contains("noVNC_right")) {
+                UI.toggleControlbarSide();
+            }
+        } else if (ptr.clientX > (window.innerWidth * 0.9)) {
+            if (!anchor.classList.contains("noVNC_right")) {
+                UI.toggleControlbarSide();
+            }
+        }
+        if (!UI.controlbarDrag) {
+            const dragDistance = Math.abs(ptr.clientY - UI.controlbarMouseDownClientY);
+            if (dragDistance < dragThreshold) return;
+            UI.controlbarDrag = true;
+        }
+        const eventY = ptr.clientY - UI.controlbarMouseDownOffsetY;
+        UI.moveControlbarHandle(eventY);
+        e.preventDefault();
+        e.stopPropagation();
+        UI.keepControlbar();
+        UI.activateControlbar();
+    },
+    moveControlbarHandle(viewportRelativeY) {
+        const handle = document.getElementById("noVNC_control_bar_handle");
+        const handleHeight = handle.getBoundingClientRect().height;
+        const controlbarBounds = document.getElementById("noVNC_control_bar").getBoundingClientRect();
+        const margin = 10;
+        if (handleHeight === 0 || controlbarBounds.height === 0) {
+            return;
+        }
+        let newY = viewportRelativeY;
+        if (newY < controlbarBounds.top + margin) {
+            newY = controlbarBounds.top + margin;
+        } else if (newY > controlbarBounds.top + controlbarBounds.height - handleHeight - margin) {
+            newY = controlbarBounds.top + controlbarBounds.height - handleHeight - margin;
+        }
+        if (controlbarBounds.height < (handleHeight + margin * 2)) {
+            newY = controlbarBounds.top + (controlbarBounds.height - handleHeight) / 2;
+        }
+        const parentRelativeY = newY - controlbarBounds.top;
+        handle.style.transform = "translateY(" + parentRelativeY + "px)";
+    },
+    updateControlbarHandle() {
+        const handle = document.getElementById("noVNC_control_bar_handle");
+        const handleBounds = handle.getBoundingClientRect();
+        UI.moveControlbarHandle(handleBounds.top);
+    },
+    controlbarHandleMouseUp(e) {
+        if ((e.type == "mouseup") && (e.button != 0)) return;
+        if (UI.controlbarGrabbed && !UI.controlbarDrag) {
+            UI.toggleControlbar();
+            e.preventDefault();
+            e.stopPropagation();
+            UI.keepControlbar();
+            UI.activateControlbar();
+        }
+        UI.controlbarGrabbed = false;
+        UI.showControlbarHint(false);
+    },
+    controlbarHandleMouseDown(e) {
+        if ((e.type == "mousedown") && (e.button != 0)) return;
+        const ptr = getPointerEvent(e);
+        const handle = document.getElementById("noVNC_control_bar_handle");
+        const bounds = handle.getBoundingClientRect();
+        if (e.type === "mousedown") {
+            setCapture(handle);
+        }
+        UI.controlbarGrabbed = true;
+        UI.controlbarDrag = false;
+        UI.showControlbarHint(true);
+        UI.controlbarMouseDownClientY = ptr.clientY;
+        UI.controlbarMouseDownOffsetY = ptr.clientY - bounds.top;
+        e.preventDefault();
+        e.stopPropagation();
+        UI.keepControlbar();
+        UI.activateControlbar();
+    },
+    toggleExpander(e) {
+        if (this.classList.contains("noVNC_open")) {
+            this.classList.remove("noVNC_open");
+        } else {
+            this.classList.add("noVNC_open");
+        }
+    },
 };
 
 export default UI;
