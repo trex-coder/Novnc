@@ -870,6 +870,62 @@ const UI = {
         if (UI.rfb && UI.rfb.clipboardPasteFrom) UI.rfb.clipboardPasteFrom(text);
         Log.Debug("<< UI.clipboardSend");
     },
+    updateVisualState(state) {
+        document.documentElement.classList.remove("noVNC_connecting");
+        document.documentElement.classList.remove("noVNC_connected");
+        document.documentElement.classList.remove("noVNC_disconnecting");
+        document.documentElement.classList.remove("noVNC_reconnecting");
+        const transitionElem = document.getElementById("noVNC_transition_text");
+        switch (state) {
+            case 'init':
+                break;
+            case 'connecting':
+                if (transitionElem) transitionElem.textContent = _("Connecting...");
+                document.documentElement.classList.add("noVNC_connecting");
+                break;
+            case 'connected':
+                document.documentElement.classList.add("noVNC_connected");
+                break;
+            case 'disconnecting':
+                if (transitionElem) transitionElem.textContent = _("Disconnecting...");
+                document.documentElement.classList.add("noVNC_disconnecting");
+                break;
+            case 'disconnected':
+                break;
+            case 'reconnecting':
+                if (transitionElem) transitionElem.textContent = _("Reconnecting...");
+                document.documentElement.classList.add("noVNC_reconnecting");
+                break;
+            default:
+                Log.Error("Invalid visual state: " + state);
+                UI.showStatus && UI.showStatus(_("Internal error"), 'error');
+                return;
+        }
+        if (UI.connected) {
+            UI.updateViewClip && UI.updateViewClip();
+            UI.disableSetting && UI.disableSetting('encrypt');
+            UI.disableSetting && UI.disableSetting('shared');
+            UI.disableSetting && UI.disableSetting('host');
+            UI.disableSetting && UI.disableSetting('port');
+            UI.disableSetting && UI.disableSetting('path');
+            UI.disableSetting && UI.disableSetting('repeaterID');
+            UI.closeControlbarTimeout = setTimeout(UI.closeControlbar, 2000);
+        } else {
+            UI.enableSetting && UI.enableSetting('encrypt');
+            UI.enableSetting && UI.enableSetting('shared');
+            UI.enableSetting && UI.enableSetting('host');
+            UI.enableSetting && UI.enableSetting('port');
+            UI.enableSetting && UI.enableSetting('path');
+            UI.enableSetting && UI.enableSetting('repeaterID');
+            UI.updatePowerButton && UI.updatePowerButton();
+            UI.keepControlbar && UI.keepControlbar();
+        }
+        UI.closeAllPanels && UI.closeAllPanels();
+        const verifyDlg = document.getElementById('noVNC_verify_server_dlg');
+        if (verifyDlg) verifyDlg.classList.remove('noVNC_open');
+        const credDlg = document.getElementById('noVNC_credentials_dlg');
+        if (credDlg) credDlg.classList.remove('noVNC_open');
+    },
 };
 
 export default UI;
