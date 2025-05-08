@@ -116,13 +116,13 @@ const UI = {
         UI.setupSettingLabels();
 
         /* Populate the controls if defaults are provided in the URL */
-        UI.initSetting('host', window.location.hostname || 'localhost');
-        UI.initSetting('port', window.location.port || 5900);
+        UI.initSetting('host', '');
+        UI.initSetting('port', 0);
         UI.initSetting('encrypt', (window.location.protocol === "https:"));
         UI.initSetting('password');
-        UI.initSetting('autoconnect', true);
+        UI.initSetting('autoconnect', false);
         UI.initSetting('view_clip', false);
-        UI.initSetting('resize', 'scale');
+        UI.initSetting('resize', 'off');
         UI.initSetting('quality', 6);
         UI.initSetting('compression', 2);
         UI.initSetting('shared', true);
@@ -135,7 +135,7 @@ const UI = {
         UI.initSetting('reconnect_delay', 5000);
 
         // If autoconnect is enabled, inhibit reconnect until first connection
-        if (UI.getSetting('autoconnect', true)) {
+        if (UI.getSetting('autoconnect', false)) {
             UI.inhibitReconnect = false;
             UI.connect();
         }
