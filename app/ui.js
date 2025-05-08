@@ -435,6 +435,101 @@ const UI = {
         // Display the desktop name in the document title
         document.title = e.detail.name + " - " + PAGE_TITLE;
     },
+
+    // Initial page load read/initialization of settings
+    initSetting(name, defVal) {
+        // Has the user overridden the default value?
+        if (name in UI.customSettings && UI.customSettings.defaults) {
+            defVal = UI.customSettings.defaults[name];
+        }
+        // Check Query string followed by cookie
+        let val = WebUtil.getConfigVar ? WebUtil.getConfigVar(name) : null;
+        if (val === null && WebUtil.readSetting) {
+            val = WebUtil.readSetting(name, defVal);
+        }
+        if (WebUtil.setSetting) WebUtil.setSetting(name, val);
+        if (UI.updateSetting) UI.updateSetting(name);
+        // Has the user forced a value?
+        if (name in UI.customSettings && UI.customSettings.mandatory) {
+            val = UI.customSettings.mandatory[name];
+            if (UI.forceSetting) UI.forceSetting(name, val);
+        }
+        return val;
+    },
+
+    forceSetting(name, val) {
+        if (WebUtil.setSetting) WebUtil.setSetting(name, val);
+        if (UI.updateSetting) UI.updateSetting(name);
+        if (UI.disableSetting) UI.disableSetting(name);
+    },
+
+    updateSetting(name) {
+        let value = UI.getSetting ? UI.getSetting(name) : undefined;
+        const ctrl = document.getElementById('noVNC_setting_' + name);
+        if (ctrl === null) {
+            return;
+        }
+        if (ctrl.type === 'checkbox') {
+            ctrl.checked = value;
+        } else if (typeof ctrl.options !== 'undefined') {
+            for (let i = 0; i < ctrl.options.length; i += 1) {
+                if (ctrl.options[i].value === value) {
+                    ctrl.selectedIndex = i;
+                    break;
+                }
+            }
+        } else {
+            ctrl.value = value;
+        }
+    },
+
+    saveSetting(name) {
+        const ctrl = document.getElementById('noVNC_setting_' + name);
+        let val;
+        if (ctrl.type === 'checkbox') {
+            val = ctrl.checked;
+        } else if (typeof ctrl.options !== 'undefined') {
+            val = ctrl.options[ctrl.selectedIndex].value;
+        } else {
+            val = ctrl.value;
+        }
+        if (WebUtil.writeSetting) WebUtil.writeSetting(name, val);
+        return val;
+    },
+
+    getSetting(name) {
+        const ctrl = document.getElementById('noVNC_setting_' + name);
+        let val = WebUtil.readSetting ? WebUtil.readSetting(name) : undefined;
+        if (typeof val !== 'undefined' && val !== null &&
+            ctrl !== null && ctrl.type === 'checkbox') {
+            if (val.toString().toLowerCase() in {'0': 1, 'no': 1, 'false': 1}) {
+                val = false;
+            } else {
+                val = true;
+            }
+        }
+        return val;
+    },
+
+    disableSetting(name) {
+        const ctrl = document.getElementById('noVNC_setting_' + name);
+        if (ctrl !== null) {
+            ctrl.disabled = true;
+            if (ctrl.label !== undefined) {
+                ctrl.label.classList.add('noVNC_disabled');
+            }
+        }
+    },
+
+    enableSetting(name) {
+        const ctrl = document.getElementById('noVNC_setting_' + name);
+        if (ctrl !== null) {
+            ctrl.disabled = false;
+            if (ctrl.label !== undefined) {
+                ctrl.label.classList.remove('noVNC_disabled');
+            }
+        }
+    },
 };
 
 export default UI;
