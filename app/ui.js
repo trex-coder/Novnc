@@ -558,6 +558,12 @@ const UI = {
     },
 
     showStatus(text, statusType, time) {
+        // Hide the status dialog for non-serious permission errors
+        if (typeof text === 'string' && (text.includes('Permission error') || text.includes('Permissions check failed'))) {
+            document.getElementById('noVNC_status').classList.remove("noVNC_open");
+            return;
+        }
+
         const statusElem = document.getElementById('noVNC_status');
         if (typeof statusType === 'undefined') {
             statusType = 'normal';
