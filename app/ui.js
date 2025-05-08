@@ -436,6 +436,14 @@ const UI = {
         document.title = e.detail.name + " - " + PAGE_TITLE;
     },
 
+    // Force a hard refresh by appending a cache-busting query string to all JS imports
+    forceHardRefresh() {
+        // This will reload the page with a cache-busting query parameter
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', Date.now());
+        window.location.replace(url.toString());
+    },
+
     // Initial page load read/initialization of settings
     initSetting(name, defVal) {
         // Has the user overridden the default value?
@@ -527,6 +535,26 @@ const UI = {
             ctrl.disabled = false;
             if (ctrl.label !== undefined) {
                 ctrl.label.classList.remove('noVNC_disabled');
+            }
+        }
+    },
+
+    setupSettingLabels() {
+        const labels = document.getElementsByTagName('LABEL');
+        for (let i = 0; i < labels.length; i++) {
+            const htmlFor = labels[i].htmlFor;
+            if (htmlFor != '') {
+                const elem = document.getElementById(htmlFor);
+                if (elem) elem.label = labels[i];
+            } else {
+                // If 'for' isn't set, use the first input element child
+                const children = labels[i].children;
+                for (let j = 0; j < children.length; j++) {
+                    if (children[j].form !== undefined) {
+                        children[j].label = labels[i];
+                        break;
+                    }
+                }
             }
         }
     },
