@@ -872,15 +872,23 @@ const UI = {
         document.documentElement.classList.remove("noVNC_disconnecting");
         document.documentElement.classList.remove("noVNC_reconnecting");
         const transitionElem = document.getElementById("noVNC_transition_text");
+        // Progress bar animation fix
+        const loadingBar = document.querySelector('.loading-bar');
+        if (loadingBar) {
+            loadingBar.classList.remove('initializing', 'connecting', 'connected');
+        }
         switch (state) {
             case 'init':
+                if (loadingBar) loadingBar.classList.add('initializing');
                 break;
             case 'connecting':
                 if (transitionElem) transitionElem.textContent = _("Connecting...");
                 document.documentElement.classList.add("noVNC_connecting");
+                if (loadingBar) loadingBar.classList.add('connecting');
                 break;
             case 'connected':
                 document.documentElement.classList.add("noVNC_connected");
+                if (loadingBar) loadingBar.classList.add('connected');
                 break;
             case 'disconnecting':
                 if (transitionElem) transitionElem.textContent = _("Disconnecting...");
@@ -891,6 +899,7 @@ const UI = {
             case 'reconnecting':
                 if (transitionElem) transitionElem.textContent = _("Reconnecting...");
                 document.documentElement.classList.add("noVNC_reconnecting");
+                if (loadingBar) loadingBar.classList.add('connecting');
                 break;
             default:
                 Log.Error("Invalid visual state: " + state);
