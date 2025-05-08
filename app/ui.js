@@ -959,6 +959,47 @@ const UI = {
             exps[i].addEventListener('click', UI.toggleExpander);
         }
     },
+
+    addTouchSpecificHandlers() {
+        document.getElementById("noVNC_keyboard_button")
+            .addEventListener('click', UI.toggleVirtualKeyboard);
+
+        UI.touchKeyboard = new Keyboard(document.getElementById('noVNC_keyboardinput'));
+        UI.touchKeyboard.onkeyevent = UI.keyEvent;
+        UI.touchKeyboard.grab();
+        document.getElementById("noVNC_keyboardinput")
+            .addEventListener('input', UI.keyInput);
+        document.getElementById("noVNC_keyboardinput")
+            .addEventListener('focus', UI.onfocusVirtualKeyboard);
+        document.getElementById("noVNC_keyboardinput")
+            .addEventListener('blur', UI.onblurVirtualKeyboard);
+        document.getElementById("noVNC_keyboardinput")
+            .addEventListener('submit', () => false);
+
+        document.documentElement
+            .addEventListener('mousedown', UI.keepVirtualKeyboard, true);
+
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('touchstart', UI.activateControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('touchmove', UI.activateControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('touchend', UI.activateControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('input', UI.activateControlbar);
+
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('touchstart', UI.keepControlbar);
+        document.getElementById("noVNC_control_bar")
+            .addEventListener('input', UI.keepControlbar);
+
+        document.getElementById("noVNC_control_bar_handle")
+            .addEventListener('touchstart', UI.controlbarHandleMouseDown);
+        document.getElementById("noVNC_control_bar_handle")
+            .addEventListener('touchend', UI.controlbarHandleMouseUp);
+        document.getElementById("noVNC_control_bar_handle")
+            .addEventListener('touchmove', UI.dragControlbarHandle);
+    },
 };
 
 export default UI;

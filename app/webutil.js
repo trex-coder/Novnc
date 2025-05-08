@@ -168,6 +168,67 @@ export function setSetting(name, value) {
 }
 
 // No days means only for this browser session
+let loggedMsgs = [];
+function logOnce(msg, level = "warn") {
+    if (!loggedMsgs.includes(msg)) {
+        switch (level) {
+            case "error":
+                Log.Error(msg);
+                break;
+            case "warn":
+                Log.Warn(msg);
+                break;
+            case "debug":
+                Log.Debug(msg);
+                break;
+            default:
+                Log.Info(msg);
+        }
+        loggedMsgs.push(msg);
+    }
+}
+
+let cookiesMsg = "Couldn't access noVNC settings, are cookies disabled?";
+
+function localStorageGet(name) {
+    let r;
+    try {
+        r = localStorage.getItem(name);
+    } catch (e) {
+        if (e instanceof DOMException) {
+            logOnce(cookiesMsg);
+            logOnce("'localStorage.getItem(" + name + ")' failed: " + e, "debug");
+        } else {
+            throw e;
+        }
+    }
+    return r;
+}
+function localStorageSet(name, value) {
+    try {
+        localStorage.setItem(name, value);
+    } catch (e) {
+        if (e instanceof DOMException) {
+            logOnce(cookiesMsg);
+            logOnce("'localStorage.setItem(" + name + "," + value + ")' failed: " + e, "debug");
+        } else {
+            throw e;
+        }
+    }
+}
+function localStorageRemove(name) {
+    try {
+        localStorage.removeItem(name);
+    } catch (e) {
+        if (e instanceof DOMException) {
+            logOnce(cookiesMsg);
+            logOnce("'localStorage.removeItem(" + name + ")' failed: " + e, "debug");
+        } else {
+            throw e;
+        }
+    }
+}
+
 export function writeSetting(name, value) {
     "use strict";
     if (settings[name] === value) return;
@@ -178,15 +239,7 @@ export function writeSetting(name, value) {
         setting[name] = value;
         window.chrome.storage.sync.set(setting);
     } else {
-        try {
-            localStorage.setItem(name, value);
-        } catch (e) {
-            if (e instanceof DOMException) {
-                Log.Warn("Could not write setting to localStorage: " + e);
-            } else {
-                throw e;
-            }
-        }
+        localStorageSet(name, value);
     }
 }
 
@@ -204,13 +257,17 @@ export function readSetting(name, defaultValue) {
         return urlValue;
     }
 
-    // Finally use default
-    if (typeof defaultValue !== "undefined") {
+    // Then check localStorage
+    let value = localStorageGet(name);
+    if (typeof value === "undefined") {
+        value = null;
+    }
+    if (value === null && typeof defaultValue !== "undefined") {
         settings[name] = defaultValue;
         return defaultValue;
     }
     
-    return null;
+    return value;
 }
 
 export function eraseSetting(name) {
@@ -219,14 +276,6 @@ export function eraseSetting(name) {
     if (window.chrome && window.chrome.storage) {
         window.chrome.storage.sync.remove(name);
     } else {
-        try {
-            localStorage.removeItem(name);
-        } catch (e) {
-            if (e instanceof DOMException) {
-                Log.Warn("Could not erase setting from localStorage: " + e);
-            } else {
-                throw e;
-            }
-        }
+        localStorageRemove(name);
     }
 }
