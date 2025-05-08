@@ -14,7 +14,6 @@ import { isTouchDevice, isMac, isIOS, isAndroid, isChromeOS, isSafari,
 import { setCapture, getPointerEvent } from '../core/util/events.js';
 import KeyTable from "../core/input/keysym.js";
 import keysyms from "../core/input/keysymdef.js";
-import Keyboard from "../core/input/keyboard.js";
 import RFB from "../core/rfb.js";
 import * as WebUtil from "./webutil.js";
 
@@ -46,8 +45,6 @@ const UI = {
     reconnectCallback: null,
     reconnectPassword: null,
 
-    touchKeyboard: null,
-
     async start(options={}) {
         UI.customSettings = options.settings || {};
         if (UI.customSettings.defaults === undefined) {
@@ -74,7 +71,6 @@ const UI = {
 
         // Add event listeners
         UI.addControlbarHandlers();
-        UI.addTouchSpecificHandlers();
         UI.addExtraKeysHandlers();
         UI.addMachineHandlers();
         UI.addConnectionControlHandlers();
@@ -997,89 +993,6 @@ const UI = {
         if (!UI.rfb) return;
         UI.rfb.compressionLevel = parseInt(UI.getSetting('compression'));
     },
-    showVirtualKeyboard() {
-        if (!isTouchDevice) return;
-        const input = document.getElementById('noVNC_keyboardinput');
-        if (document.activeElement == input) return;
-        input.focus();
-        try {
-            const l = input.value.length;
-            input.setSelectionRange(l, l);
-        } catch (err) {}
-    },
-    hideVirtualKeyboard() {
-        if (!isTouchDevice) return;
-        const input = document.getElementById('noVNC_keyboardinput');
-        if (document.activeElement != input) return;
-        input.blur();
-    },
-    toggleVirtualKeyboard() {
-        if (document.getElementById('noVNC_keyboard_button')?.classList.contains("noVNC_selected")) {
-            UI.hideVirtualKeyboard();
-        } else {
-            UI.showVirtualKeyboard();
-        }
-    },
-    onfocusVirtualKeyboard(event) {
-        document.getElementById('noVNC_keyboard_button')?.classList.add("noVNC_selected");
-        if (UI.rfb) UI.rfb.focusOnClick = false;
-    },
-    onblurVirtualKeyboard(event) {
-        document.getElementById('noVNC_keyboard_button')?.classList.remove("noVNC_selected");
-        if (UI.rfb) UI.rfb.focusOnClick = true;
-    },
-    keepVirtualKeyboard(event) {
-        const input = document.getElementById('noVNC_keyboardinput');
-        if (document.activeElement != input) return;
-        if (event.target.form !== undefined) {
-            switch (event.target.type) {
-                case 'text': case 'email': case 'search': case 'password': case 'tel': case 'url': case 'textarea': case 'select-one': case 'select-multiple': return;
-            }
-        }
-        event.preventDefault();
-    },
-    keyboardinputReset() {
-        const kbi = document.getElementById('noVNC_keyboardinput');
-        kbi.value = new Array(UI.defaultKeyboardinputLen).join("_");
-        UI.lastKeyboardinput = kbi.value;
-    },
-    keyEvent(keysym, code, down) {
-        if (!UI.rfb) return;
-        UI.rfb.sendKey(keysym, code, down);
-    },
-    keyInput(event) {
-        if (!UI.rfb) return;
-        const newValue = event.target.value;
-        if (!UI.lastKeyboardinput) UI.keyboardinputReset();
-        const oldValue = UI.lastKeyboardinput;
-        let newLen;
-        try { newLen = Math.max(event.target.selectionStart, newValue.length); } catch (err) { newLen = newValue.length; }
-        const oldLen = oldValue.length;
-        let inputs = newLen - oldLen;
-        let backspaces = inputs < 0 ? -inputs : 0;
-        for (let i = 0; i < Math.min(oldLen, newLen); i++) {
-            if (newValue.charAt(i) != oldValue.charAt(i)) {
-                inputs = newLen - i;
-                backspaces = oldLen - i;
-                break;
-            }
-        }
-        for (let i = 0; i < backspaces; i++) {
-            UI.rfb.sendKey(KeyTable.XK_BackSpace, "Backspace");
-        }
-        for (let i = newLen - inputs; i < newLen; i++) {
-            UI.rfb.sendKey(keysyms.lookup(newValue.charCodeAt(i)));
-        }
-        if (newLen > 2 * UI.defaultKeyboardinputLen) {
-            UI.keyboardinputReset();
-        } else if (newLen < 1) {
-            UI.keyboardinputReset();
-            event.target.blur();
-            setTimeout(event.target.focus.bind(event.target), 0);
-        } else {
-            UI.lastKeyboardinput = newValue;
-        }
-    },
     openExtraKeys() {
         UI.closeAllPanels && UI.closeAllPanels();
         UI.openControlbar && UI.openControlbar();
@@ -1136,11 +1049,7 @@ const UI = {
     },
     sendKey(keysym, code, down) {
         UI.rfb.sendKey(keysym, code, down);
-        if (document.getElementById('noVNC_keyboard_button')?.classList.contains("noVNC_selected")) {
-            document.getElementById('noVNC_keyboardinput').focus();
-        } else {
-            UI.rfb.focus();
-        }
+        UI.rfb.focus();
         UI.idleControlbar();
     },
     updatePowerButton() {
@@ -1218,47 +1127,6 @@ const UI = {
         for (let i = 0;i < exps.length;i++) {
             exps[i].addEventListener('click', UI.toggleExpander);
         }
-    },
-
-    addTouchSpecificHandlers() {
-        document.getElementById("noVNC_keyboard_button")
-            .addEventListener('click', UI.toggleVirtualKeyboard);
-
-        UI.touchKeyboard = new Keyboard(document.getElementById('noVNC_keyboardinput'));
-        UI.touchKeyboard.onkeyevent = UI.keyEvent;
-        UI.touchKeyboard.grab();
-        document.getElementById("noVNC_keyboardinput")
-            .addEventListener('input', UI.keyInput);
-        document.getElementById("noVNC_keyboardinput")
-            .addEventListener('focus', UI.onfocusVirtualKeyboard);
-        document.getElementById("noVNC_keyboardinput")
-            .addEventListener('blur', UI.onblurVirtualKeyboard);
-        document.getElementById("noVNC_keyboardinput")
-            .addEventListener('submit', () => false);
-
-        document.documentElement
-            .addEventListener('mousedown', UI.keepVirtualKeyboard, true);
-
-        document.getElementById("noVNC_control_bar")
-            .addEventListener('touchstart', UI.activateControlbar);
-        document.getElementById("noVNC_control_bar")
-            .addEventListener('touchmove', UI.activateControlbar);
-        document.getElementById("noVNC_control_bar")
-            .addEventListener('touchend', UI.activateControlbar);
-        document.getElementById("noVNC_control_bar")
-            .addEventListener('input', UI.activateControlbar);
-
-        document.getElementById("noVNC_control_bar")
-            .addEventListener('touchstart', UI.keepControlbar);
-        document.getElementById("noVNC_control_bar")
-            .addEventListener('input', UI.keepControlbar);
-
-        document.getElementById("noVNC_control_bar_handle")
-            .addEventListener('touchstart', UI.controlbarHandleMouseDown);
-        document.getElementById("noVNC_control_bar_handle")
-            .addEventListener('touchend', UI.controlbarHandleMouseUp);
-        document.getElementById("noVNC_control_bar_handle")
-            .addEventListener('touchmove', UI.dragControlbarHandle);
     },
 
     addExtraKeysHandlers() {
