@@ -46,61 +46,6 @@ const UI = {
     reconnectCallback: null,
     reconnectPassword: null,
 
-    // Tips for cloud PC usage
-    _cloudTips: [
-        "Cloud PCs offer seamless collaboration with your team members across different time zones",
-        "Access your development environment from anywhere with full IDE capabilities",
-        "Never worry about hardware limitations - scale your cloud PC as needed",
-        "Keep your work secure with automatic backups and enterprise-grade security",
-        "Reduce IT costs and maintenance with cloud-based workstations",
-        "Experience consistent performance regardless of your local device",
-        "Set up new development environments in minutes instead of hours",
-        "Collaborate in real-time with screen sharing and pair programming",
-        "Access specialized software without installing it locally",
-        "Work from any device while maintaining the same powerful development environment"
-    ],
-
-    _rotateTips() {
-        const tipElement = document.getElementById('noVNC_tips');
-        if (!tipElement) {
-            // If tips element doesn't exist yet, wait for DOM to be ready
-            const initTips = () => {
-                const el = document.getElementById('noVNC_tips');
-                if (el) {
-                    this._initializeTips(el);
-                }
-            };
-
-            // Check if document is already loaded
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initTips);
-            } else {
-                // Try initializing now if document is already loaded
-                initTips();
-            }
-            return;
-        }
-
-        this._initializeTips(tipElement);
-    },
-
-    _initializeTips(tipElement) {
-        let currentTip = 0;
-        // Set initial tip
-        tipElement.textContent = UI._cloudTips[currentTip];
-        tipElement.style.opacity = '1';
-
-        // Start rotation
-        setInterval(() => {
-            tipElement.style.opacity = '0';
-            setTimeout(() => {
-                currentTip = (currentTip + 1) % UI._cloudTips.length;
-                tipElement.textContent = UI._cloudTips[currentTip];
-                tipElement.style.opacity = '1';
-            }, 1000);
-        }, 12000);
-    },
-
     async start(options={}) {
         UI.customSettings = options.settings || {};
         if (UI.customSettings.defaults === undefined) {
@@ -110,22 +55,65 @@ const UI = {
             UI.customSettings.mandatory = {};
         }
 
+        // Set up translations
         try {
             await l10n.setup(LINGUAS, "app/locale/");
         } catch (err) {
             Log.Error("Failed to load translations: " + err);
         }
 
+        // Initialize setting storage
         await WebUtil.initSettings();
 
-        // Ensure DOM is fully loaded
-        if (document.readyState === "loading") {
-            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
+        // Wait for the page to load
+        if (document.readyState !== "interactive" && document.readyState !== "complete") {
+            await new Promise((resolve, reject) => {
+                document.addEventListener('DOMContentLoaded', resolve);
+            });
         }
 
         UI.initSettings();
 
-        // Add event listeners
+        // Translate the DOM
+        l10n.translateDOM();
+
+        // We rely on modern APIs which might not be available in an
+        // insecure context
+        if (!window.isSecureContext) {
+            // FIXME: This gets hidden when connecting
+            UI.showStatus(_("Running without HTTPS is not recommended, crashes or other issues are likely."), 'error');
+        }
+
+        // Try to fetch version number
+        try {
+            let response = await fetch('./package.json');
+            if (!response.ok) {
+                throw Error("" + response.status + " " + response.statusText);
+            }
+
+            let packageInfo = await response.json();
+            Array.from(document.getElementsByClassName('noVNC_version')).forEach(el => el.innerText = packageInfo.version);
+        } catch (err) {
+            Log.Error("Couldn't fetch package.json: " + err);
+            Array.from(document.getElementsByClassName('noVNC_version_wrapper'))
+                .concat(Array.from(document.getElementsByClassName('noVNC_version_separator')))
+                .forEach(el => el.style.display = 'none');
+        }
+
+        // Adapt the interface for touch screen devices
+        if (isTouchDevice) {
+            // Remove the address bar
+            setTimeout(() => window.scrollTo(0, 1), 100);
+        }
+
+        // Restore control bar position
+        if (WebUtil.readSetting('controlbar_pos') === 'right') {
+            UI.toggleControlbarSide();
+        }
+
+        UI.initFullscreen();
+
+        // Setup event handlers
         UI.addControlbarHandlers();
         UI.addTouchSpecificHandlers();
         UI.addExtraKeysHandlers();
@@ -133,17 +121,26 @@ const UI = {
         UI.addConnectionControlHandlers();
         UI.addClipboardHandlers();
         UI.addSettingsHandlers();
-        
-        document.getElementById("noVNC_status").addEventListener('click', UI.hideStatus);
+        document.getElementById("noVNC_status")
+            .addEventListener('click', UI.hideStatus);
+
+        // Bootstrap fallback input handler
+        UI.keyboardinputReset();
 
         UI.openControlbar();
+
         UI.updateVisualState('init');
 
         document.documentElement.classList.remove("noVNC_loading");
 
-        // If autoconnect is enabled, connect now
-        if (UI.getSetting('autoconnect', true)) {
+        let autoconnect = UI.getSetting('autoconnect');
+        if (autoconnect === 'true' || autoconnect == '1') {
+            autoconnect = true;
             UI.connect();
+        } else {
+            autoconnect = false;
+            // Show the connect panel on first load unless autoconnecting
+            UI.openConnectPanel();
         }
     },
 
@@ -175,29 +172,23 @@ const UI = {
         UI.setupSettingLabels();
 
         /* Populate the controls if defaults are provided in the URL */
-        UI.initSetting('host', window.location.hostname || 'localhost');
-        UI.initSetting('port', window.location.port || 5900);
+        UI.initSetting('host', '');
+        UI.initSetting('port', 0);
         UI.initSetting('encrypt', (window.location.protocol === "https:"));
         UI.initSetting('password');
-        UI.initSetting('autoconnect', true);
+        UI.initSetting('autoconnect', false);
         UI.initSetting('view_clip', false);
-        UI.initSetting('resize', 'scale');
+        UI.initSetting('resize', 'off');
         UI.initSetting('quality', 6);
         UI.initSetting('compression', 2);
         UI.initSetting('shared', true);
-        UI.initSetting('bell', 'off');
+        UI.initSetting('bell', 'on');
         UI.initSetting('view_only', false);
         UI.initSetting('show_dot', false);
         UI.initSetting('path', 'websockify');
         UI.initSetting('repeaterID', '');
         UI.initSetting('reconnect', false);
         UI.initSetting('reconnect_delay', 5000);
-
-        // If autoconnect is enabled, inhibit reconnect until first connection
-        if (UI.getSetting('autoconnect', true)) {
-            UI.inhibitReconnect = false;
-            UI.connect();
-        }
     },
     // Adds a link to the label elements on the corresponding input elements
     setupSettingLabels() {
@@ -329,32 +320,19 @@ const UI = {
     },
 
     addConnectionControlHandlers() {
-        // Add null checks for all elements
-        const disconnectBtn = document.getElementById("noVNC_disconnect_button");
-        const connectBtn = document.getElementById("noVNC_connect_button");
-        const cancelReconnectBtn = document.getElementById("noVNC_cancel_reconnect_button");
-        const approveServerBtn = document.getElementById("noVNC_approve_server_button");
-        const rejectServerBtn = document.getElementById("noVNC_reject_server_button");
-        const credentialsBtn = document.getElementById("noVNC_credentials_button");
+        document.getElementById("noVNC_disconnect_button")
+            .addEventListener('click', UI.disconnect);
+        document.getElementById("noVNC_connect_button")
+            .addEventListener('click', UI.connect);
+        document.getElementById("noVNC_cancel_reconnect_button")
+            .addEventListener('click', UI.cancelReconnect);
 
-        if (disconnectBtn) {
-            disconnectBtn.addEventListener('click', UI.disconnect);
-        }
-        if (connectBtn) {
-            connectBtn.addEventListener('click', UI.connect);
-        }
-        if (cancelReconnectBtn) {
-            cancelReconnectBtn.addEventListener('click', UI.cancelReconnect);
-        }
-        if (approveServerBtn) {
-            approveServerBtn.addEventListener('click', UI.approveServer);
-        }
-        if (rejectServerBtn) {
-            rejectServerBtn.addEventListener('click', UI.rejectServer);
-        }
-        if (credentialsBtn) {
-            credentialsBtn.addEventListener('click', UI.setCredentials);
-        }
+        document.getElementById("noVNC_approve_server_button")
+            .addEventListener('click', UI.approveServer);
+        document.getElementById("noVNC_reject_server_button")
+            .addEventListener('click', UI.rejectServer);
+        document.getElementById("noVNC_credentials_button")
+            .addEventListener('click', UI.setCredentials);
     },
 
     addClipboardHandlers() {
@@ -421,63 +399,69 @@ const UI = {
 
     // Disable/enable controls depending on connection state
     updateVisualState(state) {
+
         document.documentElement.classList.remove("noVNC_connecting");
         document.documentElement.classList.remove("noVNC_connected");
         document.documentElement.classList.remove("noVNC_disconnecting");
         document.documentElement.classList.remove("noVNC_reconnecting");
 
-        const transitionElem = document.getElementById("noVNC_transition");
-        const transitionText = document.getElementById("noVNC_transition_text");
-        const loadingBar = document.querySelector(".loading-bar");
-
-        // Remove all progress states
-        if (loadingBar) {
-            loadingBar.classList.remove("initializing", "loading", "connecting", "connected");
-        }
-
-        // Start tips rotation when showing transition screen
-        if (state === 'init') {
-            UI._rotateTips();
-        }
-
+        const transitionElem = document.getElementById("noVNC_transition_text");
         switch (state) {
             case 'init':
-                if (loadingBar) loadingBar.classList.add("initializing");
-                if (transitionText) transitionText.textContent = "Initializing connection...";
                 break;
             case 'connecting':
+                transitionElem.textContent = _("Connecting...");
                 document.documentElement.classList.add("noVNC_connecting");
-                if (loadingBar) loadingBar.classList.add("connecting");
-                if (transitionText) transitionText.textContent = "Establishing secure connection...";
                 break;
             case 'connected':
                 document.documentElement.classList.add("noVNC_connected");
-                if (loadingBar) loadingBar.classList.add("connected");
-                if (transitionText) transitionText.textContent = "Connection established!";
-                transitionElem.style.display = 'none';
                 break;
             case 'disconnecting':
+                transitionElem.textContent = _("Disconnecting...");
                 document.documentElement.classList.add("noVNC_disconnecting");
-                if (loadingBar) loadingBar.classList.add("loading");
-                if (transitionText) transitionText.textContent = "Disconnecting...";
-                transitionElem.style.display = 'flex';
                 break;
             case 'disconnected':
-                if (loadingBar) loadingBar.classList.add("initializing");
-                if (transitionText) transitionText.textContent = "Disconnected.";
-                transitionElem.style.display = 'flex';
                 break;
             case 'reconnecting':
+                transitionElem.textContent = _("Reconnecting...");
                 document.documentElement.classList.add("noVNC_reconnecting");
-                if (loadingBar) loadingBar.classList.add("connecting");
-                if (transitionText) transitionText.textContent = "Reconnecting...";
-                transitionElem.style.display = 'flex';
                 break;
             default:
                 Log.Error("Invalid visual state: " + state);
                 UI.showStatus(_("Internal error"), 'error');
                 return;
         }
+
+        if (UI.connected) {
+            UI.updateViewClip();
+
+            UI.disableSetting('encrypt');
+            UI.disableSetting('shared');
+            UI.disableSetting('host');
+            UI.disableSetting('port');
+            UI.disableSetting('path');
+            UI.disableSetting('repeaterID');
+
+            // Hide the controlbar after 2 seconds
+            UI.closeControlbarTimeout = setTimeout(UI.closeControlbar, 2000);
+        } else {
+            UI.enableSetting('encrypt');
+            UI.enableSetting('shared');
+            UI.enableSetting('host');
+            UI.enableSetting('port');
+            UI.enableSetting('path');
+            UI.enableSetting('repeaterID');
+            UI.updatePowerButton();
+            UI.keepControlbar();
+        }
+
+        // State change closes dialogs as they may not be relevant
+        // anymore
+        UI.closeAllPanels();
+        document.getElementById('noVNC_verify_server_dlg')
+            .classList.remove('noVNC_open');
+        document.getElementById('noVNC_credentials_dlg')
+            .classList.remove('noVNC_open');
     },
 
     showStatus(text, statusType, time) {
@@ -487,13 +471,11 @@ const UI = {
             statusType = 'normal';
         }
 
-        // Don't overwrite more severe visible statuses
+        // Don't overwrite more severe visible statuses and never
+        // errors. Only shows the first error.
         if (statusElem.classList.contains("noVNC_open")) {
             if (statusElem.classList.contains("noVNC_status_error")) {
-                // Only allow updating an error if it's another error
-                if (statusType !== 'error') {
-                    return;
-                }
+                return;
             }
             if (statusElem.classList.contains("noVNC_status_warn") &&
                 statusType === 'normal') {
@@ -502,10 +484,6 @@ const UI = {
         }
 
         clearTimeout(UI.statusTimeout);
-        
-        // Ensure visibility in fullscreen
-        statusElem.style.position = 'fixed';
-        statusElem.style.zIndex = '100000';
 
         switch (statusType) {
             case 'error':
@@ -531,19 +509,15 @@ const UI = {
         statusElem.textContent = text;
         statusElem.classList.add("noVNC_open");
 
-        // If no time was specified, show the status for longer (3 seconds)
+        // If no time was specified, show the status for 1.5 seconds
         if (typeof time === 'undefined') {
-            time = 3000;
+            time = 1500;
         }
 
-        // Error messages and warnings stay visible longer
-        if (statusType === 'error') {
-            time = 10000;
-        } else if (statusType === 'warning' || statusType === 'warn') {
-            time = 5000;
+        // Error messages do not timeout
+        if (statusType !== 'error') {
+            UI.statusTimeout = window.setTimeout(UI.hideStatus, time);
         }
-
-        UI.statusTimeout = window.setTimeout(UI.hideStatus, time);
     },
 
     hideStatus() {
@@ -776,28 +750,22 @@ const UI = {
 
     // Initial page load read/initialization of settings
     initSetting(name, defVal) {
-        // First check URL parameters
-        let val = WebUtil.getConfigVar(name);
-        
-        // Then check custom defaults if no URL parameter
-        if (val === null && name in UI.customSettings.defaults) {
-            val = UI.customSettings.defaults[name];
+        // Has the user overridden the default value?
+        if (name in UI.customSettings.defaults) {
+            defVal = UI.customSettings.defaults[name];
         }
-        
-        // Finally fall back to provided default
+        // Check Query string followed by cookie
+        let val = WebUtil.getConfigVar(name);
         if (val === null) {
             val = WebUtil.readSetting(name, defVal);
         }
-
         WebUtil.setSetting(name, val);
         UI.updateSetting(name);
-        
-        // Handle mandatory settings
+        // Has the user forced a value?
         if (name in UI.customSettings.mandatory) {
             val = UI.customSettings.mandatory[name];
             UI.forceSetting(name, val);
         }
-        
         return val;
     },
 
@@ -1056,6 +1024,7 @@ const UI = {
     },
 
     connect(event, password) {
+
         // Ignore when rfb already exists
         if (typeof UI.rfb !== 'undefined') {
             return;
@@ -1075,21 +1044,30 @@ const UI = {
         }
 
         UI.hideStatus();
+
         UI.closeConnectPanel();
+
         UI.updateVisualState('connecting');
 
         let url;
 
         if (host) {
             url = new URL("https://" + host);
+
             url.protocol = UI.getSetting('encrypt') ? 'wss:' : 'ws:';
             if (port) {
                 url.port = port;
             }
-            // './' is needed to force URL() to interpret the path as a path, not a host
+
+            // "./" is needed to force URL() to interpret the path-variable as
+            // a path and not as an URL. This is relevant if for example path
+            // starts with more than one "/", in which case it would be
+            // interpreted as a host name instead.
             url = new URL("./" + path, url);
         } else {
-            // Fallback for browsers and configs without host
+            // Current (May 2024) browsers support relative WebSocket
+            // URLs natively, but we need to support older browsers for
+            // some time.
             url = new URL(path, location.href);
             url.protocol = (window.location.protocol === "https:") ? 'wss:' : 'ws:';
         }
@@ -1176,17 +1154,6 @@ const UI = {
         UI.showStatus(msg);
         UI.updateVisualState('connected');
 
-        // Auto-enter fullscreen mode
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-        } else if (!document.mozFullScreenElement && document.documentElement.mozRequestFullScreen) {
-            document.documentElement.mozRequestFullScreen();
-        } else if (!document.webkitFullscreenElement && document.documentElement.webkitRequestFullscreen) {
-            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        } else if (!document.msFullscreenElement && document.body.msRequestFullscreen) {
-            document.body.msRequestFullscreen();
-        }
-
         // Do this last because it can only be used on rendered elements
         UI.rfb.focus();
     },
@@ -1230,8 +1197,6 @@ const UI = {
     },
 
     securityFailed(e) {
-        // Always show security messages since they are important,
-        // regardless of fullscreen state
         let msg = "";
         // On security failures we might get a string with a reason
         // directly from the server. Note that we can't control if
@@ -1242,15 +1207,7 @@ const UI = {
         } else {
             msg = _("New connection has been rejected");
         }
-        
-        // Force the status to be visible even in fullscreen
-        const statusElem = document.getElementById('noVNC_status');
-        statusElem.style.zIndex = "10000"; // Ensure it's above fullscreen elements
         UI.showStatus(msg, 'error');
-
-        // Keep the status visible longer for security messages
-        clearTimeout(UI.statusTimeout);
-        UI.statusTimeout = window.setTimeout(UI.hideStatus, 5000);
     },
 
 /* ------^-------
@@ -1267,39 +1224,20 @@ const UI = {
             // The same fingerprint format as RealVNC
             fingerprint = Array.from(new Uint8Array(fingerprint).slice(0, 8)).map(
                 x => x.toString(16).padStart(2, '0')).join('-');
-            
-            const dlg = document.getElementById('noVNC_verify_server_dlg');
-            const fingerprintElem = document.getElementById('noVNC_fingerprint');
-            
-            // Add null checks for required elements
-            if (!dlg || !fingerprintElem) {
-                Log.Error("Unable to find server verification dialog elements");
-                UI.disconnect();
-                return;
-            }
-            
-            dlg.classList.add('noVNC_open');
-            fingerprintElem.innerHTML = fingerprint;
+            document.getElementById('noVNC_verify_server_dlg').classList.add('noVNC_open');
+            document.getElementById('noVNC_fingerprint').innerHTML = fingerprint;
         }
     },
 
     approveServer(e) {
         e.preventDefault();
-        const dlg = document.getElementById('noVNC_verify_server_dlg');
-        if (dlg) {
-            dlg.classList.remove('noVNC_open');
-        }
-        if (UI.rfb) {
-            UI.rfb.approveServer();
-        }
+        document.getElementById('noVNC_verify_server_dlg').classList.remove('noVNC_open');
+        UI.rfb.approveServer();
     },
 
     rejectServer(e) {
         e.preventDefault();
-        const dlg = document.getElementById('noVNC_verify_server_dlg');
-        if (dlg) {
-            dlg.classList.remove('noVNC_open');
-        }
+        document.getElementById('noVNC_verify_server_dlg').classList.remove('noVNC_open');
         UI.disconnect();
     },
 
