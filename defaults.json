@@ -10,7 +10,7 @@
     "bell": "off",
     "path": "websockify",
     "repeaterID": "",
-    "encrypt": false,
+    "encrypt": true,
     "quality": 6,
     "compression": 2,
     "logging": "warn"
