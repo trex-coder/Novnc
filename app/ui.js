@@ -284,6 +284,13 @@ const UI = {
 
         UI.rfb = undefined;
 
+        // Suppress permission errors
+        const errorText = (e && e.detail && e.detail.clean === false && e.detail.reason) ? e.detail.reason : '';
+        if (errorText && (errorText.includes('Permission error') || errorText.includes('Permissions check failed'))) {
+            UI.updateVisualState('disconnected');
+            return;
+        }
+
         if (!e.detail.clean) {
             UI.updateVisualState('disconnected');
             if (wasConnected) {
@@ -325,6 +332,12 @@ const UI = {
             msg = _("New connection has been rejected");
         }
         
+        // Suppress permission errors
+        if (msg.includes('Permission error') || msg.includes('Permissions check failed')) {
+            document.getElementById('noVNC_status').classList.remove("noVNC_open");
+            return;
+        }
+
         // Force the status to be visible even in fullscreen
         const statusElem = document.getElementById('noVNC_status');
         statusElem.style.zIndex = "10000"; // Ensure it's above fullscreen elements
