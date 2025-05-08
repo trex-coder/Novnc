@@ -92,6 +92,14 @@ const UI = {
         }
     },
 
+    // Helper to add options to dropdown.
+    addOption(selectbox, text, value) {
+        const optn = document.createElement("OPTION");
+        optn.text = text;
+        optn.value = value;
+        selectbox.options.add(optn);
+    },
+
     initSettings() {
         // Logging selection dropdown
         const llevels = ['error', 'warn', 'info', 'debug'];
