@@ -1277,6 +1277,26 @@ const UI = {
         document.getElementById("noVNC_send_ctrl_alt_del_button")
             .addEventListener('click', UI.sendCtrlAltDel);
     },
+
+    addMachineHandlers() {
+        document.getElementById("noVNC_shutdown_button")
+            .addEventListener('click', () => UI.rfb.machineShutdown());
+        document.getElementById("noVNC_reboot_button")
+            .addEventListener('click', () => UI.rfb.machineReboot());
+        document.getElementById("noVNC_reset_button")
+            .addEventListener('click', () => UI.rfb.machineReset());
+        document.getElementById("noVNC_power_button")
+            .addEventListener('click', UI.togglePowerPanel);
+    },
+
+    bell(e) {
+        // Optionally play a sound or show a notification
+        // Example: play a sound if you have one
+        // let audio = document.getElementById('noVNC_bell_audio');
+        // if (audio) { audio.play(); }
+        // Or just log for now:
+        Log.Debug("Bell event received from server");
+    },
 };
 
 export default UI;
