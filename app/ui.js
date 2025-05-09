@@ -1337,17 +1337,28 @@ const UI = {
         try {
             // Use a VNC ping extension if available, else fallback to WebSocket ping
             if (UI.rfb.sendPing) {
+                // If sendPing supports a callback, use it
                 UI.rfb.sendPing(() => {
                     const latency = Date.now() - UI.latencyLastPing;
                     UI.recordLatency(latency);
                 });
             } else if (UI.rfb._sock && UI.rfb._sock.send) {
-                // Send a dummy ping packet (if protocol allows)
-                UI.rfb._sock.send('');
-                setTimeout(() => {
-                    const latency = Date.now() - UI.latencyLastPing;
-                    UI.recordLatency(latency);
-                }, 50); // fallback, not accurate
+                // Try to send a ping frame if supported
+                if (UI.rfb._sock.ping) {
+                    UI.rfb._sock.ping();
+                    setTimeout(() => {
+                        const latency = Date.now() - UI.latencyLastPing;
+                        UI.recordLatency(latency);
+                    }, 100);
+                } else {
+                    // Fallback: send a small message and measure roundtrip
+                    const pingMsg = new Uint8Array([0]);
+                    UI.rfb._sock.send(pingMsg);
+                    setTimeout(() => {
+                        const latency = Date.now() - UI.latencyLastPing;
+                        UI.recordLatency(latency);
+                    }, 100);
+                }
             }
         } catch (e) {
             UI.updateLatency('--');
