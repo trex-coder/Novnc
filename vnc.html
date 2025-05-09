@@ -185,35 +185,17 @@
     </div> <!-- End of noVNC_control_bar -->
 
     <!-- Modern Quick Session Menu Overlay -->
-    <div id="noVNC_quick_menu" class="noVNC_quick_menu">
+    <div id="noVNC_quick_menu" class="noVNC_modal_quick_menu" tabindex="-1" aria-modal="true" style="display:none;">
+        <button id="noVNC_quick_menu_close" class="noVNC_modal_close" aria-label="Close">&times;</button>
         <div class="noVNC_quick_menu_content">
-            <div class="noVNC_quick_menu_header">
-                <span>Session Menu</span>
-                <button id="noVNC_quick_menu_close" class="noVNC_quick_menu_close">&times;</button>
-            </div>
-            <div class="noVNC_quick_menu_group">
-                <button id="noVNC_quick_connect" class="noVNC_quick_btn">Connect</button>
-                <button id="noVNC_quick_disconnect" class="noVNC_quick_btn">
-                  <span class="disconnect-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 17.657A8 8 0 1 1 17 6.343"/><polyline points="16 8 17 6 18 8"/><line x1="12" y1="12" x2="21" y2="12"/></svg>
-                  </span>
-                  Disconnect
-                </button>
-            </div>
-            <div class="noVNC_quick_menu_group">
-                <button id="noVNC_quick_settings" class="noVNC_quick_btn">Settings</button>
-                <button id="noVNC_quick_clipboard" class="noVNC_quick_btn">Clipboard</button>
-            </div>
-            <div class="noVNC_quick_menu_group">
-                <button id="noVNC_quick_power" class="noVNC_quick_btn">Power</button>
-                <button id="noVNC_quick_fullscreen" class="noVNC_quick_btn">Fullscreen</button>
-            </div>
+            <button id="noVNC_quick_connect">Connect</button>
+            <button id="noVNC_quick_disconnect">Disconnect</button>
+            <button id="noVNC_quick_settings">Settings</button>
+            <button id="noVNC_quick_clipboard">Clipboard</button>
+            <button id="noVNC_quick_power">Power</button>
+            <button id="noVNC_quick_fullscreen">Fullscreen</button>
         </div>
     </div>
-    <!-- Modern Quick Menu Toggle Button -->
-    <button id="noVNC_quick_menu_toggle" class="noVNC_quick_menu_toggle" aria-label="Open session menu">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/></svg>
-    </button>
 
     <!-- Modern Settings Panel as Modal -->
     <div id="noVNC_modern_settings_modal" class="noVNC_modal_backdrop">
@@ -231,6 +213,10 @@
             <div class="noVNC_setting_group">
               <label for="noVNC_setting_quality">Quality <span id="noVNC_setting_quality_value">6</span></label>
               <input type="range" id="noVNC_setting_quality" min="0" max="9" value="6" step="1">
+            </div>
+            <div class="noVNC_setting_group">
+              <label for="noVNC_setting_latency_transparency">Ping Overlay Transparency <span id="noVNC_setting_latency_transparency_value">0.5</span></label>
+              <input type="range" id="noVNC_setting_latency_transparency" min="0.2" max="1" value="0.5" step="0.01">
             </div>
             <!-- Add other settings fields as needed here -->
           </form>

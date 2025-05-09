@@ -1266,13 +1266,31 @@ const UI = {
 };
 
 // Quick Menu UI logic
-function setupQuickMenu() {
+function setupQuickMenuDialog() {
     const quickMenu = document.getElementById('noVNC_quick_menu');
     const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
     const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
     if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
-    function openMenu() { quickMenu.classList.add('open'); }
-    function closeMenu() { quickMenu.classList.remove('open'); }
+    // Add modal/animation classes
+    quickMenu.classList.add('noVNC_modal_quick_menu');
+    // Open/close with animation
+    function openMenu() {
+        quickMenu.classList.add('open');
+        quickMenu.classList.remove('close');
+        quickMenu.style.display = 'block';
+        setTimeout(() => quickMenu.classList.add('slide-in'), 10);
+        quickMenu.setAttribute('aria-modal', 'true');
+        quickMenu.setAttribute('tabindex', '0');
+        quickMenu.focus();
+    }
+    function closeMenu() {
+        quickMenu.classList.remove('slide-in');
+        quickMenu.classList.add('close');
+        setTimeout(() => {
+            quickMenu.classList.remove('open');
+            quickMenu.style.display = 'none';
+        }, 250);
+    }
     // Prevent double open on touch/click
     let touchHandled = false;
     quickMenuToggle.addEventListener('click', function(e) {
@@ -1291,6 +1309,10 @@ function setupQuickMenu() {
             closeMenu();
         }
     });
+    // Trap focus when open
+    quickMenu.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMenu();
+    });
     // Wire up quick menu buttons to existing UI actions
     document.getElementById('noVNC_quick_connect').onclick = () => { closeMenu(); UI.connect(); };
     document.getElementById('noVNC_quick_disconnect').onclick = () => { closeMenu(); UI.disconnect(); };
@@ -1299,11 +1321,11 @@ function setupQuickMenu() {
     document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
     document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
 }
-// Call setupQuickMenu after DOMContentLoaded
+// Call setupQuickMenuDialog after DOMContentLoaded
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupQuickMenu);
+    document.addEventListener('DOMContentLoaded', setupQuickMenuDialog);
 } else {
-    setupQuickMenu();
+    setupQuickMenuDialog();
 }
 
 // Draggable quick menu toggle button
@@ -1671,7 +1693,6 @@ if (document.readyState === 'loading') {
 })();
 
 // --- Quality slider fix ---
-// Ensure the slider uses the full range (0-9) and updates UI and RFB logic
 function fixQualitySlider() {
     const slider = document.getElementById('noVNC_setting_quality');
     const value = document.getElementById('noVNC_setting_quality_value');
@@ -1681,18 +1702,63 @@ function fixQualitySlider() {
     slider.step = 1;
     // Set value from setting if available
     let saved = UI.getSetting && UI.getSetting('quality');
-    if (saved !== undefined && saved !== null) slider.value = saved;
+    if (saved !== undefined && saved !== null && saved !== '') slider.value = saved;
     value.textContent = slider.value;
+    // Always update RFB qualityLevel immediately
     slider.addEventListener('input', function() {
         value.textContent = this.value;
         UI.saveSetting && UI.saveSetting('quality');
         UI.updateQuality && UI.updateQuality();
+        if (UI.rfb) UI.rfb.qualityLevel = parseInt(this.value);
     });
+    // On load, set RFB qualityLevel
+    if (UI.rfb) UI.rfb.qualityLevel = parseInt(slider.value);
 }
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', fixQualitySlider);
 } else {
     fixQualitySlider();
+}
+
+// --- Transparency slider in Settings panel ---
+function addTransparencySliderToSettings() {
+    const settingsList = document.getElementById('noVNC_settings_list');
+    if (!settingsList) return;
+    // Only add if not already present
+    if (document.getElementById('noVNC_setting_latency_transparency')) return;
+    const li = document.createElement('li');
+    li.innerHTML = `<label for="noVNC_setting_latency_transparency">Ping Overlay Transparency</label>
+      <input id="noVNC_setting_latency_transparency" type="range" min="0.2" max="1" step="0.01" style="vertical-align:middle;width:90px;margin-left:8px;">
+      <span id="noVNC_setting_latency_transparency_value"></span>`;
+    // Insert after Quality and Logging
+    const qualityLi = document.getElementById('noVNC_setting_quality')?.closest('li');
+    const loggingLi = document.getElementById('noVNC_setting_logging')?.closest('li');
+    if (loggingLi && loggingLi.nextSibling) {
+        settingsList.insertBefore(li, loggingLi.nextSibling);
+    } else {
+        settingsList.appendChild(li);
+    }
+    // Sync slider with overlay
+    const slider = li.querySelector('#noVNC_setting_latency_transparency');
+    const value = li.querySelector('#noVNC_setting_latency_transparency_value');
+    let meter = document.getElementById('noVNC_latency_meter');
+    function setAlpha(alpha) {
+        if (meter) meter.style.background = `rgba(30,32,36,${alpha})`;
+        value.textContent = Math.round(alpha * 100) + '%';
+        localStorage.setItem('noVNC_latency_transparency', alpha);
+    }
+    let saved = localStorage.getItem('noVNC_latency_transparency');
+    let alpha = saved ? parseFloat(saved) : 0.82;
+    slider.value = alpha;
+    setAlpha(alpha);
+    slider.addEventListener('input', function() {
+        setAlpha(this.value);
+    });
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addTransparencySliderToSettings);
+} else {
+    addTransparencySliderToSettings();
 }
 
 export default UI;
