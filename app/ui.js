@@ -664,7 +664,7 @@ const UI = {
         const bar = document.getElementById('noVNC_control_bar');
         const barDisplayStyle = window.getComputedStyle(bar).display;
         if (barDisplayStyle !== 'none') {
-            bar.style.transitionDuration = '0s';
+            bar.style.transition = '0s';
             bar.addEventListener('transitionend', () => bar.style.transitionDuration = '');
         }
         const anchor = document.getElementById('noVNC_control_bar_anchor');
@@ -1185,14 +1185,13 @@ const UI = {
     },
 
     addMachineHandlers() {
-        document.getElementById("noVNC_shutdown_button")
-            .addEventListener('click', () => UI.rfb.machineShutdown());
-        document.getElementById("noVNC_reboot_button")
-            .addEventListener('click', () => UI.rfb.machineReboot());
-        document.getElementById("noVNC_reset_button")
-            .addEventListener('click', () => UI.rfb.machineReset());
-        document.getElementById("noVNC_power_button")
-            .addEventListener('click', UI.togglePowerPanel);
+        // Modern power panel buttons
+        const shutdownBtn = document.getElementById("noVNC_modern_shutdown");
+        if (shutdownBtn) shutdownBtn.addEventListener('click', () => UI.rfb && UI.rfb.machineShutdown());
+        const rebootBtn = document.getElementById("noVNC_modern_reboot");
+        if (rebootBtn) rebootBtn.addEventListener('click', () => UI.rfb && UI.rfb.machineReboot());
+        const resetBtn = document.getElementById("noVNC_modern_reset");
+        if (resetBtn) resetBtn.addEventListener('click', () => UI.rfb && UI.rfb.machineReset());
     },
 
     addConnectionControlHandlers() {
