@@ -571,8 +571,14 @@ const UI = {
     },
 
     showStatus(text, statusType, time) {
-        // Hide the status dialog for non-serious permission errors
-        if (typeof text === 'string' && (text.includes('Permission error') || text.includes('Permissions check failed'))) {
+        // Hide the status dialog for non-serious permission errors, even if nested in details
+        function containsPermissionError(val) {
+            if (!val) return false;
+            if (typeof val === 'string' && (val.includes('Permission error') || val.includes('Permissions check failed'))) return true;
+            if (typeof val === 'object' && val.textContent && (val.textContent.includes('Permission error') || val.textContent.includes('Permissions check failed'))) return true;
+            return false;
+        }
+        if (containsPermissionError(text)) {
             document.getElementById('noVNC_status').classList.remove("noVNC_open");
             return;
         }

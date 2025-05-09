@@ -77,3 +77,15 @@ function handleError(event, err) {
 
 window.addEventListener('error', evt => handleError(evt, evt.error));
 window.addEventListener('unhandledrejection', evt => handleError(evt.reason, evt.reason));
+
+window.addEventListener('error', (event) => {
+    if (event.message && (event.message.includes('Permission error') || event.message.includes('Permissions check failed'))) {
+        event.preventDefault(); // Suppress the error
+    }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.message && (event.reason.message.includes('Permission error') || event.reason.message.includes('Permissions check failed'))) {
+        event.preventDefault(); // Suppress the unhandled rejection
+    }
+});
