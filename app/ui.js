@@ -1261,60 +1261,50 @@ const UI = {
         modal.id = 'noVNC_fullscreen_request_modal';
         modal.className = 'noVNC_modal_backdrop open';
         modal.innerHTML = `
-          <div class="noVNC_modern_panel" style="max-width: 380px; min-width: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <div class="noVNC_modern_panel_header" style="width:100%;">
-              <span>Fullscreen Request</span>
+          <div class="noVNC_modern_panel" style="max-width: 380px; min-width: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 28px 28px 28px; box-sizing: border-box;">
+            <div class="noVNC_modern_panel_header" style="width:100%; margin-bottom: 10px;">
+              <span style="font-weight:600; font-size: 1.1em;">Fullscreen Request</span>
             </div>
-            <div class="noVNC_modern_panel_content" style="text-align:center; width:100%;">
-              <div style="margin-bottom: 18px;">Allow this session to enter fullscreen mode?</div>
+            <div class="noVNC_modern_panel_content" style="text-align:center; width:100%; margin-bottom: 18px;">
+              <div style="margin-bottom: 18px; word-break:break-word;">Allow this session to enter fullscreen mode?</div>
               <div style="display: flex; gap: 16px; justify-content: center;">
-                <button id="noVNC_fullscreen_yes" style="background: #2563eb; color: #fff; font-weight:600; min-width: 80px;">Yes</button>
-                <button id="noVNC_fullscreen_no" style="background: #23262b; color: #fff; min-width: 80px;">No</button>
+                <button id="noVNC_fullscreen_yes" style="background: #2563eb; color: #fff; font-weight:600; min-width: 80px; border-radius: 8px; padding: 8px 0;">Yes</button>
+                <button id="noVNC_fullscreen_no" style="background: #23262b; color: #fff; min-width: 80px; border-radius: 8px; padding: 8px 0;">No</button>
               </div>
             </div>
           </div>
         `;
         document.body.appendChild(modal);
-        setTimeout(() => {
-            // Focus Yes for accessibility
-            document.getElementById('noVNC_fullscreen_yes')?.focus();
-        }, 10);
+        setTimeout(() => { modal.classList.add('open'); }, 10);
         document.getElementById('noVNC_fullscreen_yes').onclick = function() {
-            modal.remove();
-            UI.requestFullscreen();
+            document.body.removeChild(modal);
+            if (typeof UI.toggleFullscreen === 'function') {
+                UI.toggleFullscreen();
+            }
         };
         document.getElementById('noVNC_fullscreen_no').onclick = function() {
-            modal.remove();
+            document.body.removeChild(modal);
         };
-        // Allow closing by clicking backdrop
+        // Allow closing by clicking backdrop (but not panel)
         modal.addEventListener('mousedown', function(e) {
-            if (e.target === modal) modal.remove();
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
         });
         modal.addEventListener('touchend', function(e) {
-            if (e.target === modal) modal.remove();
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
         });
     },
 
+    // --- LATENCY METER ---
     startLatencyMeter() {
-        if (UI.latencyInterval) clearInterval(UI.latencyInterval);
+        if (UI.latencyInterval) return;
         if (!UI.latencyElem) {
-            UI.latencyElem = document.createElement('div');
-            UI.latencyElem.id = 'noVNC_latency_meter';
-            UI.latencyElem.style.position = 'fixed';
-            UI.latencyElem.style.top = '18px';
-            UI.latencyElem.style.right = '90px';
-            UI.latencyElem.style.zIndex = '10020';
-            UI.latencyElem.style.background = 'rgba(30,32,36,0.92)';
-            UI.latencyElem.style.color = '#fff';
-            UI.latencyElem.style.fontSize = '15px';
-            UI.latencyElem.style.fontWeight = '600';
-            UI.latencyElem.style.padding = '7px 18px';
-            UI.latencyElem.style.borderRadius = '16px';
-            UI.latencyElem.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
-            UI.latencyElem.style.userSelect = 'none';
-            UI.latencyElem.innerHTML = 'Latency: <span id="noVNC_latency_value">--</span> ms';
-            document.body.appendChild(UI.latencyElem);
+            UI.latencyElem = document.getElementById('noVNC_latency_value');
         }
+        UI.latencySamples = [];
         UI.latencyInterval = setInterval(UI.pingLatency, 2000);
         UI.pingLatency();
     },
@@ -1322,46 +1312,53 @@ const UI = {
     stopLatencyMeter() {
         if (UI.latencyInterval) clearInterval(UI.latencyInterval);
         UI.latencyInterval = null;
-        if (UI.latencyElem) {
-            UI.latencyElem.remove();
-            UI.latencyElem = null;
-        }
+        if (UI.latencyElem) UI.latencyElem.textContent = '-- ms';
     },
 
     pingLatency() {
         if (!UI.rfb || !UI.rfb._sock || UI.rfb._sock.readyState !== 1) {
-            UI.updateLatency('--');
+            UI.updateLatency(undefined);
             return;
         }
         UI.latencyLastPing = Date.now();
-        try {
-            // Use a VNC ping extension if available, else fallback to WebSocket ping
-            if (UI.rfb.sendPing) {
-                // If sendPing supports a callback, use it
-                UI.rfb.sendPing(() => {
-                    const latency = Date.now() - UI.latencyLastPing;
+        let pinged = false;
+        // Try RFB ping if available
+        if (UI.rfb && typeof UI.rfb.ping === 'function') {
+            try {
+                UI.rfb.ping().then((latency) => {
                     UI.recordLatency(latency);
+                }).catch(() => {
+                    UI.updateLatency(undefined);
                 });
-            } else if (UI.rfb._sock && UI.rfb._sock.send) {
-                // Try to send a ping frame if supported
-                if (UI.rfb._sock.ping) {
-                    UI.rfb._sock.ping();
-                    setTimeout(() => {
-                        const latency = Date.now() - UI.latencyLastPing;
-                        UI.recordLatency(latency);
-                    }, 100);
-                } else {
-                    // Fallback: send a small message and measure roundtrip
-                    const pingMsg = new Uint8Array([0]);
-                    UI.rfb._sock.send(pingMsg);
-                    setTimeout(() => {
-                        const latency = Date.now() - UI.latencyLastPing;
-                        UI.recordLatency(latency);
-                    }, 100);
-                }
+                pinged = true;
+            } catch (e) {}
+        }
+        // Fallback: try WebSocket ping
+        if (!pinged && UI.rfb && UI.rfb._sock && UI.rfb._sock._websocket) {
+            try {
+                const ws = UI.rfb._sock._websocket;
+                const start = Date.now();
+                let ponged = false;
+                const pongListener = function() {
+                    ponged = true;
+                    UI.recordLatency(Date.now() - start);
+                    ws.removeEventListener('pong', pongListener);
+                };
+                ws.addEventListener('pong', pongListener);
+                ws.send('ping');
+                setTimeout(() => {
+                    if (!ponged) {
+                        ws.removeEventListener('pong', pongListener);
+                        UI.updateLatency(undefined);
+                    }
+                }, 1500);
+                pinged = true;
+            } catch (e) {
+                UI.updateLatency(undefined);
             }
-        } catch (e) {
-            UI.updateLatency('--');
+        }
+        if (!pinged) {
+            UI.updateLatency(undefined);
         }
     },
 
@@ -1375,7 +1372,13 @@ const UI = {
 
     updateLatency(val) {
         const el = document.getElementById('noVNC_latency_value');
-        if (el) el.textContent = val;
+        if (el) {
+            if (typeof val === 'number' && isFinite(val)) {
+                el.textContent = val + ' ms';
+            } else {
+                el.textContent = 'unavailable';
+            }
+        }
     },
 };
 
