@@ -1036,3 +1036,109 @@ select {
     background-position: right 12px center;
     cursor: pointer;
 }
+
+/* Quick session menu overlay */
+.noVNC_quick_menu {
+    position: fixed;
+    top: 40px;
+    right: 40px;
+    z-index: 10010;
+    background: rgba(30, 32, 36, 0.98);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    padding: 0;
+    min-width: 320px;
+    display: none;
+    flex-direction: column;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #fff;
+}
+.noVNC_quick_menu.open {
+    display: flex;
+}
+.noVNC_quick_menu_content {
+    padding: 24px 24px 16px 24px;
+}
+.noVNC_quick_menu_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+.noVNC_quick_menu_close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+.noVNC_quick_menu_close:hover {
+    background: rgba(255,255,255,0.08);
+}
+.noVNC_quick_menu_group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.noVNC_quick_btn {
+    flex: 1 1 0;
+    background: #23262b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 0;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.noVNC_quick_btn:hover {
+    background: #3a3d42;
+    color: #e0e0e0;
+}
+.noVNC_quick_menu_toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10011;
+    background: #23262b;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 2em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.noVNC_quick_menu_toggle:hover {
+    background: #3a3d42;
+}
+
+@media (max-width: 600px) {
+    .noVNC_quick_menu {
+        top: 0;
+        right: 0;
+        left: 0;
+        min-width: unset;
+        width: 100vw;
+        border-radius: 0 0 18px 18px;
+    }
+    .noVNC_quick_menu_toggle {
+        top: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.5em;
+    }
+}

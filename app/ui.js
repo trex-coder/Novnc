@@ -1263,4 +1263,35 @@ const UI = {
     },
 };
 
+// Quick Menu UI logic
+function setupQuickMenu() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
+    const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
+    if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
+    function openMenu() { quickMenu.classList.add('open'); }
+    function closeMenu() { quickMenu.classList.remove('open'); }
+    quickMenuToggle.addEventListener('click', openMenu);
+    quickMenuClose.addEventListener('click', closeMenu);
+    // Close menu on outside click
+    document.addEventListener('mousedown', (e) => {
+        if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
+            closeMenu();
+        }
+    });
+    // Wire up quick menu buttons to existing UI actions
+    document.getElementById('noVNC_quick_connect').onclick = () => { closeMenu(); UI.connect(); };
+    document.getElementById('noVNC_quick_disconnect').onclick = () => { closeMenu(); UI.disconnect(); };
+    document.getElementById('noVNC_quick_settings').onclick = () => { closeMenu(); UI.openSettingsPanel(); };
+    document.getElementById('noVNC_quick_clipboard').onclick = () => { closeMenu(); UI.openClipboardPanel(); };
+    document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
+    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
+}
+// Call setupQuickMenu after DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupQuickMenu);
+} else {
+    setupQuickMenu();
+}
+
 export default UI;
