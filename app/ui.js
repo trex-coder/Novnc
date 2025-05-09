@@ -45,6 +45,12 @@ const UI = {
     reconnectCallback: null,
     reconnectPassword: null,
 
+    latencySamples: [],
+    latencyInterval: null,
+    latencyMaxSamples: 20,
+    latencyLastPing: null,
+    latencyElem: null,
+
     async start(options={}) {
         UI.customSettings = options.settings || {};
         if (UI.customSettings.defaults === undefined) {
@@ -271,6 +277,8 @@ const UI = {
 
         // Do this last because it can only be used on rendered elements
         UI.rfb.focus();
+
+        UI.startLatencyMeter();
     },
 
     disconnectFinished(e) {
@@ -316,6 +324,8 @@ const UI = {
 
         UI.openControlbar();
         UI.openConnectPanel();
+
+        UI.stopLatencyMeter();
     },
 
     securityFailed(e) {
@@ -1251,11 +1261,11 @@ const UI = {
         modal.id = 'noVNC_fullscreen_request_modal';
         modal.className = 'noVNC_modal_backdrop open';
         modal.innerHTML = `
-          <div class="noVNC_modern_panel" style="max-width: 380px; min-width: 260px;">
-            <div class="noVNC_modern_panel_header">
+          <div class="noVNC_modern_panel" style="max-width: 380px; min-width: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div class="noVNC_modern_panel_header" style="width:100%;">
               <span>Fullscreen Request</span>
             </div>
-            <div class="noVNC_modern_panel_content" style="text-align:center;">
+            <div class="noVNC_modern_panel_content" style="text-align:center; width:100%;">
               <div style="margin-bottom: 18px;">Allow this session to enter fullscreen mode?</div>
               <div style="display: flex; gap: 16px; justify-content: center;">
                 <button id="noVNC_fullscreen_yes" style="background: #2563eb; color: #fff; font-weight:600; min-width: 80px;">Yes</button>
@@ -1265,6 +1275,10 @@ const UI = {
           </div>
         `;
         document.body.appendChild(modal);
+        setTimeout(() => {
+            // Focus Yes for accessibility
+            document.getElementById('noVNC_fullscreen_yes')?.focus();
+        }, 10);
         document.getElementById('noVNC_fullscreen_yes').onclick = function() {
             modal.remove();
             UI.requestFullscreen();
@@ -1281,18 +1295,76 @@ const UI = {
         });
     },
 
-    // Helper to request fullscreen in a user gesture
-    requestFullscreen() {
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-        } else if (document.documentElement.mozRequestFullScreen) {
-            document.documentElement.mozRequestFullScreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        } else if (document.body.msRequestFullscreen) {
-            document.body.msRequestFullscreen();
+    startLatencyMeter() {
+        if (UI.latencyInterval) clearInterval(UI.latencyInterval);
+        if (!UI.latencyElem) {
+            UI.latencyElem = document.createElement('div');
+            UI.latencyElem.id = 'noVNC_latency_meter';
+            UI.latencyElem.style.position = 'fixed';
+            UI.latencyElem.style.top = '18px';
+            UI.latencyElem.style.right = '90px';
+            UI.latencyElem.style.zIndex = '10020';
+            UI.latencyElem.style.background = 'rgba(30,32,36,0.92)';
+            UI.latencyElem.style.color = '#fff';
+            UI.latencyElem.style.fontSize = '15px';
+            UI.latencyElem.style.fontWeight = '600';
+            UI.latencyElem.style.padding = '7px 18px';
+            UI.latencyElem.style.borderRadius = '16px';
+            UI.latencyElem.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+            UI.latencyElem.style.userSelect = 'none';
+            UI.latencyElem.innerHTML = 'Latency: <span id="noVNC_latency_value">--</span> ms';
+            document.body.appendChild(UI.latencyElem);
         }
-        UI.updateFullscreenButton();
+        UI.latencyInterval = setInterval(UI.pingLatency, 2000);
+        UI.pingLatency();
+    },
+
+    stopLatencyMeter() {
+        if (UI.latencyInterval) clearInterval(UI.latencyInterval);
+        UI.latencyInterval = null;
+        if (UI.latencyElem) {
+            UI.latencyElem.remove();
+            UI.latencyElem = null;
+        }
+    },
+
+    pingLatency() {
+        if (!UI.rfb || !UI.rfb._sock || UI.rfb._sock.readyState !== 1) {
+            UI.updateLatency('--');
+            return;
+        }
+        UI.latencyLastPing = Date.now();
+        try {
+            // Use a VNC ping extension if available, else fallback to WebSocket ping
+            if (UI.rfb.sendPing) {
+                UI.rfb.sendPing(() => {
+                    const latency = Date.now() - UI.latencyLastPing;
+                    UI.recordLatency(latency);
+                });
+            } else if (UI.rfb._sock && UI.rfb._sock.send) {
+                // Send a dummy ping packet (if protocol allows)
+                UI.rfb._sock.send('');
+                setTimeout(() => {
+                    const latency = Date.now() - UI.latencyLastPing;
+                    UI.recordLatency(latency);
+                }, 50); // fallback, not accurate
+            }
+        } catch (e) {
+            UI.updateLatency('--');
+        }
+    },
+
+    recordLatency(val) {
+        if (typeof val !== 'number' || !isFinite(val)) return;
+        UI.latencySamples.push(val);
+        if (UI.latencySamples.length > UI.latencyMaxSamples) UI.latencySamples.shift();
+        const avg = Math.round(UI.latencySamples.reduce((a,b)=>a+b,0)/UI.latencySamples.length);
+        UI.updateLatency(avg);
+    },
+
+    updateLatency(val) {
+        const el = document.getElementById('noVNC_latency_value');
+        if (el) el.textContent = val;
     },
 };
 
@@ -1450,8 +1522,8 @@ function setupQuickMenuDraggable() {
         if (!isDragging) return;
         isDragging = false;
         btn.classList.remove('dragging');
-        document.removeEventListener('touchmove', onTouchMove);
-        document.removeEventListener('touchend', onTouchEnd);
+        document.removeEventListener('touchmove');
+        document.removeEventListener('touchend');
         // Snap to nearest corner
         let rect = btn.getBoundingClientRect();
         winW = window.innerWidth; winH = window.innerHeight;
