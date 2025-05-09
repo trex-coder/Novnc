@@ -1099,28 +1099,7 @@ const UI = {
         }
     },
     toggleFullscreen() {
-        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
-        } else {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if (document.documentElement.mozRequestFullScreen) {
-                document.documentElement.mozRequestFullScreen();
-            } else if (document.documentElement.webkitRequestFullscreen) {
-                document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-            } else if (document.body.msRequestFullscreen) {
-                document.body.msRequestFullscreen();
-            }
-        }
-        UI.updateFullscreenButton();
+        UI.showFullscreenRequestDialog();
     },
     updateFullscreenButton() {
         if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement ) {
@@ -1263,6 +1242,58 @@ const UI = {
         // Or just log for now:
         Log.Debug("Bell event received from server");
     },
+
+    // Show a fullscreen request dialog with Yes/No buttons
+    showFullscreenRequestDialog() {
+        // If already present, don't add again
+        if (document.getElementById('noVNC_fullscreen_request_modal')) return;
+        const modal = document.createElement('div');
+        modal.id = 'noVNC_fullscreen_request_modal';
+        modal.className = 'noVNC_modal_backdrop open';
+        modal.innerHTML = `
+          <div class="noVNC_modern_panel" style="max-width: 380px; min-width: 260px;">
+            <div class="noVNC_modern_panel_header">
+              <span>Fullscreen Request</span>
+            </div>
+            <div class="noVNC_modern_panel_content" style="text-align:center;">
+              <div style="margin-bottom: 18px;">Allow this session to enter fullscreen mode?</div>
+              <div style="display: flex; gap: 16px; justify-content: center;">
+                <button id="noVNC_fullscreen_yes" style="background: #2563eb; color: #fff; font-weight:600; min-width: 80px;">Yes</button>
+                <button id="noVNC_fullscreen_no" style="background: #23262b; color: #fff; min-width: 80px;">No</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('noVNC_fullscreen_yes').onclick = function() {
+            modal.remove();
+            UI.requestFullscreen();
+        };
+        document.getElementById('noVNC_fullscreen_no').onclick = function() {
+            modal.remove();
+        };
+        // Allow closing by clicking backdrop
+        modal.addEventListener('mousedown', function(e) {
+            if (e.target === modal) modal.remove();
+        });
+        modal.addEventListener('touchend', function(e) {
+            if (e.target === modal) modal.remove();
+        });
+    },
+
+    // Helper to request fullscreen in a user gesture
+    requestFullscreen() {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        } else if (document.body.msRequestFullscreen) {
+            document.body.msRequestFullscreen();
+        }
+        UI.updateFullscreenButton();
+    },
 };
 
 // Quick Menu UI logic
@@ -1297,7 +1328,7 @@ function setupQuickMenu() {
     document.getElementById('noVNC_quick_settings').onclick = () => { closeMenu(); UI.openSettingsPanel(); };
     document.getElementById('noVNC_quick_clipboard').onclick = () => { closeMenu(); UI.openClipboardPanel(); };
     document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
-    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
+    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.showFullscreenRequestDialog(); };
 }
 // Call setupQuickMenu after DOMContentLoaded
 if (document.readyState === 'loading') {
