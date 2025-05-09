@@ -224,11 +224,14 @@
         </div>
         <div class="noVNC_modern_panel_content">
           <form id="noVNC_modern_settings_form">
-            <label for="noVNC_setting_logging">Logging level</label>
-            <select id="noVNC_setting_logging"></select>
-            <!-- Quality slider -->
-            <label for="noVNC_setting_quality">Quality <span id="noVNC_setting_quality_value">6</span></label>
-            <input type="range" id="noVNC_setting_quality" min="0" max="9" value="6" step="1">
+            <div class="noVNC_setting_group">
+              <label for="noVNC_setting_logging">Logging level</label>
+              <select id="noVNC_setting_logging"></select>
+            </div>
+            <div class="noVNC_setting_group">
+              <label for="noVNC_setting_quality">Quality <span id="noVNC_setting_quality_value">6</span></label>
+              <input type="range" id="noVNC_setting_quality" min="0" max="9" value="6" step="1">
+            </div>
             <!-- Add other settings fields as needed here -->
           </form>
         </div>
