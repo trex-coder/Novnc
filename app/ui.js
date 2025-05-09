@@ -802,6 +802,7 @@ const UI = {
         UI.closePowerPanel && UI.closePowerPanel();
         UI.closeClipboardPanel && UI.closeClipboardPanel();
         UI.closeExtraKeys && UI.closeExtraKeys();
+        closeQuickMenuPanel();
     },
     openSettingsPanel() {
         UI.closeAllPanels && UI.closeAllPanels();
@@ -1271,8 +1272,8 @@ function setupQuickMenu() {
     const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
     const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
     if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
-    function openMenu() { quickMenu.classList.add('open'); }
-    function closeMenu() { quickMenu.classList.remove('open'); }
+    function openMenu() { openQuickMenuPanel(); }
+    function closeMenu() { closeQuickMenuPanel(); }
     // Prevent double open on touch/click
     let touchHandled = false;
     quickMenuToggle.addEventListener('click', function(e) {
@@ -1287,7 +1288,7 @@ function setupQuickMenu() {
     quickMenuClose.addEventListener('click', closeMenu);
     // Close menu on outside click
     document.addEventListener('mousedown', (e) => {
-        if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
+        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
             closeMenu();
         }
     });
@@ -1693,6 +1694,39 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', fixQualitySlider);
 } else {
     fixQualitySlider();
+}
+
+// Quick Menu open/close logic (like other panels, centered, no design change)
+function openQuickMenuPanel() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (quickMenu) quickMenu.classList.add('noVNC_open');
+}
+function closeQuickMenuPanel() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (quickMenu) quickMenu.classList.remove('noVNC_open');
+}
+function setupQuickMenuPanel() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
+    const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
+    if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
+    quickMenuToggle.addEventListener('click', openQuickMenuPanel);
+    quickMenuClose.addEventListener('click', closeQuickMenuPanel);
+    // Close on outside click (optional, like other panels)
+    document.addEventListener('mousedown', (e) => {
+        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
+            closeQuickMenuPanel();
+        }
+    });
+    // Escape key closes
+    quickMenu.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeQuickMenuPanel();
+    });
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupQuickMenuPanel);
+} else {
+    setupQuickMenuPanel();
 }
 
 export default UI;
