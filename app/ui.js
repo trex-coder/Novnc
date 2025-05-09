@@ -1211,10 +1211,10 @@ const UI = {
     },
 
     addClipboardHandlers() {
-        document.getElementById("noVNC_clipboard_button")
-            .addEventListener('click', UI.toggleClipboardPanel);
-        document.getElementById("noVNC_clipboard_text")
-            .addEventListener('change', UI.clipboardSend);
+        const clipboardBtn = document.getElementById("noVNC_clipboard_button");
+        if (clipboardBtn) clipboardBtn.addEventListener('click', UI.toggleClipboardPanel);
+        const clipboardText = document.getElementById("noVNC_clipboard_text");
+        if (clipboardText) clipboardText.addEventListener('change', UI.clipboardSend);
     },
 
     addSettingChangeHandler(name, changeFunc) {

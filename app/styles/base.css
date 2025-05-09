@@ -308,6 +308,12 @@ textarea:focus {
 html.noVNC_loading .noVNC_quick_menu_toggle {
     display: none !important;
 }
+html.noVNC_connecting .noVNC_quick_menu_toggle,
+html.noVNC_connected .noVNC_quick_menu_toggle,
+html.noVNC_disconnecting .noVNC_quick_menu_toggle,
+html.noVNC_reconnecting .noVNC_quick_menu_toggle {
+    display: flex !important;
+}
 
 @media (max-width: 600px) {
     .noVNC_quick_menu_toggle {
