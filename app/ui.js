@@ -1419,8 +1419,8 @@ function setupQuickMenuDraggable() {
         if (!isDragging) return;
         isDragging = false;
         btn.classList.remove('dragging');
-        document.removeEventListener('touchmove', onTouchMove);
-        document.removeEventListener('touchend', onTouchEnd);
+        document.removeEventListener('touchmove');
+        document.removeEventListener('touchend');
         // Snap to nearest corner
         let rect = btn.getBoundingClientRect();
         winW = window.innerWidth; winH = window.innerHeight;
@@ -1538,5 +1538,97 @@ if (document.readyState === 'loading') {
 } else {
     setupModernPanels();
 }
+
+// Hide the connect button forever
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        const connectBtn = document.getElementById('noVNC_connect_button');
+        if (connectBtn) connectBtn.style.display = 'none';
+    });
+} else {
+    const connectBtn = document.getElementById('noVNC_connect_button');
+    if (connectBtn) connectBtn.style.display = 'none';
+}
+
+// --- LATENCY METER ---
+(function setupLatencyMeter() {
+    // Create the latency meter container
+    const meter = document.createElement('div');
+    meter.id = 'noVNC_latency_meter';
+    meter.style.position = 'fixed';
+    meter.style.top = '18px';
+    meter.style.right = '24px';
+    meter.style.zIndex = '9999';
+    meter.style.display = 'flex';
+    meter.style.alignItems = 'center';
+    meter.style.gap = '8px';
+    meter.style.background = 'rgba(30,32,36,0.82)';
+    meter.style.borderRadius = '10px';
+    meter.style.padding = '6px 16px 6px 12px';
+    meter.style.boxShadow = '0 2px 12px 0 rgba(0,0,0,0.10)';
+    meter.style.fontWeight = '600';
+    meter.style.fontSize = '1em';
+    meter.style.userSelect = 'none';
+    meter.style.pointerEvents = 'none';
+
+    // Inline SVG network icon
+    const icon = document.createElement('span');
+    icon.id = 'noVNC_latency_icon';
+    icon.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M6 15c1.5-2 8.5-2 10 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="15" r="1.5" fill="currentColor"/></svg>`;
+    icon.style.display = 'inline-flex';
+    icon.style.verticalAlign = 'middle';
+    icon.style.fontSize = '1.2em';
+    icon.style.transition = 'color 0.2s';
+
+    // Latency text
+    const text = document.createElement('span');
+    text.id = 'noVNC_latency_text';
+    text.textContent = '-- ms';
+    text.style.transition = 'color 0.2s';
+
+    meter.appendChild(icon);
+    meter.appendChild(text);
+    document.body.appendChild(meter);
+
+    // Color logic
+    function setMeterColor(latency) {
+        let color;
+        if (latency === null) {
+            color = '#aaa';
+        } else if (latency < 80) {
+            color = '#22c55e'; // green
+        } else if (latency < 200) {
+            color = '#eab308'; // yellow
+        } else {
+            color = '#ef4444'; // red
+        }
+        icon.style.color = color;
+        text.style.color = color;
+    }
+
+    // Ping logic
+    async function pingServer() {
+        const url = window.location.origin + window.location.pathname;
+        const start = performance.now();
+        let latency = null;
+        try {
+            // Use HEAD for minimal data
+            const resp = await fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' });
+            latency = Math.round(performance.now() - start);
+        } catch (e) {
+            latency = null;
+        }
+        if (latency !== null) {
+            text.textContent = latency + ' ms';
+        } else {
+            text.textContent = '-- ms';
+        }
+        setMeterColor(latency);
+    }
+
+    // Initial ping and interval
+    pingServer();
+    setInterval(pingServer, 2000);
+})();
 
 export default UI;

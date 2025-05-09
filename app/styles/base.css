@@ -52,6 +52,7 @@ html, body {
     height: 100%;
     background: var(--novnc-gray-900);
     color: var(--novnc-gray-100);
+    font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .noVNC_only_touch.noVNC_hidden {
