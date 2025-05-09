@@ -335,29 +335,33 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
 
 /* Modern overlays for settings, clipboard, power */
 .noVNC_modern_panel {
-    background: #23262b;
+    position: fixed;
+    top: 110px;
+    right: 40px;
+    z-index: 10012;
+    background: rgba(30, 32, 36, 0.98);
     border-radius: 18px;
-    box-shadow: 0 4px 32px 0 rgba(0,0,0,0.18);
-    padding: 32px 28px 28px 28px;
-    margin: 0 12px;
-    min-width: 260px;
-    max-width: 380px;
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    min-width: 340px;
+    max-width: 90vw;
+    max-height: 80vh;
+    color: #fff;
+    display: none;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    padding: 0 0 18px 0;
+    overflow: auto;
 }
 .noVNC_modern_panel.open {
     display: flex;
 }
 .noVNC_modern_panel_header {
-    width: 100%;
-    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 1.1em;
-    margin-bottom: 10px;
-    text-align: left;
+    font-weight: 600;
+    padding: 22px 24px 0 24px;
 }
 .noVNC_modern_panel_close {
     background: none;
@@ -384,17 +388,27 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     box-shadow: 0 4px 16px rgba(239,68,68,0.18);
 }
 .noVNC_modern_panel_content {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 18px;
-    word-break: break-word;
+    padding: 12px 24px 0 24px;
+    flex: 1 1 auto;
 }
+.noVNC_modern_panel .noVNC_button,
 .noVNC_modern_panel button {
-    border-radius: 8px;
-    padding: 8px 0;
-    min-width: 80px;
-    font-weight: 600;
+    background: #23262b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 0;
     font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 10px;
+}
+.noVNC_modern_panel .noVNC_button:hover,
+.noVNC_modern_panel button:hover {
+    background: #3a3d42;
+    color: #e0e0e0;
 }
 .noVNC_modern_panel input,
 .noVNC_modern_panel select,
@@ -412,14 +426,6 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     margin-bottom: 4px;
 }
 
-@media (max-width: 480px) {
-    .noVNC_modern_panel {
-        padding: 18px 6vw 18px 6vw;
-        min-width: 0;
-        max-width: 98vw;
-    }
-}
-
 @media (max-width: 600px) {
     .noVNC_modern_panel {
         top: 60px;
@@ -435,15 +441,14 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
 .noVNC_modal_backdrop {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 1000;
-    background: rgba(30, 32, 36, 0.65);
-    display: flex;
+    z-index: 10009;
+    background: rgba(0,0,0,0.45);
+    display: none;
     align-items: center;
     justify-content: center;
     width: 100vw;
     height: 100vh;
     transition: background 0.2s;
-    padding: 0;
 }
 .noVNC_modal_backdrop.open {
     display: flex;

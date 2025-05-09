@@ -45,12 +45,6 @@ const UI = {
     reconnectCallback: null,
     reconnectPassword: null,
 
-    latencySamples: [],
-    latencyInterval: null,
-    latencyMaxSamples: 20,
-    latencyLastPing: null,
-    latencyElem: null,
-
     async start(options={}) {
         UI.customSettings = options.settings || {};
         if (UI.customSettings.defaults === undefined) {
@@ -277,8 +271,6 @@ const UI = {
 
         // Do this last because it can only be used on rendered elements
         UI.rfb.focus();
-
-        UI.startLatencyMeter();
     },
 
     disconnectFinished(e) {
@@ -324,8 +316,6 @@ const UI = {
 
         UI.openControlbar();
         UI.openConnectPanel();
-
-        UI.stopLatencyMeter();
     },
 
     securityFailed(e) {
@@ -1109,7 +1099,28 @@ const UI = {
         }
     },
     toggleFullscreen() {
-        UI.showFullscreenRequestDialog();
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        } else {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) {
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+            } else if (document.body.msRequestFullscreen) {
+                document.body.msRequestFullscreen();
+            }
+        }
+        UI.updateFullscreenButton();
     },
     updateFullscreenButton() {
         if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement ) {
@@ -1252,134 +1263,6 @@ const UI = {
         // Or just log for now:
         Log.Debug("Bell event received from server");
     },
-
-    // Show a fullscreen request dialog with Yes/No buttons
-    showFullscreenRequestDialog() {
-        // If already present, don't add again
-        if (document.getElementById('noVNC_fullscreen_request_modal')) return;
-        const modal = document.createElement('div');
-        modal.id = 'noVNC_fullscreen_request_modal';
-        modal.className = 'noVNC_modal_backdrop open';
-        modal.innerHTML = `
-          <div class="noVNC_modern_panel" style="max-width: 380px; min-width: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 28px 28px 28px; box-sizing: border-box;">
-            <div class="noVNC_modern_panel_header" style="width:100%; margin-bottom: 10px;">
-              <span style="font-weight:600; font-size: 1.1em;">Fullscreen Request</span>
-            </div>
-            <div class="noVNC_modern_panel_content" style="text-align:center; width:100%; margin-bottom: 18px;">
-              <div style="margin-bottom: 18px; word-break:break-word;">Allow this session to enter fullscreen mode?</div>
-              <div style="display: flex; gap: 16px; justify-content: center;">
-                <button id="noVNC_fullscreen_yes" style="background: #2563eb; color: #fff; font-weight:600; min-width: 80px; border-radius: 8px; padding: 8px 0;">Yes</button>
-                <button id="noVNC_fullscreen_no" style="background: #23262b; color: #fff; min-width: 80px; border-radius: 8px; padding: 8px 0;">No</button>
-              </div>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-        setTimeout(() => { modal.classList.add('open'); }, 10);
-        document.getElementById('noVNC_fullscreen_yes').onclick = function() {
-            document.body.removeChild(modal);
-            if (typeof UI.toggleFullscreen === 'function') {
-                UI.toggleFullscreen();
-            }
-        };
-        document.getElementById('noVNC_fullscreen_no').onclick = function() {
-            document.body.removeChild(modal);
-        };
-        // Allow closing by clicking backdrop (but not panel)
-        modal.addEventListener('mousedown', function(e) {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-        modal.addEventListener('touchend', function(e) {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-    },
-
-    // --- LATENCY METER ---
-    startLatencyMeter() {
-        if (UI.latencyInterval) return;
-        if (!UI.latencyElem) {
-            UI.latencyElem = document.getElementById('noVNC_latency_value');
-        }
-        UI.latencySamples = [];
-        UI.latencyInterval = setInterval(UI.pingLatency, 2000);
-        UI.pingLatency();
-    },
-
-    stopLatencyMeter() {
-        if (UI.latencyInterval) clearInterval(UI.latencyInterval);
-        UI.latencyInterval = null;
-        if (UI.latencyElem) UI.latencyElem.textContent = '-- ms';
-    },
-
-    pingLatency() {
-        if (!UI.rfb || !UI.rfb._sock || UI.rfb._sock.readyState !== 1) {
-            UI.updateLatency(undefined);
-            return;
-        }
-        UI.latencyLastPing = Date.now();
-        let pinged = false;
-        // Try RFB ping if available
-        if (UI.rfb && typeof UI.rfb.ping === 'function') {
-            try {
-                UI.rfb.ping().then((latency) => {
-                    UI.recordLatency(latency);
-                }).catch(() => {
-                    UI.updateLatency(undefined);
-                });
-                pinged = true;
-            } catch (e) {}
-        }
-        // Fallback: try WebSocket ping
-        if (!pinged && UI.rfb && UI.rfb._sock && UI.rfb._sock._websocket) {
-            try {
-                const ws = UI.rfb._sock._websocket;
-                const start = Date.now();
-                let ponged = false;
-                const pongListener = function() {
-                    ponged = true;
-                    UI.recordLatency(Date.now() - start);
-                    ws.removeEventListener('pong', pongListener);
-                };
-                ws.addEventListener('pong', pongListener);
-                ws.send('ping');
-                setTimeout(() => {
-                    if (!ponged) {
-                        ws.removeEventListener('pong', pongListener);
-                        UI.updateLatency(undefined);
-                    }
-                }, 1500);
-                pinged = true;
-            } catch (e) {
-                UI.updateLatency(undefined);
-            }
-        }
-        if (!pinged) {
-            UI.updateLatency(undefined);
-        }
-    },
-
-    recordLatency(val) {
-        if (typeof val !== 'number' || !isFinite(val)) return;
-        UI.latencySamples.push(val);
-        if (UI.latencySamples.length > UI.latencyMaxSamples) UI.latencySamples.shift();
-        const avg = Math.round(UI.latencySamples.reduce((a,b)=>a+b,0)/UI.latencySamples.length);
-        UI.updateLatency(avg);
-    },
-
-    updateLatency(val) {
-        const el = document.getElementById('noVNC_latency_value');
-        if (el) {
-            if (typeof val === 'number' && isFinite(val)) {
-                el.textContent = val + ' ms';
-            } else {
-                el.textContent = 'unavailable';
-            }
-        }
-    },
 };
 
 // Quick Menu UI logic
@@ -1414,7 +1297,7 @@ function setupQuickMenu() {
     document.getElementById('noVNC_quick_settings').onclick = () => { closeMenu(); UI.openSettingsPanel(); };
     document.getElementById('noVNC_quick_clipboard').onclick = () => { closeMenu(); UI.openClipboardPanel(); };
     document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
-    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.showFullscreenRequestDialog(); };
+    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
 }
 // Call setupQuickMenu after DOMContentLoaded
 if (document.readyState === 'loading') {
@@ -1536,8 +1419,8 @@ function setupQuickMenuDraggable() {
         if (!isDragging) return;
         isDragging = false;
         btn.classList.remove('dragging');
-        document.removeEventListener('touchmove');
-        document.removeEventListener('touchend');
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
         // Snap to nearest corner
         let rect = btn.getBoundingClientRect();
         winW = window.innerWidth; winH = window.innerHeight;
