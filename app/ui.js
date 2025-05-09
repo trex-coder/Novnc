@@ -883,7 +883,8 @@ const UI = {
     },
     clipboardReceive(e) {
         Log.Debug("UI.clipboardReceive: " + (e.detail.text ? e.detail.text.substr(0, 40) : "") + "...");
-        document.getElementById('noVNC_clipboard_text').value = e.detail.text;
+        const clipboardElem = document.getElementById('noVNC_clipboard_text');
+        if (clipboardElem) clipboardElem.value = e.detail.text;
         Log.Debug("<< UI.clipboardReceive");
     },
     clipboardSend() {
@@ -1294,6 +1295,155 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupQuickMenu);
 } else {
     setupQuickMenu();
+}
+
+// Draggable quick menu toggle button
+function setupQuickMenuDraggable() {
+    const btn = document.getElementById('noVNC_quick_menu_toggle');
+    if (!btn) return;
+    let isDragging = false;
+    let startX, startY, origX, origY;
+    let winW = window.innerWidth, winH = window.innerHeight;
+    let btnW = btn.offsetWidth, btnH = btn.offsetHeight;
+
+    function getCorner(x, y) {
+        // Snap to nearest corner
+        const corners = [
+            {top: 24, left: 24}, // top-left
+            {top: 24, left: winW - btnW - 24}, // top-right
+            {top: winH - btnH - 24, left: 24}, // bottom-left
+            {top: winH - btnH - 24, left: winW - btnW - 24} // bottom-right
+        ];
+        let minDist = Infinity, best = corners[0];
+        for (const c of corners) {
+            const dist = Math.hypot(x - c.left, y - c.top);
+            if (dist < minDist) { minDist = dist; best = c; }
+        }
+        return best;
+    }
+
+    function onMouseDown(e) {
+        if (e.button !== 0) return;
+        isDragging = true;
+        btn.classList.add('dragging');
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = btn.getBoundingClientRect();
+        origX = rect.left;
+        origY = rect.top;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+    }
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+        let newX = origX + dx;
+        let newY = origY + dy;
+        btn.style.transition = 'none';
+        btn.style.left = newX + 'px';
+        btn.style.top = newY + 'px';
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+    }
+    function onMouseUp(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        btn.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        // Snap to nearest corner
+        let rect = btn.getBoundingClientRect();
+        winW = window.innerWidth; winH = window.innerHeight;
+        btnW = btn.offsetWidth; btnH = btn.offsetHeight;
+        const corner = getCorner(rect.left, rect.top);
+        btn.style.transition = '';
+        btn.style.left = '';
+        btn.style.top = '';
+        btn.style.right = '';
+        btn.style.bottom = '';
+        // Set to snapped corner
+        if (corner.left < winW/2) {
+            btn.style.left = corner.left + 'px';
+            btn.style.right = '';
+        } else {
+            btn.style.right = (winW - corner.left - btnW) + 'px';
+            btn.style.left = '';
+        }
+        if (corner.top < winH/2) {
+            btn.style.top = corner.top + 'px';
+            btn.style.bottom = '';
+        } else {
+            btn.style.bottom = (winH - corner.top - btnH) + 'px';
+            btn.style.top = '';
+        }
+    }
+    btn.addEventListener('mousedown', onMouseDown);
+    // Touch support
+    btn.addEventListener('touchstart', function(e) {
+        if (e.touches.length !== 1) return;
+        isDragging = true;
+        btn.classList.add('dragging');
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        const rect = btn.getBoundingClientRect();
+        origX = rect.left;
+        origY = rect.top;
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('touchend', onTouchEnd);
+        e.preventDefault();
+    }, {passive: false});
+    function onTouchMove(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+        let dx = e.touches[0].clientX - startX;
+        let dy = e.touches[0].clientY - startY;
+        let newX = origX + dx;
+        let newY = origY + dy;
+        btn.style.transition = 'none';
+        btn.style.left = newX + 'px';
+        btn.style.top = newY + 'px';
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+    }
+    function onTouchEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        btn.classList.remove('dragging');
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+        // Snap to nearest corner
+        let rect = btn.getBoundingClientRect();
+        winW = window.innerWidth; winH = window.innerHeight;
+        btnW = btn.offsetWidth; btnH = btn.offsetHeight;
+        const corner = getCorner(rect.left, rect.top);
+        btn.style.transition = '';
+        btn.style.left = '';
+        btn.style.top = '';
+        btn.style.right = '';
+        btn.style.bottom = '';
+        // Set to snapped corner
+        if (corner.left < winW/2) {
+            btn.style.left = corner.left + 'px';
+            btn.style.right = '';
+        } else {
+            btn.style.right = (winW - corner.left - btnW) + 'px';
+            btn.style.left = '';
+        }
+        if (corner.top < winH/2) {
+            btn.style.top = corner.top + 'px';
+            btn.style.bottom = '';
+        } else {
+            btn.style.bottom = (winH - corner.top - btnH) + 'px';
+            btn.style.top = '';
+        }
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupQuickMenuDraggable);
+} else {
+    setupQuickMenuDraggable();
 }
 
 // Modern panel logic

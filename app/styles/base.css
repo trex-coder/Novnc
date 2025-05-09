@@ -270,28 +270,57 @@ textarea:focus {
 
 /* Modern quick menu toggle button */
 .noVNC_quick_menu_toggle {
-    background: #181a1b;
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10011;
+    background: #23262b;
     color: #fff;
     border: none;
-    border-radius: 12px;
-    width: 48px;
-    height: 48px;
+    border-radius: 50%; /* Make it a perfect circle */
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    max-width: 56px;
+    max-height: 56px;
     font-size: 2em;
     box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: background 0.2s, box-shadow 0.2s;
     padding: 0;
+    user-select: none;
 }
 .noVNC_quick_menu_toggle svg {
     width: 28px;
     height: 28px;
     display: block;
+    margin: 0 auto;
 }
-.noVNC_quick_menu_toggle:hover {
-    background: #23262b;
+.noVNC_quick_menu_toggle:active, .noVNC_quick_menu_toggle.dragging {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    background: #181a1b;
+}
+
+@media (max-width: 600px) {
+    .noVNC_quick_menu_toggle {
+        top: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        max-width: 44px;
+        max-height: 44px;
+        font-size: 1.5em;
+    }
+    .noVNC_quick_menu_toggle svg {
+        width: 22px;
+        height: 22px;
+    }
 }
 
 /* Modern overlays for settings, clipboard, power */
@@ -1049,19 +1078,50 @@ select {
     background: #23262b;
     color: #fff;
     border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
+    border-radius: 50%; /* Make it a perfect circle */
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    max-width: 56px;
+    max-height: 56px;
     font-size: 2em;
     box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: background 0.2s, box-shadow 0.2s;
+    padding: 0;
+    user-select: none;
 }
-.noVNC_quick_menu_toggle:hover {
-    background: #3a3d42;
+.noVNC_quick_menu_toggle svg {
+    width: 28px;
+    height: 28px;
+    display: block;
+    margin: 0 auto;
+}
+.noVNC_quick_menu_toggle:active, .noVNC_quick_menu_toggle.dragging {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    background: #181a1b;
+}
+
+@media (max-width: 600px) {
+    .noVNC_quick_menu_toggle {
+        top: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        max-width: 44px;
+        max-height: 44px;
+        font-size: 1.5em;
+    }
+    .noVNC_quick_menu_toggle svg {
+        width: 22px;
+        height: 22px;
+    }
 }
 
 @media (max-width: 600px) {
