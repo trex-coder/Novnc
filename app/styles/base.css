@@ -742,20 +742,6 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     margin-left: 8px;
 }
 
-/* Settings panel transparency slider styling */
-#noVNC_setting_latency_transparency {
-    accent-color: #3b82f6;
-    margin-left: 8px;
-    width: 90px;
-    vertical-align: middle;
-}
-#noVNC_setting_latency_transparency_value {
-    margin-left: 8px;
-    font-size: 0.98em;
-    color: #3b82f6;
-    font-weight: 500;
-}
-
 /* Version */
 
 .noVNC_version_wrapper {
@@ -1310,41 +1296,4 @@ html.noVNC_reconnecting #noVNC_quick_connect {
         height: 40px;
         font-size: 1.5em;
     }
-}
-
-/* Quick menu modal dialog and animation */
-.noVNC_modal_quick_menu {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -60%) scale(1);
-    min-width: 260px;
-    min-height: 180px;
-    background: #23272f;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.18);
-    z-index: 12000;
-    display: none;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s cubic-bezier(.4,0,.2,1), transform 0.25s cubic-bezier(.4,0,.2,1);
-}
-.noVNC_modal_quick_menu.open {
-    display: block;
-    opacity: 1;
-    pointer-events: auto;
-}
-.noVNC_modal_quick_menu.slide-in {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-}
-.noVNC_modal_quick_menu.close {
-    opacity: 0;
-    transform: translate(-50%, -60%) scale(0.98);
-    pointer-events: none;
-}
-
-/* Prevent interaction when not open */
-.noVNC_modal_quick_menu:not(.open) {
-    pointer-events: none !important;
 }
