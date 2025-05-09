@@ -1493,6 +1493,10 @@ function setupModernPanels() {
         const q = document.getElementById('noVNC_setting_quality');
         const qv = document.getElementById('noVNC_setting_quality_value');
         if (q && qv) qv.textContent = q.value;
+        // Sync compression value display
+        const c = document.getElementById('noVNC_setting_compression');
+        const cv = document.getElementById('noVNC_setting_compression_value');
+        if (c && cv) cv.textContent = c.value;
     };
     settingsClose.onclick = () => { settingsModal.classList.remove('open'); settingsPanel.classList.remove('open'); };
     // Quality slider live update
@@ -1503,6 +1507,16 @@ function setupModernPanels() {
             qualityValue.textContent = this.value;
             UI.saveSetting('quality');
             UI.updateQuality && UI.updateQuality();
+        });
+    }
+    // Compression slider live update
+    const compressionSlider = document.getElementById('noVNC_setting_compression');
+    const compressionValue = document.getElementById('noVNC_setting_compression_value');
+    if (compressionSlider && compressionValue) {
+        compressionSlider.addEventListener('input', function() {
+            compressionValue.textContent = this.value;
+            UI.saveSetting('compression');
+            UI.updateCompression && UI.updateCompression();
         });
     }
 
@@ -1718,6 +1732,34 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', fixQualitySlider);
 } else {
     fixQualitySlider();
+}
+
+// --- Compression slider fix for modern settings panel ---
+function fixCompressionSlider() {
+    const slider = document.getElementById('noVNC_setting_compression');
+    const value = document.getElementById('noVNC_setting_compression_value');
+    if (!slider || !value) return;
+    slider.min = 0;
+    slider.max = 9;
+    slider.step = 1;
+    // Set value from setting if available
+    let saved = UI.getSetting && UI.getSetting('compression');
+    if (saved !== undefined && saved !== null && saved !== '') slider.value = saved;
+    value.textContent = slider.value;
+    // Always update RFB compressionLevel immediately
+    slider.addEventListener('input', function() {
+        value.textContent = this.value;
+        UI.saveSetting && UI.saveSetting('compression');
+        UI.updateCompression && UI.updateCompression();
+        if (UI.rfb) UI.rfb.compressionLevel = parseInt(this.value);
+    });
+    // On load, set RFB compressionLevel
+    if (UI.rfb) UI.rfb.compressionLevel = parseInt(slider.value);
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixCompressionSlider);
+} else {
+    fixCompressionSlider();
 }
 
 // --- Transparency slider in Settings panel ---
