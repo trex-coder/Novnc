@@ -1315,6 +1315,27 @@ function setupQuickMenuDraggable() {
     let winW = window.innerWidth, winH = window.innerHeight;
     let btnW = btn.offsetWidth, btnH = btn.offsetHeight;
 
+    // --- Position Persistence ---
+    function saveBtnPosition(pos) {
+        localStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+    }
+    function loadBtnPosition() {
+        try {
+            return JSON.parse(localStorage.getItem('noVNC_quick_menu_btn_pos'));
+        } catch (e) { return null; }
+    }
+    function setBtnPosition(pos) {
+        // Remove all manual positions first
+        btn.style.left = '';
+        btn.style.top = '';
+        btn.style.right = '';
+        btn.style.bottom = '';
+        // Set to snapped corner
+        if (pos.left !== undefined) btn.style.left = pos.left + 'px';
+        if (pos.right !== undefined) btn.style.right = pos.right + 'px';
+        if (pos.top !== undefined) btn.style.top = pos.top + 'px';
+        if (pos.bottom !== undefined) btn.style.bottom = pos.bottom + 'px';
+    }
     function getCorner(x, y) {
         // Snap to nearest corner
         const corners = [
@@ -1330,7 +1351,14 @@ function setupQuickMenuDraggable() {
         }
         return best;
     }
-
+    // Restore position on load
+    let pos = loadBtnPosition();
+    if (pos) {
+        setBtnPosition(pos);
+    } else {
+        // Default to top left
+        setBtnPosition({top: 24, left: 24});
+    }
     function onMouseDown(e) {
         if (e.button !== 0) return;
         isDragging = true;
@@ -1368,25 +1396,8 @@ function setupQuickMenuDraggable() {
         btnW = btn.offsetWidth; btnH = btn.offsetHeight;
         const corner = getCorner(rect.left, rect.top);
         btn.style.transition = '';
-        btn.style.left = '';
-        btn.style.top = '';
-        btn.style.right = '';
-        btn.style.bottom = '';
-        // Set to snapped corner
-        if (corner.left < winW/2) {
-            btn.style.left = corner.left + 'px';
-            btn.style.right = '';
-        } else {
-            btn.style.right = (winW - corner.left - btnW) + 'px';
-            btn.style.left = '';
-        }
-        if (corner.top < winH/2) {
-            btn.style.top = corner.top + 'px';
-            btn.style.bottom = '';
-        } else {
-            btn.style.bottom = (winH - corner.top - btnH) + 'px';
-            btn.style.top = '';
-        }
+        setBtnPosition(corner);
+        saveBtnPosition(corner);
     }
     btn.addEventListener('mousedown', onMouseDown);
     // Touch support
@@ -1419,33 +1430,16 @@ function setupQuickMenuDraggable() {
         if (!isDragging) return;
         isDragging = false;
         btn.classList.remove('dragging');
-        document.removeEventListener('touchmove');
-        document.removeEventListener('touchend');
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
         // Snap to nearest corner
         let rect = btn.getBoundingClientRect();
         winW = window.innerWidth; winH = window.innerHeight;
         btnW = btn.offsetWidth; btnH = btn.offsetHeight;
         const corner = getCorner(rect.left, rect.top);
         btn.style.transition = '';
-        btn.style.left = '';
-        btn.style.top = '';
-        btn.style.right = '';
-        btn.style.bottom = '';
-        // Set to snapped corner
-        if (corner.left < winW/2) {
-            btn.style.left = corner.left + 'px';
-            btn.style.right = '';
-        } else {
-            btn.style.right = (winW - corner.left - btnW) + 'px';
-            btn.style.left = '';
-        }
-        if (corner.top < winH/2) {
-            btn.style.top = corner.top + 'px';
-            btn.style.bottom = '';
-        } else {
-            btn.style.bottom = (winH - corner.top - btnH) + 'px';
-            btn.style.top = '';
-        }
+        setBtnPosition(corner);
+        saveBtnPosition(corner);
     }
 }
 
@@ -1571,6 +1565,51 @@ if (document.readyState === 'loading') {
     meter.style.userSelect = 'none';
     meter.style.pointerEvents = 'none';
 
+    // --- Transparency Slider ---
+    const transparencyWrap = document.createElement('div');
+    transparencyWrap.style.position = 'absolute';
+    transparencyWrap.style.top = '100%';
+    transparencyWrap.style.right = '0';
+    transparencyWrap.style.background = 'rgba(30,32,36,0.95)';
+    transparencyWrap.style.borderRadius = '8px';
+    transparencyWrap.style.padding = '8px 12px';
+    transparencyWrap.style.marginTop = '8px';
+    transparencyWrap.style.display = 'none';
+    transparencyWrap.style.zIndex = '10000';
+    transparencyWrap.style.boxShadow = '0 2px 12px 0 rgba(0,0,0,0.10)';
+    transparencyWrap.style.userSelect = 'auto';
+    transparencyWrap.style.pointerEvents = 'auto';
+    transparencyWrap.innerHTML = `<label style="font-size:0.95em;font-weight:500;">Ping Overlay Transparency <input id="noVNC_latency_transparency" type="range" min="0.2" max="1" step="0.01" value="0.82" style="vertical-align:middle;width:90px;margin-left:8px;"></label>`;
+    document.body.appendChild(transparencyWrap);
+    // Show/hide on click
+    meter.addEventListener('click', function() {
+        transparencyWrap.style.display = transparencyWrap.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('mousedown', function(e) {
+        if (!transparencyWrap.contains(e.target) && e.target !== meter) {
+            transparencyWrap.style.display = 'none';
+        }
+    });
+    // Persist transparency
+    function saveTransparency(val) {
+        localStorage.setItem('noVNC_latency_transparency', val);
+    }
+    function loadTransparency() {
+        let v = localStorage.getItem('noVNC_latency_transparency');
+        if (!v) return 0.82;
+        return parseFloat(v);
+    }
+    const transparencySlider = transparencyWrap.querySelector('#noVNC_latency_transparency');
+    function setMeterAlpha(alpha) {
+        meter.style.background = `rgba(30,32,36,${alpha})`;
+    }
+    transparencySlider.value = loadTransparency();
+    setMeterAlpha(transparencySlider.value);
+    transparencySlider.addEventListener('input', function() {
+        setMeterAlpha(this.value);
+        saveTransparency(this.value);
+    });
+
     // Inline SVG network icon
     const icon = document.createElement('span');
     icon.id = 'noVNC_latency_icon';
@@ -1630,5 +1669,30 @@ if (document.readyState === 'loading') {
     pingServer();
     setInterval(pingServer, 2000);
 })();
+
+// --- Quality slider fix ---
+// Ensure the slider uses the full range (0-9) and updates UI and RFB logic
+function fixQualitySlider() {
+    const slider = document.getElementById('noVNC_setting_quality');
+    const value = document.getElementById('noVNC_setting_quality_value');
+    if (!slider || !value) return;
+    slider.min = 0;
+    slider.max = 9;
+    slider.step = 1;
+    // Set value from setting if available
+    let saved = UI.getSetting && UI.getSetting('quality');
+    if (saved !== undefined && saved !== null) slider.value = saved;
+    value.textContent = slider.value;
+    slider.addEventListener('input', function() {
+        value.textContent = this.value;
+        UI.saveSetting && UI.saveSetting('quality');
+        UI.updateQuality && UI.updateQuality();
+    });
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixQualitySlider);
+} else {
+    fixQualitySlider();
+}
 
 export default UI;
