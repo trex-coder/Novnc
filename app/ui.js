@@ -1273,7 +1273,17 @@ function setupQuickMenu() {
     if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
     function openMenu() { quickMenu.classList.add('open'); }
     function closeMenu() { quickMenu.classList.remove('open'); }
-    quickMenuToggle.addEventListener('click', openMenu);
+    // Prevent double open on touch/click
+    let touchHandled = false;
+    quickMenuToggle.addEventListener('click', function(e) {
+        if (touchHandled) { touchHandled = false; return; }
+        openMenu();
+    });
+    quickMenuToggle.addEventListener('touchend', function(e) {
+        touchHandled = true;
+        openMenu();
+        e.preventDefault();
+    }, {passive: false});
     quickMenuClose.addEventListener('click', closeMenu);
     // Close menu on outside click
     document.addEventListener('mousedown', (e) => {
