@@ -819,19 +819,19 @@ const UI = {
         UI.updateSetting && UI.updateSetting('reconnect');
         UI.updateSetting && UI.updateSetting('reconnect_delay');
         document.getElementById('noVNC_settings')
-            .classList.add("noVNC_open");
+            ?.classList.add("noVNC_open");
         document.getElementById('noVNC_settings_button')
-            .classList.add("noVNC_selected");
+            ?.classList.add("noVNC_selected");
     },
     closeSettingsPanel() {
-        document.getElementById('noVNC_settings')
-            .classList.remove("noVNC_open");
-        document.getElementById('noVNC_settings_button')
-            .classList.remove("noVNC_selected");
+        const settings = document.getElementById('noVNC_settings');
+        if (settings) settings.classList.remove("noVNC_open");
+        const btn = document.getElementById('noVNC_settings_button');
+        if (btn) btn.classList.remove("noVNC_selected");
     },
     toggleSettingsPanel() {
         if (document.getElementById('noVNC_settings')
-            .classList.contains("noVNC_open")) {
+            ?.classList.contains("noVNC_open")) {
             UI.closeSettingsPanel();
         } else {
             UI.openSettingsPanel();
@@ -841,19 +841,19 @@ const UI = {
         UI.closeAllPanels && UI.closeAllPanels();
         UI.openControlbar && UI.openControlbar();
         document.getElementById('noVNC_power')
-            .classList.add("noVNC_open");
+            ?.classList.add("noVNC_open");
         document.getElementById('noVNC_power_button')
-            .classList.add("noVNC_selected");
+            ?.classList.add("noVNC_selected");
     },
     closePowerPanel() {
-        document.getElementById('noVNC_power')
-            .classList.remove("noVNC_open");
-        document.getElementById('noVNC_power_button')
-            .classList.remove("noVNC_selected");
+        const power = document.getElementById('noVNC_power');
+        if (power) power.classList.remove("noVNC_open");
+        const btn = document.getElementById('noVNC_power_button');
+        if (btn) btn.classList.remove("noVNC_selected");
     },
     togglePowerPanel() {
         if (document.getElementById('noVNC_power')
-            .classList.contains("noVNC_open")) {
+            ?.classList.contains("noVNC_open")) {
             UI.closePowerPanel();
         } else {
             UI.openPowerPanel();
@@ -863,19 +863,19 @@ const UI = {
         UI.closeAllPanels && UI.closeAllPanels();
         UI.openControlbar && UI.openControlbar();
         document.getElementById('noVNC_clipboard')
-            .classList.add("noVNC_open");
+            ?.classList.add("noVNC_open");
         document.getElementById('noVNC_clipboard_button')
-            .classList.add("noVNC_selected");
+            ?.classList.add("noVNC_selected");
     },
     closeClipboardPanel() {
-        document.getElementById('noVNC_clipboard')
-            .classList.remove("noVNC_open");
-        document.getElementById('noVNC_clipboard_button')
-            .classList.remove("noVNC_selected");
+        const clipboard = document.getElementById('noVNC_clipboard');
+        if (clipboard) clipboard.classList.remove("noVNC_open");
+        const btn = document.getElementById('noVNC_clipboard_button');
+        if (btn) btn.classList.remove("noVNC_selected");
     },
     toggleClipboardPanel() {
         if (document.getElementById('noVNC_clipboard')
-            .classList.contains("noVNC_open")) {
+            ?.classList.contains("noVNC_open")) {
             UI.closeClipboardPanel();
         } else {
             UI.openClipboardPanel();
@@ -1088,11 +1088,13 @@ const UI = {
         UI.idleControlbar();
     },
     updatePowerButton() {
-        if (UI.connected && UI.rfb.capabilities.power && !UI.rfb.viewOnly) {
-            document.getElementById('noVNC_power_button')?.classList.remove("noVNC_hidden");
+        if (UI.connected && UI.rfb && UI.rfb.capabilities && UI.rfb.capabilities.power && !UI.rfb.viewOnly) {
+            const btn = document.getElementById('noVNC_power_button');
+            if (btn) btn.classList.remove("noVNC_hidden");
         } else {
-            document.getElementById('noVNC_power_button')?.classList.add("noVNC_hidden");
-            UI.closePowerPanel();
+            const btn = document.getElementById('noVNC_power_button');
+            if (btn) btn.classList.add("noVNC_hidden");
+            UI.closePowerPanel && UI.closePowerPanel();
         }
     },
     toggleFullscreen() {
