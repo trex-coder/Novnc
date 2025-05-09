@@ -1085,6 +1085,44 @@ select {
     gap: 12px;
     margin-bottom: 16px;
 }
+html.noVNC_connected .noVNC_quick_menu_group:first-child,
+html.noVNC_connecting .noVNC_quick_menu_group:first-child,
+html.noVNC_disconnecting .noVNC_quick_menu_group:first-child,
+html.noVNC_reconnecting .noVNC_quick_menu_group:first-child {
+    gap: 0;
+}
+html.noVNC_connected #noVNC_quick_disconnect,
+html.noVNC_connecting #noVNC_quick_disconnect,
+html.noVNC_disconnecting #noVNC_quick_disconnect,
+html.noVNC_reconnecting #noVNC_quick_disconnect {
+    flex: 1 1 0;
+}
+html.noVNC_connected #noVNC_quick_connect,
+html.noVNC_connecting #noVNC_quick_connect,
+html.noVNC_disconnecting #noVNC_quick_connect,
+html.noVNC_reconnecting #noVNC_quick_connect {
+    display: none !important;
+}
+#noVNC_quick_disconnect {
+    background: #ef4444;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+}
+#noVNC_quick_disconnect:hover {
+    background: #b91c1c;
+    color: #fff;
+}
+#noVNC_quick_disconnect .disconnect-icon {
+    width: 1.2em;
+    height: 1.2em;
+    display: inline-block;
+    vertical-align: middle;
+}
 .noVNC_quick_btn {
     flex: 1 1 0;
     background: #23262b;
