@@ -8,6 +8,17 @@
 
 // Fallback for all uncaught errors
 function handleError(event, err) {
+    // Suppress fallback error overlay for permission errors
+    let msgText = event && event.message ? event.message : (typeof event === 'string' ? event : '');
+    if (msgText && (msgText.toLowerCase().includes('permission error') || msgText.toLowerCase().includes('permissions check failed'))) {
+        // Hide fallback error overlay if present
+        const fallback = document.getElementById('noVNC_fallback_error');
+        if (fallback) fallback.classList.remove('noVNC_open');
+        const fallbackMsg = document.getElementById('noVNC_fallback_errormsg');
+        if (fallbackMsg) fallbackMsg.innerHTML = '';
+        return false;
+    }
+
     try {
         const msg = document.getElementById('noVNC_fallback_errormsg');
 
