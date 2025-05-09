@@ -1294,4 +1294,74 @@ if (document.readyState === 'loading') {
     setupQuickMenu();
 }
 
+// Modern panel logic
+function closeAllModernPanels() {
+    document.getElementById('noVNC_modern_settings').classList.remove('open');
+    document.getElementById('noVNC_modern_clipboard').classList.remove('open');
+    document.getElementById('noVNC_modern_power').classList.remove('open');
+}
+
+function setupModernPanels() {
+    // Settings panel
+    const settingsBtn = document.getElementById('noVNC_quick_settings');
+    const settingsPanel = document.getElementById('noVNC_modern_settings');
+    const settingsClose = document.getElementById('noVNC_modern_settings_close');
+    settingsBtn.onclick = () => {
+        closeAllModernPanels();
+        settingsPanel.classList.add('open');
+    };
+    settingsClose.onclick = () => settingsPanel.classList.remove('open');
+
+    // Move settings fields from old panel to modern panel
+    const oldSettings = document.getElementById('noVNC_settings');
+    const modernSettingsForm = document.getElementById('noVNC_modern_settings_form');
+    if (oldSettings && modernSettingsForm && oldSettings.children.length > 0 && modernSettingsForm.children.length === 0) {
+        // Move all children
+        while (oldSettings.children.length > 0) {
+            modernSettingsForm.appendChild(oldSettings.children[0]);
+        }
+    }
+
+    // Clipboard panel
+    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
+    const clipboardPanel = document.getElementById('noVNC_modern_clipboard');
+    const clipboardClose = document.getElementById('noVNC_modern_clipboard_close');
+    clipboardBtn.onclick = () => {
+        closeAllModernPanels();
+        clipboardPanel.classList.add('open');
+    };
+    clipboardClose.onclick = () => clipboardPanel.classList.remove('open');
+    // Clipboard send
+    document.getElementById('noVNC_modern_clipboard_send').onclick = (e) => {
+        e.preventDefault();
+        const text = document.getElementById('noVNC_modern_clipboard_text').value;
+        if (UI.rfb && UI.rfb.clipboardPasteFrom) UI.rfb.clipboardPasteFrom(text);
+    };
+
+    // Power panel
+    const powerBtn = document.getElementById('noVNC_quick_power');
+    const powerPanel = document.getElementById('noVNC_modern_power');
+    const powerClose = document.getElementById('noVNC_modern_power_close');
+    powerBtn.onclick = () => {
+        closeAllModernPanels();
+        powerPanel.classList.add('open');
+    };
+    powerClose.onclick = () => powerPanel.classList.remove('open');
+    document.getElementById('noVNC_modern_shutdown').onclick = () => { if (UI.rfb) UI.rfb.machineShutdown(); };
+    document.getElementById('noVNC_modern_reboot').onclick = () => { if (UI.rfb) UI.rfb.machineReboot(); };
+    document.getElementById('noVNC_modern_reset').onclick = () => { if (UI.rfb) UI.rfb.machineReset(); };
+
+    // Fullscreen
+    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeAllModernPanels(); UI.toggleFullscreen(); };
+
+    // Close all panels when quick menu closes
+    document.getElementById('noVNC_quick_menu_close').onclick = () => closeAllModernPanels();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupModernPanels);
+} else {
+    setupModernPanels();
+}
+
 export default UI;

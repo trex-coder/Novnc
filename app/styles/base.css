@@ -260,192 +260,131 @@ textarea:focus {
  * ----------------------------------------
  */
 
-#noVNC_control_bar_anchor {
-    /* The anchor is needed to get z-stacking to work */
-    position: fixed;
-    z-index: 10;
-
-    transition: 0.5s ease-in-out;
-
-    /* Edge misrenders animations wihthout this */
-    transform: translateX(0);
-}
-:root.noVNC_connected #noVNC_control_bar_anchor.noVNC_idle {
-    opacity: 0.8;
-}
-#noVNC_control_bar_anchor.noVNC_right {
-    left: auto;
-    right: 0;
-}
-
-#noVNC_control_bar {
-    position: relative;
-    left: -100%;
-
-    transition: 0.5s ease-in-out;
-
-    background-color: rgba(37, 99, 235, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0 12px 12px 0;
-
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none; /* Disable iOS image long-press popup */
-}
-#noVNC_control_bar.noVNC_open {
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
-    left: 0;
-}
-#noVNC_control_bar::before {
-    /* This extra element is to get a proper shadow */
-    content: "";
-    position: absolute;
-    z-index: -1;
-    height: 100%;
-    width: 30px;
-    left: -30px;
-    transition: box-shadow 0.5s ease-in-out;
-}
-#noVNC_control_bar.noVNC_open::before {
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
-}
-.noVNC_right #noVNC_control_bar {
-    left: 100%;
-    border-radius: 12px 0 0 12px;
-}
-.noVNC_right #noVNC_control_bar.noVNC_open {
-    left: 0;
-}
-.noVNC_right #noVNC_control_bar::before {
-    visibility: hidden;
-}
-
-#noVNC_control_bar_handle {
-    position: absolute;
-    left: -15px;
-    top: 0;
-    transform: translateY(35px);
-    width: calc(100% + 30px);
-    height: 50px;
-    z-index: -1;
-    cursor: pointer;
-    border-radius: 6px;
-    background-color: var(--novnc-darkblue);
-    background-image: url("../images/handle_bg.svg");
-    background-repeat: no-repeat;
-    background-position: right;
-    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
-}
-#noVNC_control_bar_handle:after {
-    content: "";
-    transition: transform 0.5s ease-in-out;
-    background: url("../images/handle.svg");
-    position: absolute;
-    top: 22px; /* (50px-6px)/2 */
-    right: 5px;
-    width: 5px;
-    height: 6px;
-}
-#noVNC_control_bar.noVNC_open #noVNC_control_bar_handle:after {
-    transform: translateX(1px) rotate(180deg);
-}
-:root:not(.noVNC_connected) #noVNC_control_bar_handle {
-    display: none;
-}
-.noVNC_right #noVNC_control_bar_handle {
-    background-position: left;
-}
-.noVNC_right #noVNC_control_bar_handle:after {
-    left: 5px;
-    right: 0;
-    transform: translateX(1px) rotate(180deg);
-}
-.noVNC_right #noVNC_control_bar.noVNC_open #noVNC_control_bar_handle:after {
-    transform: none;
-}
-/* Larger touch area for the handle, used when a touch screen is available */
-#noVNC_control_bar_handle div {
-    position: absolute;
-    right: -35px;
-    top: 0;
-    width: 50px;
-    height: 100%;
-    display: none;
-}
-@media (any-pointer: coarse) {
-    #noVNC_control_bar_handle div {
-        display: initial;
-    }
-}
-.noVNC_right #noVNC_control_bar_handle div {
-    left: -35px;
-    right: auto;
-}
-
-#noVNC_control_bar > .noVNC_scroll {
-    max-height: 100vh; /* Chrome is buggy with 100% */
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: 0 10px;
-}
-
-#noVNC_control_bar > .noVNC_scroll > * {
-    display: block;
-    margin: 10px auto;
-}
-
-/* Control bar hint */
+/* Hide the old quick panel and its buttons */
+#noVNC_control_bar_anchor,
+#noVNC_control_bar,
+#noVNC_control_bar_handle,
 #noVNC_hint_anchor {
-    position: fixed;
-    right: -50px;
-    left: auto;
-}
-#noVNC_control_bar_anchor.noVNC_right + #noVNC_hint_anchor {
-    left: -50px;
-    right: auto;
-}
-#noVNC_control_bar_hint {
-    position: relative;
-    transform: scale(0);
-    width: 100px;
-    height: 50%;
-    max-height: 600px;
-
-    visibility: hidden;
-    opacity: 0;
-    transition: 0.2s ease-in-out;
-    background: transparent;
-    box-shadow: 0 0 10px black, inset 0 0 10px 10px var(--novnc-darkblue);
-    border-radius: 12px;
-    transition-delay: 0s;
-}
-#noVNC_control_bar_hint.noVNC_active {
-    visibility: visible;
-    opacity: 1;
-    transition-delay: 0.2s;
-    transform: scale(1);
-}
-#noVNC_control_bar_hint.noVNC_notransition {
-    transition: none !important;
-}
-
-/* Control bar buttons */
-#noVNC_control_bar .noVNC_button {
-    min-width: unset;
-    padding: 4px 4px;
-    vertical-align: middle;
-    border:1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    background-color: transparent;
-}
-#noVNC_control_bar .noVNC_button.noVNC_selected {
-    border-color: rgba(0, 0, 0, 0.8);
-    background-color: rgba(0, 0, 0, 0.5);
-}
-#noVNC_control_bar .noVNC_button.noVNC_hidden {
     display: none !important;
+}
+
+/* Modern quick menu toggle button */
+.noVNC_quick_menu_toggle {
+    background: #181a1b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    font-size: 2em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    padding: 0;
+}
+.noVNC_quick_menu_toggle svg {
+    width: 28px;
+    height: 28px;
+    display: block;
+}
+.noVNC_quick_menu_toggle:hover {
+    background: #23262b;
+}
+
+/* Modern overlays for settings, clipboard, power */
+.noVNC_modern_panel {
+    position: fixed;
+    top: 110px;
+    right: 40px;
+    z-index: 10012;
+    background: rgba(30, 32, 36, 0.98);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    min-width: 340px;
+    max-width: 90vw;
+    max-height: 80vh;
+    color: #fff;
+    display: none;
+    flex-direction: column;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    padding: 0 0 18px 0;
+    overflow: auto;
+}
+.noVNC_modern_panel.open {
+    display: flex;
+}
+.noVNC_modern_panel_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1em;
+    font-weight: 600;
+    padding: 22px 24px 0 24px;
+}
+.noVNC_modern_panel_close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+.noVNC_modern_panel_close:hover {
+    background: rgba(255,255,255,0.08);
+}
+.noVNC_modern_panel_content {
+    padding: 12px 24px 0 24px;
+    flex: 1 1 auto;
+}
+.noVNC_modern_panel .noVNC_button,
+.noVNC_modern_panel button {
+    background: #23262b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 0;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 10px;
+}
+.noVNC_modern_panel .noVNC_button:hover,
+.noVNC_modern_panel button:hover {
+    background: #3a3d42;
+    color: #e0e0e0;
+}
+.noVNC_modern_panel input,
+.noVNC_modern_panel select,
+.noVNC_modern_panel textarea {
+    background: #23262b;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+}
+.noVNC_modern_panel label {
+    color: #bbb;
+    font-size: 0.98em;
+    margin-bottom: 4px;
+}
+
+@media (max-width: 600px) {
+    .noVNC_modern_panel {
+        top: 60px;
+        right: 0;
+        left: 0;
+        min-width: unset;
+        width: 100vw;
+        border-radius: 0 0 18px 18px;
+    }
 }
 
 /* Panels */

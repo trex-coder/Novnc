@@ -157,34 +157,13 @@
 
                 <!-- Shutdown/Reboot -->
                 <input type="image" alt="Shutdown/Reboot" src="app/images/power.svg"
-                    id="noVNC_power_button" class="noVNC_button"
+                    id="noVNC_power_button" class="noVNC_button noVNC_hidden"
                     title="Shutdown/Reboot...">
-                <div class="noVNC_vcenter">
-                <div id="noVNC_power" class="noVNC_panel">
-                    <div class="noVNC_heading">
-                        <img alt="" src="app/images/power.svg"> Power
-                    </div>
-                    <input type="button" id="noVNC_shutdown_button" value="Shutdown">
-                    <input type="button" id="noVNC_reboot_button" value="Reboot">
-                    <input type="button" id="noVNC_reset_button" value="Reset">
-                </div>
-                </div>
 
                 <!-- Clipboard -->
                 <input type="image" alt="Clipboard" src="app/images/clipboard.svg"
-                    id="noVNC_clipboard_button" class="noVNC_button"
+                    id="noVNC_clipboard_button" class="noVNC_button noVNC_hidden"
                     title="Clipboard">
-                <div class="noVNC_vcenter">
-                <div id="noVNC_clipboard" class="noVNC_panel">
-                    <div class="noVNC_heading">
-                        <img alt="" src="app/images/clipboard.svg"> Clipboard
-                    </div>
-                    <p class="noVNC_subheading">
-                        Edit clipboard content in the textarea below.
-                    </p>
-                    <textarea id="noVNC_clipboard_text" rows=5></textarea>
-                </div>
-                </div>
 
                 <!-- Toggle fullscreen -->
                 <input type="image" alt="Full screen" src="app/images/fullscreen.svg"
@@ -193,125 +172,8 @@
 
                 <!-- Settings panel with modern styling -->
                 <input type="image" alt="Settings" src="app/images/settings.svg"
-                    id="noVNC_settings_button" class="noVNC_button"
+                    id="noVNC_settings_button" class="noVNC_button noVNC_hidden"
                     title="Settings">
-                <div class="noVNC_vcenter">
-                    <div id="noVNC_settings" class="noVNC_panel">
-                        <div class="noVNC_heading">
-                            <img alt="" src="app/images/settings.svg"> Settings
-                        </div>
-                        <div class="noVNC_settings_container">
-                            <ul>
-                                <li>
-                                    <label>
-                                        <input id="noVNC_setting_shared" type="checkbox"
-                                               class="toggle">
-                                        Shared mode
-                                    </label>
-                                </li>
-                                <li>
-                                    <label>
-                                        <input id="noVNC_setting_view_only" type="checkbox"
-                                               class="toggle">
-                                        View only
-                                    </label>
-                                </li>
-                                <li><hr></li>
-                                <li>
-                                    <label>
-                                        <input id="noVNC_setting_view_clip" type="checkbox"
-                                               class="toggle">
-                                        Clip to window
-                                    </label>
-                                </li>
-                                <li>
-                                    <label for="noVNC_setting_resize">Scaling mode:</label>
-                                    <select id="noVNC_setting_resize" name="vncResize">
-                                        <option value="off">None</option>
-                                        <option value="scale">Local scaling</option>
-                                        <option value="remote">Remote resizing</option>
-                                    </select>
-                                </li>
-                                <li><hr></li>
-                                <li>
-                                    <div class="noVNC_expander">Advanced</div>
-                                    <div><ul>
-                                        <li>
-                                            <label for="noVNC_setting_quality">Quality:</label>
-                                            <input id="noVNC_setting_quality" type="range" min="0" max="9" value="6">
-                                        </li>
-                                        <li>
-                                            <label for="noVNC_setting_compression">Compression level:</label>
-                                            <input id="noVNC_setting_compression" type="range" min="0" max="9" value="2">
-                                        </li>
-                                        <li><hr></li>
-                                        <li>
-                                            <label for="noVNC_setting_repeaterID">Repeater ID:</label>
-                                            <input id="noVNC_setting_repeaterID" type="text" value="">
-                                        </li>
-                                        <li>
-                                            <div class="noVNC_expander">WebSocket</div>
-                                            <div><ul>
-                                                <li>
-                                                    <label>
-                                                        <input id="noVNC_setting_encrypt" type="checkbox"
-                                                               class="toggle">
-                                                        Encrypt
-                                                    </label>
-                                                </li>
-                                                <li>
-                                                    <label for="noVNC_setting_host">Host:</label>
-                                                    <input id="noVNC_setting_host">
-                                                </li>
-                                                <li>
-                                                    <label for="noVNC_setting_port">Port:</label>
-                                                    <input id="noVNC_setting_port" type="number">
-                                                </li>
-                                                <li>
-                                                    <label for="noVNC_setting_path">Path:</label>
-                                                    <input id="noVNC_setting_path" type="text" value="websockify">
-                                                </li>
-                                            </ul></div>
-                                        </li>
-                                        <li><hr></li>
-                                        <li>
-                                            <label>
-                                                <input id="noVNC_setting_reconnect" type="checkbox"
-                                                       class="toggle">
-                                                Automatic reconnect
-                                            </label>
-                                        </li>
-                                        <li>
-                                            <label for="noVNC_setting_reconnect_delay">Reconnect delay (ms):</label>
-                                            <input id="noVNC_setting_reconnect_delay" type="number">
-                                        </li>
-                                        <li><hr></li>
-                                        <li>
-                                            <label>
-                                                <input id="noVNC_setting_show_dot" type="checkbox"
-                                                       class="toggle">
-                                                Show dot when no cursor
-                                            </label>
-                                        </li>
-                                        <li><hr></li>
-                                        <!-- Logging selection dropdown -->
-                                        <li>
-                                            <label>Logging:
-                                                <select id="noVNC_setting_logging" name="vncLogging">
-                                                </select>
-                                            </label>
-                                        </li>
-                                    </ul></div>
-                                </li>
-                                <li class="noVNC_version_separator"><hr></li>
-                                <li class="noVNC_version_wrapper">
-                                    <span>Version:</span>
-                                    <span class="noVNC_version"></span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Connection controls -->
                 <input type="image" alt="Disconnect" src="app/images/disconnect.svg"
@@ -343,8 +205,46 @@
             </div>
         </div>
     </div>
-    <!-- Quick Menu Toggle Button -->
-    <button id="noVNC_quick_menu_toggle" class="noVNC_quick_menu_toggle">☰</button>
+    <!-- Modern Quick Menu Toggle Button -->
+    <button id="noVNC_quick_menu_toggle" class="noVNC_quick_menu_toggle" aria-label="Open session menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/></svg>
+    </button>
+
+    <!-- Modern Settings Panel -->
+    <div id="noVNC_modern_settings" class="noVNC_modern_panel" tabindex="-1">
+      <div class="noVNC_modern_panel_header">
+        <span>Settings</span>
+        <button id="noVNC_modern_settings_close" class="noVNC_modern_panel_close" aria-label="Close settings">&times;</button>
+      </div>
+      <div class="noVNC_modern_panel_content">
+        <form id="noVNC_modern_settings_form"></form>
+      </div>
+    </div>
+
+    <!-- Modern Clipboard Panel -->
+    <div id="noVNC_modern_clipboard" class="noVNC_modern_panel" tabindex="-1">
+      <div class="noVNC_modern_panel_header">
+        <span>Clipboard</span>
+        <button id="noVNC_modern_clipboard_close" class="noVNC_modern_panel_close" aria-label="Close clipboard">&times;</button>
+      </div>
+      <div class="noVNC_modern_panel_content">
+        <textarea id="noVNC_modern_clipboard_text" rows="8" style="width:100%"></textarea>
+        <button id="noVNC_modern_clipboard_send" class="noVNC_button">Send</button>
+      </div>
+    </div>
+
+    <!-- Modern Power Panel -->
+    <div id="noVNC_modern_power" class="noVNC_modern_panel" tabindex="-1">
+      <div class="noVNC_modern_panel_header">
+        <span>Power</span>
+        <button id="noVNC_modern_power_close" class="noVNC_modern_panel_close" aria-label="Close power">&times;</button>
+      </div>
+      <div class="noVNC_modern_panel_content">
+        <button id="noVNC_modern_shutdown" class="noVNC_button">Shutdown</button>
+        <button id="noVNC_modern_reboot" class="noVNC_button">Reboot</button>
+        <button id="noVNC_modern_reset" class="noVNC_button">Reset</button>
+      </div>
+    </div>
 
     <div id="noVNC_hint_anchor" class="noVNC_vcenter">
         <div id="noVNC_control_bar_hint">
