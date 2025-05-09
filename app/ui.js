@@ -1457,6 +1457,7 @@ if (document.readyState === 'loading') {
 
 // Modern panel logic
 function closeAllModernPanels() {
+    document.querySelectorAll('.noVNC_modal_backdrop').forEach(b => b.classList.remove('open'));
     document.getElementById('noVNC_modern_settings').classList.remove('open');
     document.getElementById('noVNC_modern_clipboard').classList.remove('open');
     document.getElementById('noVNC_modern_power').classList.remove('open');
@@ -1465,34 +1466,41 @@ function closeAllModernPanels() {
 function setupModernPanels() {
     // Settings panel
     const settingsBtn = document.getElementById('noVNC_quick_settings');
+    const settingsModal = document.getElementById('noVNC_modern_settings_modal');
     const settingsPanel = document.getElementById('noVNC_modern_settings');
     const settingsClose = document.getElementById('noVNC_modern_settings_close');
     settingsBtn.onclick = () => {
         closeAllModernPanels();
+        settingsModal.classList.add('open');
         settingsPanel.classList.add('open');
+        // Sync quality value display
+        const q = document.getElementById('noVNC_setting_quality');
+        const qv = document.getElementById('noVNC_setting_quality_value');
+        if (q && qv) qv.textContent = q.value;
     };
-    settingsClose.onclick = () => settingsPanel.classList.remove('open');
-
-    // Move settings fields from old panel to modern panel
-    const oldSettings = document.getElementById('noVNC_settings');
-    const modernSettingsForm = document.getElementById('noVNC_modern_settings_form');
-    if (oldSettings && modernSettingsForm && oldSettings.children.length > 0 && modernSettingsForm.children.length === 0) {
-        // Move all children
-        while (oldSettings.children.length > 0) {
-            modernSettingsForm.appendChild(oldSettings.children[0]);
-        }
+    settingsClose.onclick = () => { settingsModal.classList.remove('open'); settingsPanel.classList.remove('open'); };
+    // Quality slider live update
+    const qualitySlider = document.getElementById('noVNC_setting_quality');
+    const qualityValue = document.getElementById('noVNC_setting_quality_value');
+    if (qualitySlider && qualityValue) {
+        qualitySlider.addEventListener('input', function() {
+            qualityValue.textContent = this.value;
+            UI.saveSetting('quality');
+            UI.updateQuality && UI.updateQuality();
+        });
     }
 
     // Clipboard panel
     const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
+    const clipboardModal = document.getElementById('noVNC_modern_clipboard_modal');
     const clipboardPanel = document.getElementById('noVNC_modern_clipboard');
     const clipboardClose = document.getElementById('noVNC_modern_clipboard_close');
     clipboardBtn.onclick = () => {
         closeAllModernPanels();
+        clipboardModal.classList.add('open');
         clipboardPanel.classList.add('open');
     };
-    clipboardClose.onclick = () => clipboardPanel.classList.remove('open');
-    // Clipboard send
+    clipboardClose.onclick = () => { clipboardModal.classList.remove('open'); clipboardPanel.classList.remove('open'); };
     document.getElementById('noVNC_modern_clipboard_send').onclick = (e) => {
         e.preventDefault();
         const text = document.getElementById('noVNC_modern_clipboard_text').value;
@@ -1501,22 +1509,28 @@ function setupModernPanels() {
 
     // Power panel
     const powerBtn = document.getElementById('noVNC_quick_power');
+    const powerModal = document.getElementById('noVNC_modern_power_modal');
     const powerPanel = document.getElementById('noVNC_modern_power');
     const powerClose = document.getElementById('noVNC_modern_power_close');
     powerBtn.onclick = () => {
         closeAllModernPanels();
+        powerModal.classList.add('open');
         powerPanel.classList.add('open');
     };
-    powerClose.onclick = () => powerPanel.classList.remove('open');
+    powerClose.onclick = () => { powerModal.classList.remove('open'); powerPanel.classList.remove('open'); };
     document.getElementById('noVNC_modern_shutdown').onclick = () => { if (UI.rfb) UI.rfb.machineShutdown(); };
     document.getElementById('noVNC_modern_reboot').onclick = () => { if (UI.rfb) UI.rfb.machineReboot(); };
     document.getElementById('noVNC_modern_reset').onclick = () => { if (UI.rfb) UI.rfb.machineReset(); };
 
-    // Fullscreen
-    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeAllModernPanels(); UI.toggleFullscreen(); };
-
-    // Close all panels when quick menu closes
-    document.getElementById('noVNC_quick_menu_close').onclick = () => closeAllModernPanels();
+    // Close modal on backdrop click
+    document.querySelectorAll('.noVNC_modal_backdrop').forEach(backdrop => {
+        backdrop.addEventListener('mousedown', function(e) {
+            if (e.target === backdrop) closeAllModernPanels();
+        });
+        backdrop.addEventListener('touchend', function(e) {
+            if (e.target === backdrop) closeAllModernPanels();
+        });
+    });
 }
 
 if (document.readyState === 'loading') {

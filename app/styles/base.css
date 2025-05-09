@@ -437,6 +437,43 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     }
 }
 
+/* Modal backdrop for modern panels */
+.noVNC_modal_backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 10009;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    transition: background 0.2s;
+}
+.noVNC_modal_backdrop.open {
+    display: flex;
+}
+
+/* Ensure modal panel is centered and responsive */
+.noVNC_modal_backdrop .noVNC_modern_panel {
+    margin: auto;
+    max-width: 420px;
+    width: 96vw;
+    max-height: 90vh;
+    min-width: 0;
+    min-height: 0;
+    box-sizing: border-box;
+}
+@media (max-width: 600px) {
+    .noVNC_modal_backdrop .noVNC_modern_panel {
+        max-width: 98vw;
+        width: 100vw;
+        border-radius: 0 0 18px 18px;
+        right: 0;
+        left: 0;
+    }
+}
+
 /* Panels */
 .noVNC_panel {
     transform: translateX(25px);
@@ -654,6 +691,19 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
 }
 #noVNC_setting_path {
     width: 100px;
+}
+
+/* Quality slider styling */
+#noVNC_setting_quality {
+    width: 100%;
+    margin: 8px 0 16px 0;
+}
+#noVNC_setting_quality_value {
+    display: inline-block;
+    min-width: 2ch;
+    font-weight: 600;
+    color: var(--novnc-primary);
+    margin-left: 8px;
 }
 
 /* Version */

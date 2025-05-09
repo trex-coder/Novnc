@@ -215,43 +215,52 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/></svg>
     </button>
 
-    <!-- Modern Settings Panel -->
-    <div id="noVNC_modern_settings" class="noVNC_modern_panel" tabindex="-1">
-      <div class="noVNC_modern_panel_header">
-        <span>Settings</span>
-        <button id="noVNC_modern_settings_close" class="noVNC_modern_panel_close" aria-label="Close settings">&times;</button>
-      </div>
-      <div class="noVNC_modern_panel_content">
-        <form id="noVNC_modern_settings_form">
-          <label for="noVNC_setting_logging">Logging level</label>
-          <select id="noVNC_setting_logging"></select>
-          <!-- Add other settings fields as needed here -->
-        </form>
-      </div>
-    </div>
-
-    <!-- Modern Clipboard Panel -->
-    <div id="noVNC_modern_clipboard" class="noVNC_modern_panel" tabindex="-1">
-      <div class="noVNC_modern_panel_header">
-        <span>Clipboard</span>
-        <button id="noVNC_modern_clipboard_close" class="noVNC_modern_panel_close" aria-label="Close clipboard">&times;</button>
-      </div>
-      <div class="noVNC_modern_panel_content">
-        <textarea id="noVNC_modern_clipboard_text" rows="8" style="width:100%"></textarea>
-        <button id="noVNC_modern_clipboard_send" class="noVNC_button">Send</button>
+    <!-- Modern Settings Panel as Modal -->
+    <div id="noVNC_modern_settings_modal" class="noVNC_modal_backdrop">
+      <div id="noVNC_modern_settings" class="noVNC_modern_panel" tabindex="-1">
+        <div class="noVNC_modern_panel_header">
+          <span>Settings</span>
+          <button id="noVNC_modern_settings_close" class="noVNC_modern_panel_close" aria-label="Close settings">&times;</button>
+        </div>
+        <div class="noVNC_modern_panel_content">
+          <form id="noVNC_modern_settings_form">
+            <label for="noVNC_setting_logging">Logging level</label>
+            <select id="noVNC_setting_logging"></select>
+            <!-- Quality slider -->
+            <label for="noVNC_setting_quality">Quality <span id="noVNC_setting_quality_value">6</span></label>
+            <input type="range" id="noVNC_setting_quality" min="0" max="9" value="6" step="1">
+            <!-- Add other settings fields as needed here -->
+          </form>
+        </div>
       </div>
     </div>
 
-    <!-- Modern Power Panel -->
-    <div id="noVNC_modern_power" class="noVNC_modern_panel" tabindex="-1">
-      <div class="noVNC_modern_panel_header">
-        <span>Power</span>
-        <button id="noVNC_modern_power_close" class="noVNC_modern_panel_close" aria-label="Close power">&times;</button>
+    <!-- Modern Clipboard Panel as Modal -->
+    <div id="noVNC_modern_clipboard_modal" class="noVNC_modal_backdrop">
+      <div id="noVNC_modern_clipboard" class="noVNC_modern_panel" tabindex="-1">
+        <div class="noVNC_modern_panel_header">
+          <span>Clipboard</span>
+          <button id="noVNC_modern_clipboard_close" class="noVNC_modern_panel_close" aria-label="Close clipboard">&times;</button>
+        </div>
+        <div class="noVNC_modern_panel_content">
+          <textarea id="noVNC_modern_clipboard_text" rows="8" style="width:100%"></textarea>
+          <button id="noVNC_modern_clipboard_send" class="noVNC_button">Send</button>
+        </div>
       </div>
-      <div class="noVNC_modern_panel_content">
-        <button id="noVNC_modern_shutdown" class="noVNC_button">Shutdown</button>
-        <button id="noVNC_modern_reboot" class="noVNC_button">Reboot</button>
-        <button id="noVNC_modern_reset" class="noVNC_button">Reset</button>
+    </div>
+
+    <!-- Modern Power Panel as Modal -->
+    <div id="noVNC_modern_power_modal" class="noVNC_modal_backdrop">
+      <div id="noVNC_modern_power" class="noVNC_modern_panel" tabindex="-1">
+        <div class="noVNC_modern_panel_header">
+          <span>Power</span>
+          <button id="noVNC_modern_power_close" class="noVNC_modern_panel_close" aria-label="Close power">&times;</button>
+        </div>
+        <div class="noVNC_modern_panel_content">
+          <button id="noVNC_modern_shutdown" class="noVNC_button">Shutdown</button>
+          <button id="noVNC_modern_reboot" class="noVNC_button">Reboot</button>
+          <button id="noVNC_modern_reset" class="noVNC_button">Reset</button>
+        </div>
       </div>
     </div>
 
