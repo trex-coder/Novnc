@@ -342,7 +342,7 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     z-index: 10012;
     background: rgba(30, 32, 36, 0.98);
     border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     min-width: 340px;
     max-width: 90vw;
     max-height: 80vh;
@@ -351,7 +351,8 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     flex-direction: column;
     font-family: 'Segoe UI', Arial, sans-serif;
     padding: 0 0 18px 0;
-    overflow: auto;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
 }
 .noVNC_modern_panel.open {
     display: flex;
@@ -363,9 +364,12 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     font-size: 1.1em;
     font-weight: 600;
     padding: 22px 24px 0 24px;
+    background: rgba(20, 22, 26, 0.4);
+    border-radius: 18px 18px 0 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .noVNC_modern_panel_close {
-    background: none;
+    background: rgba(255, 255, 255, 0.08);
     border: none;
     color: #fff;
     font-size: 2.1em;
@@ -379,18 +383,25 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.2s ease-out;
     box-shadow: 0 2px 8px rgba(0,0,0,0.10);
     margin-left: 8px;
 }
 .noVNC_modern_panel_close:hover {
-    background: #ef4444;
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
-    box-shadow: 0 4px 16px rgba(239,68,68,0.18);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    transform: scale(1.05);
+}
+.noVNC_modern_panel_close:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
 }
 .noVNC_modern_panel_content {
     padding: 12px 24px 0 24px;
     flex: 1 1 auto;
+    overflow-y: auto;
+    max-height: calc(80vh - 120px);
 }
 .noVNC_modern_panel .noVNC_button,
 .noVNC_modern_panel button {
@@ -443,16 +454,20 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     z-index: 10009;
-    background: rgba(0,0,0,0.45);
-    display: none;
+    background: rgba(0,0,0,0);
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 100vw;
     height: 100vh;
-    transition: background 0.2s;
+    transition: background 0.25s ease-in-out;
+    pointer-events: none;
+    opacity: 0;
 }
 .noVNC_modal_backdrop.open {
-    display: flex;
+    background: rgba(0,0,0,0.5);
+    pointer-events: auto;
+    opacity: 1;
 }
 
 /* Center and enlarge modal panel */
@@ -469,6 +484,14 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
     top: 0;
     bottom: 0;
     position: relative;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+}
+
+.noVNC_modal_backdrop.open .noVNC_modern_panel.open {
+    transform: translateY(0);
+    opacity: 1;
 }
 @media (max-width: 600px) {
     .noVNC_modal_backdrop .noVNC_modern_panel {
@@ -1123,13 +1146,19 @@ select {
     box-shadow: 0 8px 32px rgba(0,0,0,0.25);
     padding: 0;
     min-width: 320px;
-    display: none;
+    display: flex;
     flex-direction: column;
     font-family: 'Segoe UI', Arial, sans-serif;
     color: #fff;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
 }
 .noVNC_quick_menu.open {
-    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 .noVNC_quick_menu_content {
     padding: 24px 24px 16px 24px;
@@ -1143,10 +1172,10 @@ select {
     margin-bottom: 18px;
 }
 .noVNC_quick_menu_close {
-    background: none;
+    background: rgba(255, 255, 255, 0.08);
     border: none;
     color: #fff;
-    font-size: 2.1em;
+    font-size: 1.8em;
     font-weight: 700;
     width: 44px;
     height: 44px;
@@ -1157,14 +1186,23 @@ select {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.2s ease-out;
     margin-left: 8px;
 }
+
 .noVNC_quick_menu_close:hover {
-    background: #ef4444;
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(239,68,68,0.18);
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+.noVNC_quick_menu_close:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
+}
+.noVNC_quick_menu_close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
 }
 .noVNC_quick_menu_group {
     display: flex;

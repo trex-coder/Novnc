@@ -1272,8 +1272,17 @@ function setupQuickMenu() {
     const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
     const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
     if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
-    function openMenu() { openQuickMenuPanel(); }
-    function closeMenu() { closeQuickMenuPanel(); }
+    function openMenu() { 
+        // Close any open panels first
+        closeAllModernPanels();
+        // Then open the quick menu
+        const quickMenu = document.getElementById('noVNC_quick_menu');
+        if (quickMenu) quickMenu.classList.add('open');
+    }
+    function closeMenu() { 
+        const quickMenu = document.getElementById('noVNC_quick_menu');
+        if (quickMenu) quickMenu.classList.remove('open');
+    }
     // Prevent double open on touch/click
     let touchHandled = false;
     quickMenuToggle.addEventListener('click', function(e) {
@@ -1452,28 +1461,57 @@ if (document.readyState === 'loading') {
 
 // Modern panel logic
 function closeAllModernPanels() {
+    // Close all modal backdrops
     document.querySelectorAll('.noVNC_modal_backdrop').forEach(b => b.classList.remove('open'));
-    document.getElementById('noVNC_modern_settings').classList.remove('open');
-    document.getElementById('noVNC_modern_clipboard').classList.remove('open');
-    document.getElementById('noVNC_modern_power').classList.remove('open');
+    // Close all panels
+    document.querySelectorAll('.noVNC_modern_panel').forEach(p => p.classList.remove('open'));
+    // Close quick menu if it's open
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (quickMenu && quickMenu.classList.contains('open')) {
+        quickMenu.classList.remove('open');
+    }
 }
 
 function setupModernPanels() {
+    // Helper function to open a panel with animation
+    function openPanel(modalBackdrop, panel) {
+        // First ensure all other panels are closed
+        closeAllModernPanels();
+        
+        // Add a small delay to ensure smooth transition
+        setTimeout(() => {
+            modalBackdrop.classList.add('open');
+            panel.classList.add('open');
+            
+            // Focus the first input if there is one
+            const firstInput = panel.querySelector('input, textarea, select');
+            if (firstInput) firstInput.focus();
+        }, 10);
+    }
+    
+    // Helper function to close a panel with animation
+    function closePanel(modalBackdrop, panel) {
+        panel.classList.remove('open');
+        modalBackdrop.classList.remove('open');
+    }
+
     // Settings panel
     const settingsBtn = document.getElementById('noVNC_quick_settings');
     const settingsModal = document.getElementById('noVNC_modern_settings_modal');
     const settingsPanel = document.getElementById('noVNC_modern_settings');
     const settingsClose = document.getElementById('noVNC_modern_settings_close');
-    settingsBtn.onclick = () => {
-        closeAllModernPanels();
-        settingsModal.classList.add('open');
-        settingsPanel.classList.add('open');
-        // Sync quality value display
-        const q = document.getElementById('noVNC_setting_quality');
-        const qv = document.getElementById('noVNC_setting_quality_value');
-        if (q && qv) qv.textContent = q.value;
-    };
-    settingsClose.onclick = () => { settingsModal.classList.remove('open'); settingsPanel.classList.remove('open'); };
+    
+    if (settingsBtn && settingsModal && settingsPanel && settingsClose) {
+        settingsBtn.onclick = () => {
+            openPanel(settingsModal, settingsPanel);
+            // Sync quality value display
+            const q = document.getElementById('noVNC_setting_quality');
+            const qv = document.getElementById('noVNC_setting_quality_value');
+            if (q && qv) qv.textContent = q.value;
+        };
+        settingsClose.onclick = () => closePanel(settingsModal, settingsPanel);
+    }
+    
     // Quality slider live update
     const qualitySlider = document.getElementById('noVNC_setting_quality');
     const qualityValue = document.getElementById('noVNC_setting_quality_value');
@@ -1490,32 +1528,39 @@ function setupModernPanels() {
     const clipboardModal = document.getElementById('noVNC_modern_clipboard_modal');
     const clipboardPanel = document.getElementById('noVNC_modern_clipboard');
     const clipboardClose = document.getElementById('noVNC_modern_clipboard_close');
-    clipboardBtn.onclick = () => {
-        closeAllModernPanels();
-        clipboardModal.classList.add('open');
-        clipboardPanel.classList.add('open');
-    };
-    clipboardClose.onclick = () => { clipboardModal.classList.remove('open'); clipboardPanel.classList.remove('open'); };
-    document.getElementById('noVNC_modern_clipboard_send').onclick = (e) => {
-        e.preventDefault();
-        const text = document.getElementById('noVNC_modern_clipboard_text').value;
-        if (UI.rfb && UI.rfb.clipboardPasteFrom) UI.rfb.clipboardPasteFrom(text);
-    };
+    
+    if (clipboardBtn && clipboardModal && clipboardPanel && clipboardClose) {
+        clipboardBtn.onclick = () => openPanel(clipboardModal, clipboardPanel);
+        clipboardClose.onclick = () => closePanel(clipboardModal, clipboardPanel);
+    }
+    
+    const clipboardSendBtn = document.getElementById('noVNC_modern_clipboard_send');
+    if (clipboardSendBtn) {
+        clipboardSendBtn.onclick = (e) => {
+            e.preventDefault();
+            const text = document.getElementById('noVNC_modern_clipboard_text').value;
+            if (UI.rfb && UI.rfb.clipboardPasteFrom) UI.rfb.clipboardPasteFrom(text);
+        };
+    }
 
     // Power panel
     const powerBtn = document.getElementById('noVNC_quick_power');
     const powerModal = document.getElementById('noVNC_modern_power_modal');
     const powerPanel = document.getElementById('noVNC_modern_power');
     const powerClose = document.getElementById('noVNC_modern_power_close');
-    powerBtn.onclick = () => {
-        closeAllModernPanels();
-        powerModal.classList.add('open');
-        powerPanel.classList.add('open');
-    };
-    powerClose.onclick = () => { powerModal.classList.remove('open'); powerPanel.classList.remove('open'); };
-    document.getElementById('noVNC_modern_shutdown').onclick = () => { if (UI.rfb) UI.rfb.machineShutdown(); };
-    document.getElementById('noVNC_modern_reboot').onclick = () => { if (UI.rfb) UI.rfb.machineReboot(); };
-    document.getElementById('noVNC_modern_reset').onclick = () => { if (UI.rfb) UI.rfb.machineReset(); };
+    
+    if (powerBtn && powerModal && powerPanel && powerClose) {
+        powerBtn.onclick = () => openPanel(powerModal, powerPanel);
+        powerClose.onclick = () => closePanel(powerModal, powerPanel);
+    }
+    
+    const shutdownBtn = document.getElementById('noVNC_modern_shutdown');
+    const rebootBtn = document.getElementById('noVNC_modern_reboot');
+    const resetBtn = document.getElementById('noVNC_modern_reset');
+    
+    if (shutdownBtn) shutdownBtn.onclick = () => { if (UI.rfb) UI.rfb.machineShutdown(); closeAllModernPanels(); };
+    if (rebootBtn) rebootBtn.onclick = () => { if (UI.rfb) UI.rfb.machineReboot(); closeAllModernPanels(); };
+    if (resetBtn) resetBtn.onclick = () => { if (UI.rfb) UI.rfb.machineReset(); closeAllModernPanels(); };
 
     // Close modal on backdrop click
     document.querySelectorAll('.noVNC_modal_backdrop').forEach(backdrop => {
@@ -1526,6 +1571,19 @@ function setupModernPanels() {
             if (e.target === backdrop) closeAllModernPanels();
         });
     });
+    
+    // Close panels with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Only close if a panel is open
+            const openPanels = document.querySelectorAll('.noVNC_modern_panel.open');
+            if (openPanels.length > 0) {
+                closeAllModernPanels();
+                e.preventDefault();
+            }
+        }
+    });
+
 }
 
 if (document.readyState === 'loading') {
