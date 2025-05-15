@@ -543,15 +543,22 @@ const UI = {
         }
     },
 
-    saveSetting(name) {
+    saveSetting(name, value) {
+        // Robust: allow value to be passed directly, and handle missing element gracefully
+        let val = value;
         const ctrl = document.getElementById('noVNC_setting_' + name);
-        let val;
-        if (ctrl.type === 'checkbox') {
-            val = ctrl.checked;
-        } else if (typeof ctrl.options !== 'undefined') {
-            val = ctrl.options[ctrl.selectedIndex].value;
-        } else {
-            val = ctrl.value;
+        if (typeof val === 'undefined') {
+            if (!ctrl) {
+                // No element and no value: do nothing
+                return undefined;
+            }
+            if (ctrl.type === 'checkbox') {
+                val = ctrl.checked;
+            } else if (typeof ctrl.options !== 'undefined') {
+                val = ctrl.options[ctrl.selectedIndex]?.value;
+            } else {
+                val = ctrl.value;
+            }
         }
         if (WebUtil.writeSetting) WebUtil.writeSetting(name, val);
         return val;
