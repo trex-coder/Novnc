@@ -1631,10 +1631,6 @@ function setupModernPanels() {
     if (settingsBtn && settingsModal && settingsPanel && settingsClose) {
         settingsBtn.onclick = () => {
             openPanel(settingsModal, settingsPanel);
-            // Sync quality value display
-            const q = document.getElementById('noVNC_setting_quality');
-            const qv = document.getElementById('noVNC_setting_quality_value');
-            if (q && qv) qv.textContent = q.value;
             // Sync scaling dropdown value
             const scalingSelect = document.getElementById('noVNC_setting_scaling');
             if (scalingSelect) {
@@ -1644,22 +1640,32 @@ function setupModernPanels() {
         settingsClose.onclick = () => closePanel(settingsModal, settingsPanel);
     }
     
-    // Quality slider live update
-    const qualitySlider = document.getElementById('noVNC_setting_quality');
-    const qualityValue = document.getElementById('noVNC_setting_quality_value');
-    if (qualitySlider && qualityValue) {
-        qualitySlider.max = 9; // Ensure max is 9
-        qualitySlider.addEventListener('input', function() {
-            qualityValue.textContent = this.value;
-            UI.saveSetting('quality');
+    // Replace quality slider with dropdown
+    const qualityContainer = document.getElementById('noVNC_setting_quality_container');
+    if (qualityContainer) {
+        qualityContainer.innerHTML = '';
+        const select = document.createElement('select');
+        select.id = 'noVNC_setting_quality';
+        select.className = 'noVNC_setting_dropdown';
+        const options = [
+            { label: 'Low', value: 2 },
+            { label: 'Medium', value: 5 },
+            { label: 'High', value: 7 },
+            { label: 'Ultra', value: 9 }
+        ];
+        for (const opt of options) {
+            const o = document.createElement('option');
+            o.value = opt.value;
+            o.textContent = opt.label;
+            select.appendChild(o);
+        }
+        // Set initial value from settings
+        select.value = UI.getSetting('quality') || 5;
+        select.addEventListener('change', function() {
+            UI.saveSetting('quality', select.value);
             UI.updateQuality && UI.updateQuality();
-            // Fix bar fill for custom max
-            const percent = (this.value - this.min) / (this.max - this.min);
-            this.style.background = `linear-gradient(to right, #3fa9f5 0%, #3fa9f5 ${percent*100}%, #e0e0e0 ${percent*100}%, #e0e0e0 100%)`;
         });
-        // Set initial bar fill
-        const percent = (qualitySlider.value - qualitySlider.min) / (qualitySlider.max - qualitySlider.min);
-        qualitySlider.style.background = `linear-gradient(to right, #3fa9f5 0%, #3fa9f5 ${percent*100}%, #e0e0e0 ${percent*100}%, #e0e0e0 100%)`;
+        qualityContainer.appendChild(select);
     }
 
     // Modern settings panel scaling dropdown wiring
@@ -1890,31 +1896,6 @@ if (document.readyState === 'loading') {
     pingServer();
     setInterval(pingServer, 2000);
 })();
-
-// --- Quality slider fix ---
-// Ensure the slider uses the full range (0-9) and updates UI and RFB logic
-function fixQualitySlider() {
-    const slider = document.getElementById('noVNC_setting_quality');
-    const value = document.getElementById('noVNC_setting_quality_value');
-    if (!slider || !value) return;
-    slider.min = 0;
-    slider.max = 9;
-    slider.step = 1;
-    // Set value from setting if available
-    let saved = UI.getSetting && UI.getSetting('quality');
-    if (saved !== undefined && saved !== null) slider.value = saved;
-    value.textContent = slider.value;
-    slider.addEventListener('input', function() {
-        value.textContent = this.value;
-        UI.saveSetting && UI.saveSetting('quality');
-        UI.updateQuality && UI.updateQuality();
-    });
-}
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixQualitySlider);
-} else {
-    fixQualitySlider();
-}
 
 // Quick Menu open/close logic (like other panels, centered, no design change)
 function openQuickMenuPanel() {

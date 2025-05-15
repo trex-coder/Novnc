@@ -207,18 +207,22 @@ function localStorageGet(key, defVal) {
     return typeof defVal !== 'undefined' ? defVal : null;
 }
 
+// Patch: robust localStorageSet for WebView environments
 function localStorageSet(name, value) {
     try {
-        localStorage.setItem(name, value);
-    } catch (e) {
-        if (e instanceof DOMException) {
-            logOnce(cookiesMsg);
-            logOnce("'localStorage.setItem(" + name + "," + value + ")' failed: " + e, "debug");
-        } else {
-            throw e;
+        if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
+            localStorage.setItem(name, value);
         }
+    } catch (e) {
+        // Ignore storage errors in WebView or restricted environments
+        if (window.isWebView && typeof window.isWebView === 'function' && window.isWebView()) {
+            // Silently ignore
+            return;
+        }
+        // Optionally log or handle other environments
     }
 }
+
 function localStorageRemove(name) {
     try {
         localStorage.removeItem(name);
