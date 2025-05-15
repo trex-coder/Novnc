@@ -1390,63 +1390,187 @@ const UI = {
     },
 
     openQuickMenuPanel(event) {
-        // Get menu elements
+        UI.closeAllPanels();
+        
         const quickMenu = document.getElementById('noVNC_quick_menu');
         const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
         if (!quickMenu || !quickMenuBtn) return;
 
-        // Close any other open panels first
-        UI.closeAllPanels();
-
         // Position menu near the button
         const btnRect = quickMenuBtn.getBoundingClientRect();
-        quickMenu.style.position = 'fixed';
-        quickMenu.style.right = (window.innerWidth - btnRect.right) + 'px';
-        quickMenu.style.top = (btnRect.bottom + 8) + 'px'; // 8px gap
+        
+        // Calculate optimal position to ensure menu stays in viewport
+        const menuWidth = 320; // From CSS
+        const windowWidth = window.innerWidth;
+        const rightSpace = windowWidth - btnRect.right;
+        
+        // Default position
+        let left = btnRect.right - menuWidth;
+        let top = btnRect.bottom + 8;
 
-        // Show the menu with modern style
-        quickMenu.classList.remove('noVNC_quick_menu_touch');
+        // Adjust horizontal position if needed
+        if (rightSpace < 20) {
+            left = windowWidth - menuWidth - 20;
+        }
+
+        // Adjust vertical position if it would go off-screen
+        const menuHeight = quickMenu.offsetHeight || 400; // Estimated height if not yet visible
+        if (top + menuHeight > window.innerHeight) {
+            top = btnRect.top - menuHeight - 8;
+        }
+
+        // Apply position
+        quickMenu.style.left = Math.max(20, left) + 'px';
+        quickMenu.style.top = Math.max(20, top) + 'px';
+
+        // Show menu
         quickMenu.classList.add('noVNC_open');
 
-        // Focus first interactive element for accessibility
-        const firstItem = quickMenu.querySelector('button, a, input, select');
-        if (firstItem) firstItem.focus();
+        // Update settings display
+        UI.updateVisualState();
     },
 
     closeQuickMenuPanel() {
         const quickMenu = document.getElementById('noVNC_quick_menu');
         if (quickMenu) {
             quickMenu.classList.remove('noVNC_open');
-            quickMenu.classList.remove('noVNC_quick_menu_touch');
         }
-        // Re-focus the toggle button
-        const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
-        if (quickMenuBtn) quickMenuBtn.focus();
     },
 
     addQuickMenuHandlers() {
-        // Always use unified menu for both touch and desktop
+        // Main toggle button
         const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
         if (!quickMenuBtn) return;
         
-        // Remove any old event listeners if present
-        quickMenuBtn.onclick = null;
-        quickMenuBtn.ontouchstart = null;
-        
-        // Use pointer events for both touch and mouse
+        // Menu close button
+        const closeBtn = document.getElementById('noVNC_quick_menu_close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => UI.closeQuickMenuPanel());
+        }
+
+        // Quick action buttons
+        const disconnectBtn = document.getElementById('noVNC_disconnect_button');
+        if (disconnectBtn) {
+            disconnectBtn.addEventListener('click', () => {
+                UI.disconnect();
+                UI.closeQuickMenuPanel();
+            });
+        }
+
+        // Input controls
+        const keyboardBtn = document.getElementById('noVNC_keyboard_button');
+        if (keyboardBtn) {
+            keyboardBtn.addEventListener('click', () => {
+                UI.toggleVirtualKeyboard();
+                UI.closeQuickMenuPanel();
+            });
+        }
+
+        const extraKeysBtn = document.getElementById('noVNC_toggle_extra_keys_button');
+        if (extraKeysBtn) {
+            extraKeysBtn.addEventListener('click', () => {
+                UI.toggleExtraKeys();
+                UI.closeQuickMenuPanel();
+            });
+        }
+
+        // Settings handlers
+        const qualitySlider = document.getElementById('noVNC_setting_quality');
+        if (qualitySlider) {
+            qualitySlider.addEventListener('input', () => {
+                UI.updateQuality(qualitySlider.value);
+            });
+            qualitySlider.addEventListener('change', () => {
+                UI.updateQuality(qualitySlider.value);
+            });
+        }
+
+        const colorDepthSelect = document.getElementById('noVNC_setting_bgr233');
+        if (colorDepthSelect) {
+            colorDepthSelect.addEventListener('change', () => {
+                UI.updateColorDepth();
+            });
+        }
+
+        const compressionCheckbox = document.getElementById('noVNC_setting_compressionlevel');
+        if (compressionCheckbox) {
+            compressionCheckbox.addEventListener('change', () => {
+                UI.updateCompression();
+            });
+        }
+
+        // Main menu toggle
         quickMenuBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            UI.openQuickMenuPanel(e);
+            e.stopPropagation();
+            if (document.getElementById('noVNC_quick_menu').classList.contains('noVNC_open')) {
+                UI.closeQuickMenuPanel();
+            } else {
+                UI.openQuickMenuPanel(e);
+            }
         });
 
-        // Close menu on outside click/tap
-        document.addEventListener('pointerdown', (e) => {
+        // Close on outside click
+        document.addEventListener('click', (e) => {
             const quickMenu = document.getElementById('noVNC_quick_menu');
             if (!quickMenu) return;
-            if (!quickMenu.contains(e.target) && e.target !== quickMenuBtn) {
+            
+            const isClickInside = quickMenu.contains(e.target) || 
+                                quickMenuBtn.contains(e.target);
+            
+            if (!isClickInside && quickMenu.classList.contains('noVNC_open')) {
                 UI.closeQuickMenuPanel();
             }
         });
+
+        // Initialize settings values
+        UI.initializeQuickMenuSettings();
+    },
+
+    initializeQuickMenuSettings() {
+        // Set initial values from settings
+        const qualitySlider = document.getElementById('noVNC_setting_quality');
+        if (qualitySlider) {
+            qualitySlider.value = WebUtil.readSetting('quality', 6);
+        }
+
+        const colorDepthSelect = document.getElementById('noVNC_setting_bgr233');
+        if (colorDepthSelect) {
+            colorDepthSelect.value = WebUtil.readSetting('bgr233', false);
+        }
+
+        const compressionCheckbox = document.getElementById('noVNC_setting_compressionlevel');
+        if (compressionCheckbox) {
+            compressionCheckbox.checked = WebUtil.readSetting('compressionlevel', 2) > 0;
+        }
+    },
+
+    updateQuality(value) {
+        WebUtil.writeSetting('quality', value);
+        if (UI.rfb) {
+            UI.rfb.qualityLevel = parseInt(value);
+        }
+    },
+
+    updateColorDepth() {
+        const colorDepthSelect = document.getElementById('noVNC_setting_bgr233');
+        if (!colorDepthSelect) return;
+        
+        WebUtil.writeSetting('bgr233', colorDepthSelect.value);
+        if (UI.rfb) {
+            UI.rfb.bgr233 = colorDepthSelect.value === 'true';
+        }
+    },
+
+    updateCompression() {
+        const compressionCheckbox = document.getElementById('noVNC_setting_compressionlevel');
+        if (!compressionCheckbox) return;
+        
+        const level = compressionCheckbox.checked ? 2 : 0;
+        WebUtil.writeSetting('compressionlevel', level);
+        if (UI.rfb) {
+            UI.rfb.compressionLevel = level;
+        }
     },
 };
 

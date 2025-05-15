@@ -208,55 +208,77 @@
     </div> <!-- End of noVNC_control_bar -->
 
     <!-- Modern Quick Session Menu Overlay -->
-    <div id="noVNC_quick_menu" class="noVNC_quick_menu">
-        <div class="noVNC_quick_menu_content">
-            <div class="noVNC_quick_menu_header">
-                <span>Session Menu</span>
-                <button id="noVNC_quick_menu_close" class="noVNC_quick_menu_close">&times;</button>
-            </div>
-            <div class="noVNC_quick_menu_group">
-                <button id="noVNC_quick_connect" class="noVNC_quick_btn" title="Connect">
-                  <span class="quick_menu_icon"> <!-- Link/plug icon -->
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 12.5L12.5 7.5" stroke="#3b82f6" stroke-width="2"/><rect x="2" y="11" width="7" height="7" rx="3.5" stroke="#3b82f6" stroke-width="2"/><rect x="11" y="2" width="7" height="7" rx="3.5" stroke="#3b82f6" stroke-width="2"/></svg>
-                  </span>Connect
+    <div id="noVNC_quick_menu" class="noVNC_panel">
+        <div class="noVNC_menu_header">
+            <h2>Session Menu</h2>
+            <button id="noVNC_quick_menu_close" class="noVNC_menu_close" title="Close menu">×</button>
+        </div>
+        
+        <div class="noVNC_menu_section">
+            <div class="noVNC_menu_item_group">
+                <div class="noVNC_menu_heading">Quick Actions</div>
+                <button id="noVNC_disconnect_button" class="noVNC_menu_button noVNC_destructive">
+                    <span class="noVNC_icon"><svg><use href="#disconnect"></use></svg></span>
+                    Disconnect
                 </button>
-                <button id="noVNC_quick_disconnect" class="noVNC_quick_btn" title="Disconnect">
-                  <span class="quick_menu_icon">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h10M13 7l3 3-3 3" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="none"/></svg>
-                  </span>Disconnect
-                </button>
-            </div>
-            <div class="noVNC_quick_menu_group">
-                <button id="noVNC_quick_settings" class="noVNC_quick_btn" title="Settings">
-                  <span class="quick_menu_icon">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#3b82f6" stroke-width="2"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.42 1.42M14.07 14.07l1.42 1.42M4.93 15.07l1.42-1.42M14.07 5.93l1.42-1.42" stroke="#3b82f6" stroke-width="2"/></svg>
-                  </span>Settings
-                </button>
-                <button id="noVNC_quick_keyboard" class="noVNC_quick_btn" title="Keyboard">
-                  <span class="quick_menu_icon">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="10" rx="2" stroke="#3b82f6" stroke-width="2"/><rect x="5" y="8" width="2" height="2" rx="1" fill="#3b82f6"/><rect x="9" y="8" width="2" height="2" rx="1" fill="#3b82f6"/><rect x="13" y="8" width="2" height="2" rx="1" fill="#3b82f6"/><rect x="7" y="12" width="6" height="2" rx="1" fill="#3b82f6"/></svg>
-                  </span>Keyboard
-                </button>
-                <button id="noVNC_quick_clipboard" class="noVNC_quick_btn" title="Clipboard">
-                  <span class="quick_menu_icon">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="5" y="3" width="10" height="14" rx="2" stroke="#3b82f6" stroke-width="2"/><rect x="7" y="1" width="6" height="4" rx="2" stroke="#3b82f6" stroke-width="2"/></svg>
-                  </span>Clipboard
+                <button id="noVNC_fullscreen_button" class="noVNC_menu_button">
+                    <span class="noVNC_icon"><svg><use href="#fullscreen"></use></svg></span>
+                    Fullscreen
                 </button>
             </div>
-            <div class="noVNC_quick_menu_group">
-                <button id="noVNC_quick_power" class="noVNC_quick_btn" title="Power">
-                  <span class="quick_menu_icon">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2v6" stroke="#ef4444" stroke-width="2"/><circle cx="10" cy="12" r="6" stroke="#ef4444" stroke-width="2"/></svg>
-                  </span>Power
+
+            <div class="noVNC_menu_item_group">
+                <div class="noVNC_menu_heading">Input</div>
+                <button id="noVNC_keyboard_button" class="noVNC_menu_button">
+                    <span class="noVNC_icon"><svg><use href="#keyboard"></use></svg></span>
+                    Show Keyboard
                 </button>
-                <button id="noVNC_quick_fullscreen" class="noVNC_quick_btn" title="Fullscreen">
-                  <span class="quick_menu_icon">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 3h5v2H5v3H3V3zm14 0v5h-2V5h-3V3h5zm0 14h-5v-2h3v-3h2v5zm-14 0v-5h2v3h3v2H3z" fill="#3b82f6"/></svg>
-                  </span>Fullscreen
+                <button id="noVNC_toggle_extra_keys_button" class="noVNC_menu_button">
+                    <span class="noVNC_icon"><svg><use href="#toggleextra"></use></svg></span>
+                    Toggle Extra Keys
+                </button>
+                <button id="noVNC_clipboard_button" class="noVNC_menu_button">
+                    <span class="noVNC_icon"><svg><use href="#clipboard"></use></svg></span>
+                    Clipboard
+                </button>
+            </div>
+
+            <div class="noVNC_menu_item_group">
+                <div class="noVNC_menu_heading">Display</div>
+                <div class="noVNC_menu_item noVNC_slider_item">
+                    <label for="noVNC_setting_quality">Stream Quality</label>
+                    <input id="noVNC_setting_quality" type="range" min="0" max="9" value="6">
+                    <div class="noVNC_slider_labels">
+                        <span>Fastest</span>
+                        <span>Best</span>
+                    </div>
+                </div>
+                <div class="noVNC_menu_item noVNC_slider_item">
+                    <label for="noVNC_setting_bgr233">Color Depth</label>
+                    <select id="noVNC_setting_bgr233">
+                        <option value="true">Low (8 bits)</option>
+                        <option value="false" selected>High (24 bits)</option>
+                    </select>
+                </div>
+                <div class="noVNC_menu_item noVNC_checkbox_item">
+                    <label><input id="noVNC_setting_compressionlevel" type="checkbox"> Enable Compression</label>
+                </div>
+            </div>
+
+            <div class="noVNC_menu_item_group">
+                <div class="noVNC_menu_heading">Advanced</div>
+                <button id="noVNC_settings_button" class="noVNC_menu_button">
+                    <span class="noVNC_icon"><svg><use href="#settings"></use></svg></span>
+                    More Settings
+                </button>
+                <button id="noVNC_power_button" class="noVNC_menu_button">
+                    <span class="noVNC_icon"><svg><use href="#power"></use></svg></span>
+                    Power
                 </button>
             </div>
         </div>
     </div>
+
     <!-- Modern Quick Menu Toggle Button -->
     <button id="noVNC_quick_menu_toggle" class="noVNC_quick_menu_toggle" aria-label="Open session menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/></svg>
