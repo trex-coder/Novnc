@@ -87,7 +87,6 @@ const UI = {
         UI.addConnectionControlHandlers();
         UI.addClipboardHandlers();
         UI.addSettingsHandlers();
-        UI.addQuickMenuHandlers();
         
         document.getElementById("noVNC_status").addEventListener('click', UI.hideStatus);
 
@@ -544,22 +543,15 @@ const UI = {
         }
     },
 
-    saveSetting(name, value) {
-        // Robust: allow value to be passed directly, and handle missing element gracefully
-        let val = value;
+    saveSetting(name) {
         const ctrl = document.getElementById('noVNC_setting_' + name);
-        if (typeof val === 'undefined') {
-            if (!ctrl) {
-                // No element and no value: do nothing
-                return undefined;
-            }
-            if (ctrl.type === 'checkbox') {
-                val = ctrl.checked;
-            } else if (typeof ctrl.options !== 'undefined') {
-                val = ctrl.options[ctrl.selectedIndex]?.value;
-            } else {
-                val = ctrl.value;
-            }
+        let val;
+        if (ctrl.type === 'checkbox') {
+            val = ctrl.checked;
+        } else if (typeof ctrl.options !== 'undefined') {
+            val = ctrl.options[ctrl.selectedIndex].value;
+        } else {
+            val = ctrl.value;
         }
         if (WebUtil.writeSetting) WebUtil.writeSetting(name, val);
         return val;
@@ -851,7 +843,7 @@ const UI = {
         UI.closePowerPanel && UI.closePowerPanel();
         UI.closeClipboardPanel && UI.closeClipboardPanel();
         UI.closeExtraKeys && UI.closeExtraKeys();
-        UI.closeQuickMenuPanel && UI.closeQuickMenuPanel();
+        closeQuickMenuPanel();
     },
     openSettingsPanel() {
         UI.closeAllPanels && UI.closeAllPanels();
@@ -1200,46 +1192,24 @@ const UI = {
         const mode = UI.getSetting('resize');
         UI.rfb.scaleViewport = mode === 'scale';
         UI.rfb.resizeSession = mode === 'remote';
-        // For all modes, ensure the container and canvas fill the viewport
+        // For 'off', ensure the canvas fills the container and is not clipped/scaled
         const container = document.getElementById('noVNC_container');
         const canvas = container ? container.querySelector('canvas') : null;
         if (container && canvas) {
-            container.style.position = 'fixed';
-            container.style.top = '0';
-            container.style.left = '0';
-            container.style.width = '100vw';
-            container.style.height = '100vh';
-            container.style.overflow = 'hidden';
-            canvas.style.display = 'block';
-            canvas.style.position = 'absolute';
-            canvas.style.top = '0';
-            canvas.style.left = '0';
             if (mode === 'off') {
-                // Patch: force canvas to fill container exactly, no extra space
-                canvas.style.width = '100vw';
-                canvas.style.height = '100vh';
-                canvas.style.objectFit = 'fill';
-            } else if (mode === 'scale') {
-                // Patch: force canvas to fill container, but preserve aspect ratio
-                canvas.style.width = '100vw';
-                canvas.style.height = '100vh';
+                container.style.overflow = 'hidden';
+                container.style.width = '100vw';
+                container.style.height = '100vh';
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
                 canvas.style.objectFit = 'contain';
             } else {
-                // Let autoscale/_rescale handle width/height, but ensure no scrollbars
+                container.style.overflow = '';
+                container.style.width = '';
+                container.style.height = '';
                 canvas.style.width = '';
                 canvas.style.height = '';
                 canvas.style.objectFit = '';
-            }
-        }
-        // In WebView, force scaling logic to re-apply on orientation change/resize
-        if (isWebView()) {
-            if (!window._noVNCResizeHandler) {
-                window._noVNCResizeHandler = () => {
-                    UI.applyResizeMode();
-                    if (UI.rfb && UI.rfb._updateScale) UI.rfb._updateScale();
-                };
-                window.addEventListener('resize', window._noVNCResizeHandler);
-                window.addEventListener('orientationchange', window._noVNCResizeHandler);
             }
         }
     },
@@ -1388,190 +1358,585 @@ const UI = {
         const keyboardBtn = document.getElementById('noVNC_keyboard_button');
         if (keyboardBtn) keyboardBtn.click();
     },
-
-    openQuickMenuPanel(event) {
-        UI.closeAllPanels();
-        
-        const quickMenu = document.getElementById('noVNC_quick_menu');
-        const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
-        if (!quickMenu || !quickMenuBtn) return;
-
-        // Position menu near the button
-        const btnRect = quickMenuBtn.getBoundingClientRect();
-        
-        // Calculate optimal position to ensure menu stays in viewport
-        const menuWidth = 320; // From CSS
-        const windowWidth = window.innerWidth;
-        const rightSpace = windowWidth - btnRect.right;
-        
-        // Default position
-        let left = btnRect.right - menuWidth;
-        let top = btnRect.bottom + 8;
-
-        // Adjust horizontal position if needed
-        if (rightSpace < 20) {
-            left = windowWidth - menuWidth - 20;
-        }
-
-        // Adjust vertical position if it would go off-screen
-        const menuHeight = quickMenu.offsetHeight || 400; // Estimated height if not yet visible
-        if (top + menuHeight > window.innerHeight) {
-            top = btnRect.top - menuHeight - 8;
-        }
-
-        // Apply position
-        quickMenu.style.left = Math.max(20, left) + 'px';
-        quickMenu.style.top = Math.max(20, top) + 'px';
-
-        // Show menu
-        quickMenu.classList.add('noVNC_open');
-
-        // Update settings display
-        UI.updateVisualState();
-    },
-
-    closeQuickMenuPanel() {
-        const quickMenu = document.getElementById('noVNC_quick_menu');
-        if (quickMenu) {
-            quickMenu.classList.remove('noVNC_open');
-        }
-    },
-
-    addQuickMenuHandlers() {
-        // Main toggle button
-        const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
-        if (!quickMenuBtn) return;
-        
-        // Menu close button
-        const closeBtn = document.getElementById('noVNC_quick_menu_close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => UI.closeQuickMenuPanel());
-        }
-
-        // Quick action buttons
-        const disconnectBtn = document.getElementById('noVNC_disconnect_button');
-        if (disconnectBtn) {
-            disconnectBtn.addEventListener('click', () => {
-                UI.disconnect();
-                UI.closeQuickMenuPanel();
-            });
-        }
-
-        // Input controls
-        const keyboardBtn = document.getElementById('noVNC_keyboard_button');
-        if (keyboardBtn) {
-            keyboardBtn.addEventListener('click', () => {
-                UI.toggleVirtualKeyboard();
-                UI.closeQuickMenuPanel();
-            });
-        }
-
-        const extraKeysBtn = document.getElementById('noVNC_toggle_extra_keys_button');
-        if (extraKeysBtn) {
-            extraKeysBtn.addEventListener('click', () => {
-                UI.toggleExtraKeys();
-                UI.closeQuickMenuPanel();
-            });
-        }
-
-        // Settings handlers
-        const qualitySlider = document.getElementById('noVNC_setting_quality');
-        if (qualitySlider) {
-            qualitySlider.addEventListener('input', () => {
-                UI.updateQuality(qualitySlider.value);
-            });
-            qualitySlider.addEventListener('change', () => {
-                UI.updateQuality(qualitySlider.value);
-            });
-        }
-
-        const colorDepthSelect = document.getElementById('noVNC_setting_bgr233');
-        if (colorDepthSelect) {
-            colorDepthSelect.addEventListener('change', () => {
-                UI.updateColorDepth();
-            });
-        }
-
-        const compressionCheckbox = document.getElementById('noVNC_setting_compressionlevel');
-        if (compressionCheckbox) {
-            compressionCheckbox.addEventListener('change', () => {
-                UI.updateCompression();
-            });
-        }
-
-        // Main menu toggle
-        quickMenuBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (document.getElementById('noVNC_quick_menu').classList.contains('noVNC_open')) {
-                UI.closeQuickMenuPanel();
-            } else {
-                UI.openQuickMenuPanel(e);
-            }
-        });
-
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            const quickMenu = document.getElementById('noVNC_quick_menu');
-            if (!quickMenu) return;
-            
-            const isClickInside = quickMenu.contains(e.target) || 
-                                quickMenuBtn.contains(e.target);
-            
-            if (!isClickInside && quickMenu.classList.contains('noVNC_open')) {
-                UI.closeQuickMenuPanel();
-            }
-        });
-
-        // Initialize settings values
-        UI.initializeQuickMenuSettings();
-    },
-
-    initializeQuickMenuSettings() {
-        // Set initial values from settings
-        const qualitySlider = document.getElementById('noVNC_setting_quality');
-        if (qualitySlider) {
-            qualitySlider.value = WebUtil.readSetting('quality', 6);
-        }
-
-        const colorDepthSelect = document.getElementById('noVNC_setting_bgr233');
-        if (colorDepthSelect) {
-            colorDepthSelect.value = WebUtil.readSetting('bgr233', false);
-        }
-
-        const compressionCheckbox = document.getElementById('noVNC_setting_compressionlevel');
-        if (compressionCheckbox) {
-            compressionCheckbox.checked = WebUtil.readSetting('compressionlevel', 2) > 0;
-        }
-    },
-
-    updateQuality(value) {
-        WebUtil.writeSetting('quality', value);
-        if (UI.rfb) {
-            UI.rfb.qualityLevel = parseInt(value);
-        }
-    },
-
-    updateColorDepth() {
-        const colorDepthSelect = document.getElementById('noVNC_setting_bgr233');
-        if (!colorDepthSelect) return;
-        
-        WebUtil.writeSetting('bgr233', colorDepthSelect.value);
-        if (UI.rfb) {
-            UI.rfb.bgr233 = colorDepthSelect.value === 'true';
-        }
-    },
-
-    updateCompression() {
-        const compressionCheckbox = document.getElementById('noVNC_setting_compressionlevel');
-        if (!compressionCheckbox) return;
-        
-        const level = compressionCheckbox.checked ? 2 : 0;
-        WebUtil.writeSetting('compressionlevel', level);
-        if (UI.rfb) {
-            UI.rfb.compressionLevel = level;
-        }
-    },
 };
+
+// Quick Menu UI logic
+function setupQuickMenu() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
+    const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
+    if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
+    function openMenu() { 
+        // Close any open panels first
+        closeAllModernPanels();
+        // Then open the quick menu
+        const quickMenu = document.getElementById('noVNC_quick_menu');
+        if (quickMenu) quickMenu.classList.add('open');
+    }
+    function closeMenu() { 
+        const quickMenu = document.getElementById('noVNC_quick_menu');
+        if (quickMenu) quickMenu.classList.remove('open');
+    }
+    // Prevent double open on touch/click
+    let touchHandled = false;
+    quickMenuToggle.addEventListener('click', function(e) {
+        if (touchHandled) { touchHandled = false; return; }
+        openMenu();
+    });
+    quickMenuToggle.addEventListener('touchend', function(e) {
+        touchHandled = true;
+        openMenu();
+        e.preventDefault();
+    }, {passive: false});
+    quickMenuClose.addEventListener('click', closeMenu);
+    // Close menu on outside click
+    document.addEventListener('mousedown', (e) => {
+        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
+            closeMenu();
+        }
+    });
+    // Wire up quick menu buttons to existing UI actions
+    document.getElementById('noVNC_quick_connect').onclick = () => { closeMenu(); UI.connect(); };
+    document.getElementById('noVNC_quick_disconnect').onclick = () => { closeMenu(); UI.disconnect(); };
+    document.getElementById('noVNC_quick_settings').onclick = () => { closeMenu(); UI.openSettingsPanel(); };
+    document.getElementById('noVNC_quick_clipboard').onclick = () => { closeMenu(); UI.openClipboardPanel(); };
+    document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
+    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
+    document.getElementById('noVNC_quick_keyboard').onclick = () => { closeMenu(); UI.showTouchKeyboard && UI.showTouchKeyboard(); };
+}
+// Call setupQuickMenu after DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupQuickMenu);
+} else {
+    setupQuickMenu();
+}
+
+// Draggable quick menu toggle button
+function setupQuickMenuDraggable() {
+    const btn = document.getElementById('noVNC_quick_menu_toggle');
+    if (!btn) return;
+    let isDragging = false;
+    let startX, startY, origX, origY;
+    let winW = window.innerWidth, winH = window.innerHeight;
+    let btnW = btn.offsetWidth, btnH = btn.offsetHeight;
+
+    // --- Position Persistence ---
+    function saveBtnPosition(pos) {
+        if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
+            WebUtil.localStorageSet('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+            return;
+        }
+        try {
+            if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
+                localStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+                return;
+            }
+        } catch (e) {}
+        try {
+            if (typeof sessionStorage !== 'undefined' && sessionStorage !== null && typeof sessionStorage.setItem === 'function') {
+                sessionStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+                return;
+            }
+        } catch (e) {}
+        // If no storage available, do nothing
+    }
+    function loadBtnPosition() {
+        try {
+            return WebUtil.localStorageGet ? WebUtil.localStorageGet('noVNC_quick_menu_btn_pos', null) : null;
+        } catch (e) { return null; }
+    }
+    function setBtnPosition(pos) {
+        // Remove all manual positions first
+        btn.style.left = '';
+        btn.style.top = '';
+        btn.style.right = '';
+        btn.style.bottom = '';
+        // Set to snapped corner
+        if (pos.left !== undefined) btn.style.left = pos.left + 'px';
+        if (pos.right !== undefined) btn.style.right = pos.right + 'px';
+        if (pos.top !== undefined) btn.style.top = pos.top + 'px';
+        if (pos.bottom !== undefined) btn.style.bottom = pos.bottom + 'px';
+    }
+    function getCorner(x, y) {
+        // Snap to nearest corner
+        const corners = [
+            {top: 24, left: 24}, // top-left
+            {top: 24, left: winW - btnW - 24}, // top-right
+            {top: winH - btnH - 24, left: 24}, // bottom-left
+            {top: winH - btnH - 24, left: winW - btnW - 24} // bottom-right
+        ];
+        let minDist = Infinity, best = corners[0];
+        for (const c of corners) {
+            const dist = Math.hypot(x - c.left, y - c.top);
+            if (dist < minDist) { minDist = dist; best = c; }
+        }
+        return best;
+    }
+    // Restore position on load
+    let pos = loadBtnPosition();
+    if (pos) {
+        setBtnPosition(pos);
+    } else {
+        // Default to top left
+        setBtnPosition({top: 24, left: 24});
+    }
+    function onMouseDown(e) {
+        if (e.button !== 0) return;
+        isDragging = true;
+        btn.classList.add('dragging');
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = btn.getBoundingClientRect();
+        origX = rect.left;
+        origY = rect.top;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+    }
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+        let newX = origX + dx;
+        let newY = origY + dy;
+        btn.style.transition = 'none';
+        btn.style.left = newX + 'px';
+        btn.style.top = newY + 'px';
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+    }
+    function onMouseUp(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        btn.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        // Snap to nearest corner
+        let rect = btn.getBoundingClientRect();
+        winW = window.innerWidth; winH = window.innerHeight;
+        btnW = btn.offsetWidth; btnH = btn.offsetHeight;
+        const corner = getCorner(rect.left, rect.top);
+        btn.style.transition = '';
+        setBtnPosition(corner);
+        saveBtnPosition(corner);
+    }
+    btn.addEventListener('mousedown', onMouseDown);
+    // Touch support
+    btn.addEventListener('touchstart', function(e) {
+        if (e.touches.length !== 1) return;
+        isDragging = true;
+        btn.classList.add('dragging');
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        const rect = btn.getBoundingClientRect();
+        origX = rect.left;
+        origY = rect.top;
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('touchend', onTouchEnd);
+        e.preventDefault();
+    }, {passive: false});
+    function onTouchMove(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+        let dx = e.touches[0].clientX - startX;
+        let dy = e.touches[0].clientY - startY;
+        let newX = origX + dx;
+        let newY = origY + dy;
+        btn.style.transition = 'none';
+        btn.style.left = newX + 'px';
+        btn.style.top = newY + 'px';
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+    }
+    function onTouchEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        btn.classList.remove('dragging');
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+        // Snap to nearest corner
+        let rect = btn.getBoundingClientRect();
+        winW = window.innerWidth; winH = window.innerHeight;
+        btnW = btn.offsetWidth; btnH = btn.offsetHeight;
+        const corner = getCorner(rect.left, rect.top);
+        btn.style.transition = '';
+        setBtnPosition(corner);
+        saveBtnPosition(corner);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupQuickMenuDraggable);
+} else {
+    setupQuickMenuDraggable();
+}
+
+// Modern panel logic
+function closeAllModernPanels() {
+    // Close all modal backdrops
+    document.querySelectorAll('.noVNC_modal_backdrop').forEach(b => b.classList.remove('open'));
+    // Close all panels
+    document.querySelectorAll('.noVNC_modern_panel').forEach(p => p.classList.remove('open'));
+    // Close quick menu if it's open
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (quickMenu && quickMenu.classList.contains('open')) {
+        quickMenu.classList.remove('open');
+    }
+}
+
+function setupModernPanels() {
+    // Helper function to open a panel with animation
+    function openPanel(modalBackdrop, panel) {
+        // First ensure all other panels are closed
+        closeAllModernPanels();
+        
+        // Add a small delay to ensure smooth transition
+        setTimeout(() => {
+            modalBackdrop.classList.add('open');
+            panel.classList.add('open');
+            
+            // Focus the first input if there is one
+            const firstInput = panel.querySelector('input, textarea, select');
+            if (firstInput) firstInput.focus();
+        }, 10);
+    }
+    
+    // Helper function to close a panel with animation
+    function closePanel(modalBackdrop, panel) {
+        panel.classList.remove('open');
+        modalBackdrop.classList.remove('open');
+    }
+
+    // Settings panel
+    const settingsBtn = document.getElementById('noVNC_quick_settings');
+    const settingsModal = document.getElementById('noVNC_modern_settings_modal');
+    const settingsPanel = document.getElementById('noVNC_modern_settings');
+    const settingsClose = document.getElementById('noVNC_modern_settings_close');
+    
+    if (settingsBtn && settingsModal && settingsPanel && settingsClose) {
+        settingsBtn.onclick = () => {
+            openPanel(settingsModal, settingsPanel);
+            // Sync quality value display
+            const q = document.getElementById('noVNC_setting_quality');
+            const qv = document.getElementById('noVNC_setting_quality_value');
+            if (q && qv) qv.textContent = q.value;
+            // Sync scaling dropdown value
+            const scalingSelect = document.getElementById('noVNC_setting_scaling');
+            if (scalingSelect) {
+                scalingSelect.value = UI.getSetting('resize') || 'off';
+            }
+        };
+        settingsClose.onclick = () => closePanel(settingsModal, settingsPanel);
+    }
+    
+    // Quality slider live update
+    const qualitySlider = document.getElementById('noVNC_setting_quality');
+    const qualityValue = document.getElementById('noVNC_setting_quality_value');
+    if (qualitySlider && qualityValue) {
+        qualitySlider.addEventListener('input', function() {
+            qualityValue.textContent = this.value;
+            UI.saveSetting('quality');
+            UI.updateQuality && UI.updateQuality();
+        });
+    }
+
+    // Modern settings panel scaling dropdown wiring
+    const scalingSelect = document.getElementById('noVNC_setting_scaling');
+    if (scalingSelect) {
+        // Set initial value from settings
+        scalingSelect.value = UI.getSetting('resize') || 'off';
+        scalingSelect.addEventListener('change', function() {
+            UI.saveSetting('resize', scalingSelect.value);
+            UI.applyResizeMode && UI.applyResizeMode();
+        });
+    }
+
+    // Clipboard panel
+    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
+    const clipboardModal = document.getElementById('noVNC_modern_clipboard_modal');
+    const clipboardPanel = document.getElementById('noVNC_modern_clipboard');
+    const clipboardClose = document.getElementById('noVNC_modern_clipboard_close');
+    
+    if (clipboardBtn && clipboardModal && clipboardPanel && clipboardClose) {
+        clipboardBtn.onclick = () => openPanel(clipboardModal, clipboardPanel);
+        clipboardClose.onclick = () => closePanel(clipboardModal, clipboardPanel);
+    }
+    
+    const clipboardSendBtn = document.getElementById('noVNC_modern_clipboard_send');
+    if (clipboardSendBtn) {
+        clipboardSendBtn.onclick = (e) => {
+            e.preventDefault();
+            const text = document.getElementById('noVNC_modern_clipboard_text').value;
+            if (UI.rfb && UI.rfb.clipboardPasteFrom) UI.rfb.clipboardPasteFrom(text);
+        };
+    }
+
+    // Power panel
+    const powerBtn = document.getElementById('noVNC_quick_power');
+    const powerModal = document.getElementById('noVNC_modern_power_modal');
+    const powerPanel = document.getElementById('noVNC_modern_power');
+    const powerClose = document.getElementById('noVNC_modern_power_close');
+    
+    if (powerBtn && powerModal && powerPanel && powerClose) {
+        powerBtn.onclick = () => openPanel(powerModal, powerPanel);
+        powerClose.onclick = () => closePanel(powerModal, powerPanel);
+    }
+    
+    const shutdownBtn = document.getElementById('noVNC_modern_shutdown');
+    const rebootBtn = document.getElementById('noVNC_modern_reboot');
+    const resetBtn = document.getElementById('noVNC_modern_reset');
+    
+    if (shutdownBtn) shutdownBtn.onclick = () => { if (UI.rfb) UI.rfb.machineShutdown(); closeAllModernPanels(); };
+    if (rebootBtn) rebootBtn.onclick = () => { if (UI.rfb) UI.rfb.machineReboot(); closeAllModernPanels(); };
+    if (resetBtn) resetBtn.onclick = () => { if (UI.rfb) UI.rfb.machineReset(); closeAllModernPanels(); };
+
+    // Close modal on backdrop click
+    document.querySelectorAll('.noVNC_modal_backdrop').forEach(backdrop => {
+        backdrop.addEventListener('mousedown', function(e) {
+            if (e.target === backdrop) closeAllModernPanels();
+        });
+        backdrop.addEventListener('touchend', function(e) {
+            if (e.target === backdrop) closeAllModernPanels();
+        });
+    });
+    
+    // Close panels with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Only close if a panel is open
+            const openPanels = document.querySelectorAll('.noVNC_modern_panel.open');
+            if (openPanels.length > 0) {
+                closeAllModernPanels();
+                e.preventDefault();
+            }
+        }
+    });
+
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupModernPanels);
+} else {
+    setupModernPanels();
+}
+
+// Hide the connect button forever
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        const connectBtn = document.getElementById('noVNC_connect_button');
+        if (connectBtn) connectBtn.style.display = 'none';
+    });
+} else {
+    const connectBtn = document.getElementById('noVNC_connect_button');
+    if (connectBtn) connectBtn.style.display = 'none';
+}
+
+// --- LATENCY METER ---
+(function setupLatencyMeter() {
+    // Create the latency meter container
+    const meter = document.createElement('div');
+    meter.id = 'noVNC_latency_meter';
+    meter.style.position = 'fixed';
+    meter.style.top = '18px';
+    meter.style.right = '24px';
+    meter.style.zIndex = '9999';
+    meter.style.display = 'flex';
+    meter.style.alignItems = 'center';
+    meter.style.gap = '8px';
+    meter.style.background = 'rgba(30,32,36,0.82)';
+    meter.style.borderRadius = '10px';
+    meter.style.padding = '6px 16px 6px 12px';
+    meter.style.boxShadow = '0 2px 12px 0 rgba(0,0,0,0.10)';
+    meter.style.fontWeight = '600';
+    meter.style.fontSize = '1em';
+    meter.style.userSelect = 'none';
+    meter.style.pointerEvents = 'none';
+
+    // --- Transparency Slider ---
+    const transparencyWrap = document.createElement('div');
+    transparencyWrap.style.position = 'absolute';
+    transparencyWrap.style.top = '100%';
+    transparencyWrap.style.right = '0';
+    transparencyWrap.style.background = 'rgba(30,32,36,0.95)';
+    transparencyWrap.style.borderRadius = '8px';
+    transparencyWrap.style.padding = '8px 12px';
+    transparencyWrap.style.marginTop = '8px';
+    transparencyWrap.style.display = 'none';
+    transparencyWrap.style.zIndex = '10000';
+    transparencyWrap.style.boxShadow = '0 2px 12px 0 rgba(0,0,0,0.10)';
+    transparencyWrap.style.userSelect = 'auto';
+    transparencyWrap.style.pointerEvents = 'auto';
+    transparencyWrap.innerHTML = `<label style="font-size:0.95em;font-weight:500;">Ping Overlay Transparency <input id="noVNC_latency_transparency" type="range" min="0.2" max="1" step="0.01" value="0.82" style="vertical-align:middle;width:90px;margin-left:8px;"></label>`;
+    document.body.appendChild(transparencyWrap);
+    // Show/hide on click
+    meter.addEventListener('click', function() {
+        transparencyWrap.style.display = transparencyWrap.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('mousedown', function(e) {
+        if (!transparencyWrap.contains(e.target) && e.target !== meter) {
+            transparencyWrap.style.display = 'none';
+        }
+    });
+    // Persist transparency
+    function saveTransparency(val) {
+        if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
+            WebUtil.localStorageSet('noVNC_latency_transparency', val);
+        } else {
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
+                    localStorage.setItem('noVNC_latency_transparency', val);
+                    return;
+                }
+            } catch (e) {}
+            try {
+                if (typeof sessionStorage !== 'undefined' && sessionStorage !== null && typeof sessionStorage.setItem === 'function') {
+                    sessionStorage.setItem('noVNC_latency_transparency', val);
+                    return;
+                }
+            } catch (e) {}
+            // If no storage available, do nothing
+        }
+    }
+    function safeGetLocalStorageItem(key, fallback) {
+        try {
+            if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                const v = WebUtil.localStorageGet ? WebUtil.localStorageGet(key, fallback) : fallback;
+                return v !== null ? v : fallback;
+            }
+        } catch (e) {}
+        return fallback;
+    }
+    function loadTransparency() {
+        let v = safeGetLocalStorageItem('noVNC_latency_transparency', null);
+        if (!v) return 0.82;
+        return parseFloat(v);
+    }
+    const transparencySlider = transparencyWrap.querySelector('#noVNC_latency_transparency');
+    function setMeterAlpha(alpha) {
+        meter.style.background = `rgba(30,32,36,${alpha})`;
+    }
+    transparencySlider.value = loadTransparency();
+    setMeterAlpha(transparencySlider.value);
+    transparencySlider.addEventListener('input', function() {
+        setMeterAlpha(this.value);
+        saveTransparency(this.value);
+    });
+
+    // Inline SVG network icon
+    const icon = document.createElement('span');
+    icon.id = 'noVNC_latency_icon';
+    icon.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M6 15c1.5-2 8.5-2 10 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="15" r="1.5" fill="currentColor"/></svg>`;
+    icon.style.display = 'inline-flex';
+    icon.style.verticalAlign = 'middle';
+    icon.style.fontSize = '1.2em';
+    icon.style.transition = 'color 0.2s';
+
+    // Latency text
+    const text = document.createElement('span');
+    text.id = 'noVNC_latency_text';
+    text.textContent = '-- ms';
+    text.style.transition = 'color 0.2s';
+
+    meter.appendChild(icon);
+    meter.appendChild(text);
+    document.body.appendChild(meter);
+
+    // Color logic
+    function setMeterColor(latency) {
+        let color;
+        if (latency === null) {
+            color = '#aaa';
+        } else if (latency < 80) {
+            color = '#22c55e'; // green
+        } else if (latency < 200) {
+            color = '#eab308'; // yellow
+        } else {
+            color = '#ef4444'; // red
+        }
+        icon.style.color = color;
+        text.style.color = color;
+    }
+
+    // Ping logic
+    async function pingServer() {
+        const url = window.location.origin + window.location.pathname;
+        const start = performance.now();
+        let latency = null;
+        try {
+            // Use HEAD for minimal data
+            const resp = await fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' });
+            latency = Math.round(performance.now() - start);
+        } catch (e) {
+            latency = null;
+        }
+        if (latency !== null) {
+            text.textContent = latency + ' ms';
+        } else {
+            text.textContent = '-- ms';
+        }
+        setMeterColor(latency);
+    }
+
+    // Initial ping and interval
+    pingServer();
+    setInterval(pingServer, 2000);
+})();
+
+// --- Quality slider fix ---
+// Ensure the slider uses the full range (0-9) and updates UI and RFB logic
+function fixQualitySlider() {
+    const slider = document.getElementById('noVNC_setting_quality');
+    const value = document.getElementById('noVNC_setting_quality_value');
+    if (!slider || !value) return;
+    slider.min = 0;
+    slider.max = 9;
+    slider.step = 1;
+    // Set value from setting if available
+    let saved = UI.getSetting && UI.getSetting('quality');
+    if (saved !== undefined && saved !== null) slider.value = saved;
+    value.textContent = slider.value;
+    slider.addEventListener('input', function() {
+        value.textContent = this.value;
+        UI.saveSetting && UI.saveSetting('quality');
+        UI.updateQuality && UI.updateQuality();
+    });
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixQualitySlider);
+} else {
+    fixQualitySlider();
+}
+
+// Quick Menu open/close logic (like other panels, centered, no design change)
+function openQuickMenuPanel() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (quickMenu) quickMenu.classList.add('noVNC_open');
+}
+function closeQuickMenuPanel() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (quickMenu) quickMenu.classList.remove('noVNC_open');
+}
+function setupQuickMenuPanel() {
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
+    const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
+    if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
+    quickMenuToggle.addEventListener('click', openQuickMenuPanel);
+    quickMenuClose.addEventListener('click', closeQuickMenuPanel);
+    // Close on outside click (optional, like other panels)
+    document.addEventListener('mousedown', (e) => {
+        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
+            closeQuickMenuPanel();
+        }
+    });
+    // Escape key closes
+    quickMenu.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeQuickMenuPanel();
+    });
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupQuickMenuPanel);
+} else {
+    setupQuickMenuPanel();
+}
 
 export default UI;
