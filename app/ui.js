@@ -1264,6 +1264,12 @@ const UI = {
         // Or just log for now:
         Log.Debug("Bell event received from server");
     },
+
+    showTouchKeyboard() {
+        // Show the on-screen keyboard panel (same as clicking the keyboard button)
+        const keyboardBtn = document.getElementById('noVNC_keyboard_button');
+        if (keyboardBtn) keyboardBtn.click();
+    },
 };
 
 // Quick Menu UI logic
@@ -1308,6 +1314,7 @@ function setupQuickMenu() {
     document.getElementById('noVNC_quick_clipboard').onclick = () => { closeMenu(); UI.openClipboardPanel(); };
     document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
     document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
+    document.getElementById('noVNC_quick_keyboard').onclick = () => { closeMenu(); UI.showTouchKeyboard && UI.showTouchKeyboard(); };
 }
 // Call setupQuickMenu after DOMContentLoaded
 if (document.readyState === 'loading') {
@@ -1653,8 +1660,17 @@ if (document.readyState === 'loading') {
     function saveTransparency(val) {
         localStorage.setItem('noVNC_latency_transparency', val);
     }
+    function safeGetLocalStorageItem(key, fallback) {
+        try {
+            if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                const v = localStorage.getItem(key);
+                return v !== null ? v : fallback;
+            }
+        } catch (e) {}
+        return fallback;
+    }
     function loadTransparency() {
-        let v = localStorage.getItem('noVNC_latency_transparency');
+        let v = safeGetLocalStorageItem('noVNC_latency_transparency', null);
         if (!v) return 0.82;
         return parseFloat(v);
     }

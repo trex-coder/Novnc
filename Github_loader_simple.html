@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>GitHub Loader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        /* Simple, clean styling */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: #111827;
+            color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 90%;
+            width: 400px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            color: #2563eb;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status {
+            font-size: 1.2em;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Loading bar animation */
+        .loading-bar {
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(to right, #2563eb, #1e40af);
+            background-size: 200% 100%;
+            animation: loading 2s infinite;
+            border-radius: 2px;
+            margin: 20px 0;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* GitHub credentials display */
+        .credentials {
+            margin-top: 20px;
+        }
+
+        .credential-item {
+            margin: 10px 0;
+            word-break: break-all;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .credential-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2563eb;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="title">GitHub Integration</div>
+        <div class="status" id="status">Initializing...</div>
+        <div class="loading-bar"></div>
+        
+        <div class="credentials">
+            <div class="credential-item">
+                <span class="credential-label">PAT Token:</span>
+                <span id="pat_token_value">Loading...</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">GitHub User ID:</span>
+                <span id="github_userid_value">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to get URL parameters
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+            var results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        // Initialize when the document is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get credentials from URL parameters
+            let patToken = getParameterByName('pat_token') || 'PAT Token Not Available';
+            let githubUserId = getParameterByName('github_userid') || 'GitHub User ID Not Available';
+            
+            // Display the credentials
+            document.getElementById('pat_token_value').textContent = patToken;
+            document.getElementById('github_userid_value').textContent = githubUserId;
+            
+            // Update status with animation
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = 'Fetching credentials...';
+            
+            setTimeout(function() {
+                statusElement.textContent = 'Authenticating with GitHub...';
+                setTimeout(function() {
+                    statusElement.textContent = 'Connection established!';
+                }, 2000);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

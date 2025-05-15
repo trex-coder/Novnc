@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" class="noVNC_loading">
+<head>
+    <title>GitHub Loader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        /* Constants CSS */
+        :root {
+            --novnc-grey: rgb(128, 128, 128);
+            --novnc-lightgrey: rgb(192, 192, 192);
+            --novnc-darkgrey: rgb(92, 92, 92);
+            --novnc-buttongrey: rgba(192, 192, 192, 0.5);
+            --novnc-blue: rgb(110, 132, 163);
+            --novnc-lightblue: rgb(74, 144, 217);
+            --novnc-darkblue: rgb(83, 99, 122);
+            --novnc-green: rgb(0, 128, 0);
+            --novnc-yellow: rgb(255, 255, 0);
+            --input-xpadding: 1em;
+            
+            /* Modern color variables */
+            --novnc-primary: #2563eb;
+            --novnc-secondary: #1e40af;
+            --novnc-success: #10b981;
+            --novnc-warning: #f59e0b;
+            --novnc-error: #ef4444;
+            --novnc-gray-100: #f3f4f6;
+            --novnc-gray-200: #e5e7eb;
+            --novnc-gray-700: #374151;
+            --novnc-gray-900: #111827;
+            
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Base CSS */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: var(--novnc-gray-900);
+            color: var(--novnc-gray-100);
+            font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        /* Loading screen */
+        #noVNC_transition {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--novnc-gray-900);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .loading_content {
+            max-width: 90%;
+            width: 500px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #noVNC_transition_text {
+            font-size: 1.5em;
+            color: var(--novnc-gray-100);
+            margin: 20px 0;
+        }
+
+        #noVNC_tips {
+            color: var(--novnc-primary);
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        /* Loading bar animation */
+        .loading-bar {
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(to right, var(--novnc-primary), var(--novnc-secondary));
+            background-size: 200% 100%;
+            animation: loading 2s infinite;
+            border-radius: 2px;
+            margin: 20px 0;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Error screen */
+        #noVNC_fallback_error {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 60;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+
+        .noVNC_center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* GitHub credentials display */
+        #github_credentials {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-family: sans-serif;
+            text-align: left;
+        }
+
+        .credential_item {
+            margin: 10px 0;
+            word-break: break-all;
+            padding: 8px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .credential_label {
+            font-weight: bold;
+            margin-right: 5px;
+            color: var(--novnc-primary);
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        // Function to get URL parameters - optimized for Sketchware Pro
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+            var results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        // Function to initialize the page
+        function initializePage() {
+            // Get credentials from URL parameters (Sketchware Pro approach)
+            let patToken = getParameterByName('pat_token') || 'PAT Token Not Available';
+            let githubUserId = getParameterByName('github_userid') || 'GitHub User ID Not Available';
+            
+            // Display the credentials
+            displayCredentials(patToken, githubUserId);
+        }
+
+        // Function to display credentials
+        function displayCredentials(patToken, githubUserId) {
+            document.getElementById('pat_token_value').textContent = patToken;
+            document.getElementById('github_userid_value').textContent = githubUserId;
+            
+            // Update transition text
+            document.getElementById('noVNC_transition_text').textContent = 'Fetching credentials...';
+            
+            // Simulate connection process
+            setTimeout(function() {
+                document.getElementById('noVNC_transition_text').textContent = 'Authenticating with GitHub...';
+                setTimeout(function() {
+                    document.getElementById('noVNC_transition_text').textContent = 'Connection established!';
+                    // You can add additional functionality here to use the credentials
+                    // For example, making API calls to GitHub
+                }, 2000);
+            }, 2000);
+        }
+
+        // Initialize when the document is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
+    </script>
+</head>
+
+<body>
+    <div id="noVNC_fallback_error" class="noVNC_center">
+        <div>
+            <div>Connection Error</div>
+            <br>
+            <div id="noVNC_fallback_errormsg"></div>
+        </div>
+    </div>
+
+    <!-- Transition screens -->
+    <div id="noVNC_transition">
+        <div class="loading_content">
+            <div id="noVNC_tips">GitHub Integration: Access your repositories securely with PAT tokens</div>
+            <div id="noVNC_transition_text">Initializing connection...</div>
+            <div class="loading-bar"></div>
+            
+            <!-- Display GitHub credentials -->
+            <div id="github_credentials">
+                <div class="credential_item">
+                    <span class="credential_label">PAT Token:</span>
+                    <span id="pat_token_value">Loading...</span>
+                </div>
+                <div class="credential_item">
+                    <span class="credential_label">GitHub User ID:</span>
+                    <span id="github_userid_value">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions for Sketchware Pro Implementation -->
+    <div style="display: none;">
+        <!-- 
+        HOW TO USE THIS FILE IN SKETCHWARE PRO:
+        
+        1. Copy this HTML file to your Sketchware Pro project's assets folder
+        2. Rename it to "Github_loader.html"
+        3. In your activity, add this code:
+        
+        // Initialize WebView
+        WebView webview1 = findViewById(R.id.webview1);
+        
+        // Enable JavaScript
+        WebSettings webSettings = webview1.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        
+        // Set your GitHub credentials
+        String patToken = "your_github_pat_token";
+        String githubUserId = "your_github_user_id";
+        
+        // Create URL with parameters
+        try {
+            String url = "file:///android_asset/Github_loader.html" + 
+                         "?pat_token=" + URLEncoder.encode(patToken, "UTF-8") + 
+                         "&github_userid=" + URLEncoder.encode(githubUserId, "UTF-8");
+            webview1.loadUrl(url);
+        } catch (Exception e) {
+            // Handle encoding error
+            webview1.loadUrl("file:///android_asset/Github_loader.html");
+        }
+        -->
+    </div>
+</body>
+</html>

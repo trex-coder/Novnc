@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" class="noVNC_loading">
+<head>
+    <title>GitHub Loader</title>
+
+    <link rel="icon" type="image/x-icon" href="app/images/icons/novnc.ico">
+    <meta name="theme-color" content="#313131">
+
+    <!-- Apple iOS Safari settings -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="app/styles/constants.css">
+    <link rel="stylesheet" href="app/styles/base.css">
+    <link rel="stylesheet" href="app/styles/input.css">
+
+    <style>
+        /* Additional styles for GitHub loader */
+        #github_credentials {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            color: white;
+            font-family: sans-serif;
+        }
+        .credential_item {
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .credential_label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        // Function to get URL parameters - optimized for Sketchware Pro
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        // Function to initialize the page
+        function initializePage() {
+            // Get credentials from URL parameters (Sketchware Pro approach)
+            let patToken = getParameterByName('pat_token') || 'PAT Token Not Available';
+            let githubUserId = getParameterByName('github_userid') || 'GitHub User ID Not Available';
+            
+            // Display the credentials
+            displayCredentials(patToken, githubUserId);
+        }
+
+        // Function to display credentials
+        function displayCredentials(patToken, githubUserId) {
+            document.getElementById('pat_token_value').textContent = patToken;
+            document.getElementById('github_userid_value').textContent = githubUserId;
+            
+            // Update transition text
+            document.getElementById('noVNC_transition_text').textContent = 'Fetching credentials...';
+            
+            // Simulate connection process
+            setTimeout(function() {
+                document.getElementById('noVNC_transition_text').textContent = 'Authenticating with GitHub...';
+                setTimeout(function() {
+                    document.getElementById('noVNC_transition_text').textContent = 'Connection established!';
+                }, 2000);
+            }, 2000);
+        }
+
+        // Initialize when the document is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
+    </script>
+</head>
+
+<body>
+    <div id="noVNC_fallback_error" class="noVNC_center">
+        <div>
+            <div>Connection Error</div>
+            <br>
+            <div id="noVNC_fallback_errormsg"></div>
+        </div>
+    </div>
+
+    <!-- Transition screens -->
+    <div id="noVNC_transition">
+        <div class="loading_content">
+            <div id="noVNC_tips">GitHub Integration: Access your repositories securely with PAT tokens</div>
+            <div id="noVNC_transition_text">Initializing connection...</div>
+            <div class="loading-bar"></div>
+            
+            <!-- Display GitHub credentials -->
+            <div id="github_credentials">
+                <div class="credential_item">
+                    <span class="credential_label">PAT Token:</span>
+                    <span id="pat_token_value">Loading...</span>
+                </div>
+                <div class="credential_item">
+                    <span class="credential_label">GitHub User ID:</span>
+                    <span id="github_userid_value">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
