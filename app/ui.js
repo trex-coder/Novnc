@@ -87,6 +87,7 @@ const UI = {
         UI.addConnectionControlHandlers();
         UI.addClipboardHandlers();
         UI.addSettingsHandlers();
+        UI.addQuickMenuHandlers();
         
         document.getElementById("noVNC_status").addEventListener('click', UI.hideStatus);
 
@@ -1387,547 +1388,58 @@ const UI = {
         const keyboardBtn = document.getElementById('noVNC_keyboard_button');
         if (keyboardBtn) keyboardBtn.click();
     },
-};
 
-// Quick Menu UI logic
-function setupQuickMenu() {
-    const quickMenu = document.getElementById('noVNC_quick_menu');
-    const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
-    const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
-    if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
-    function openMenu() { 
-        // Close any open panels first
-        closeAllModernPanels();
-        // Then open the quick menu
+    openQuickMenuPanel(event) {
+        // Always use the latest desktop menu style for both touch and desktop
         const quickMenu = document.getElementById('noVNC_quick_menu');
-        if (quickMenu) quickMenu.classList.add('open');
-    }
-    function closeMenu() { 
+        if (!quickMenu) return;
+        // Remove any previous open state
+        quickMenu.classList.remove('noVNC_quick_menu_touch');
+        quickMenu.classList.add('noVNC_open');
+        // Position menu near the button or event
+        let x = 0, y = 0;
+        if (event && event.target) {
+            const rect = event.target.getBoundingClientRect();
+            x = rect.left + rect.width / 2;
+            y = rect.bottom;
+        } else {
+            // Fallback: center of screen
+            x = window.innerWidth / 2;
+            y = window.innerHeight / 2;
+        }
+        quickMenu.style.left = x + 'px';
+        quickMenu.style.top = y + 'px';
+        // Focus first menu item for accessibility
+        const firstItem = quickMenu.querySelector('.noVNC_menu_item, button, a, input, select');
+        if (firstItem) firstItem.focus();
+    },
+
+    closeQuickMenuPanel() {
         const quickMenu = document.getElementById('noVNC_quick_menu');
-        if (quickMenu) quickMenu.classList.remove('open');
-    }
-    // Prevent double open on touch/click
-    let touchHandled = false;
-    quickMenuToggle.addEventListener('click', function(e) {
-        if (touchHandled) { touchHandled = false; return; }
-        openMenu();
-    });
-    quickMenuToggle.addEventListener('touchend', function(e) {
-        touchHandled = true;
-        openMenu();
-        e.preventDefault();
-    }, {passive: false});
-    quickMenuClose.addEventListener('click', closeMenu);
-    // Close menu on outside click
-    document.addEventListener('mousedown', (e) => {
-        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
-            closeMenu();
-        }
-    });
-    // Wire up quick menu buttons to existing UI actions
-    document.getElementById('noVNC_quick_connect').onclick = () => { closeMenu(); UI.connect(); };
-    document.getElementById('noVNC_quick_disconnect').onclick = () => { closeMenu(); UI.disconnect(); };
-    document.getElementById('noVNC_quick_settings').onclick = () => { closeMenu(); UI.openSettingsPanel(); };
-    document.getElementById('noVNC_quick_clipboard').onclick = () => { closeMenu(); UI.openClipboardPanel(); };
-    document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
-    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
-    document.getElementById('noVNC_quick_keyboard').onclick = () => { closeMenu(); UI.showTouchKeyboard && UI.showTouchKeyboard(); };
-}
-// Call setupQuickMenu after DOMContentLoaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupQuickMenu);
-} else {
-    setupQuickMenu();
-}
+        if (quickMenu) quickMenu.classList.remove('noVNC_open');
+    },
 
-// Draggable quick menu toggle button
-function setupQuickMenuDraggable() {
-    const btn = document.getElementById('noVNC_quick_menu_toggle');
-    if (!btn) return;
-    let isDragging = false;
-    let startX, startY, origX, origY;
-    let winW = window.innerWidth, winH = window.innerHeight;
-    let btnW = btn.offsetWidth, btnH = btn.offsetHeight;
-
-    // --- Position Persistence ---
-    function saveBtnPosition(pos) {
-        if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
-            WebUtil.localStorageSet('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
-        }
-        // Do nothing if not available; WebUtil handles all fallbacks
-    }
-    function loadBtnPosition() {
-        try {
-            return WebUtil.localStorageGet ? WebUtil.localStorageGet('noVNC_quick_menu_btn_pos', null) : null;
-        } catch (e) { return null; }
-    }
-    function setBtnPosition(pos) {
-        // Remove all manual positions first
-        btn.style.left = '';
-        btn.style.top = '';
-        btn.style.right = '';
-        btn.style.bottom = '';
-        // Set to snapped corner
-        if (pos.left !== undefined) btn.style.left = pos.left + 'px';
-        if (pos.right !== undefined) btn.style.right = pos.right + 'px';
-        if (pos.top !== undefined) btn.style.top = pos.top + 'px';
-        if (pos.bottom !== undefined) btn.style.bottom = pos.bottom + 'px';
-    }
-    function getCorner(x, y) {
-        // Snap to nearest corner
-        const corners = [
-            {top: 24, left: 24}, // top-left
-            {top: 24, left: winW - btnW - 24}, // top-right
-            {top: winH - btnH - 24, left: 24}, // bottom-left
-            {top: winH - btnH - 24, left: winW - btnW - 24} // bottom-right
-        ];
-        let minDist = Infinity, best = corners[0];
-        for (const c of corners) {
-            const dist = Math.hypot(x - c.left, y - c.top);
-            if (dist < minDist) { minDist = dist; best = c; }
-        }
-        return best;
-    }
-    // Restore position on load
-    let pos = loadBtnPosition();
-    if (pos) {
-        setBtnPosition(pos);
-    } else {
-        // Default to top left
-        setBtnPosition({top: 24, left: 24});
-    }
-    function onMouseDown(e) {
-        if (e.button !== 0) return;
-        isDragging = true;
-        btn.classList.add('dragging');
-        startX = e.clientX;
-        startY = e.clientY;
-        const rect = btn.getBoundingClientRect();
-        origX = rect.left;
-        origY = rect.top;
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-        e.preventDefault();
-    }
-    function onMouseMove(e) {
-        if (!isDragging) return;
-        let dx = e.clientX - startX;
-        let dy = e.clientY - startY;
-        let newX = origX + dx;
-        let newY = origY + dy;
-        btn.style.transition = 'none';
-        btn.style.left = newX + 'px';
-        btn.style.top = newY + 'px';
-        btn.style.right = 'auto';
-        btn.style.bottom = 'auto';
-    }
-    function onMouseUp(e) {
-        if (!isDragging) return;
-        isDragging = false;
-        btn.classList.remove('dragging');
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        // Snap to nearest corner
-        let rect = btn.getBoundingClientRect();
-        winW = window.innerWidth; winH = window.innerHeight;
-        btnW = btn.offsetWidth; btnH = btn.offsetHeight;
-        const corner = getCorner(rect.left, rect.top);
-        btn.style.transition = '';
-        setBtnPosition(corner);
-        saveBtnPosition(corner);
-    }
-    btn.addEventListener('mousedown', onMouseDown);
-    // Touch support
-    btn.addEventListener('touchstart', function(e) {
-        if (e.touches.length !== 1) return;
-        isDragging = true;
-        btn.classList.add('dragging');
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        const rect = btn.getBoundingClientRect();
-        origX = rect.left;
-        origY = rect.top;
-        document.addEventListener('touchmove', onTouchMove);
-        document.addEventListener('touchend', onTouchEnd);
-        e.preventDefault();
-    }, {passive: false});
-    function onTouchMove(e) {
-        if (!isDragging || e.touches.length !== 1) return;
-        let dx = e.touches[0].clientX - startX;
-        let dy = e.touches[0].clientY - startY;
-        let newX = origX + dx;
-        let newY = origY + dy;
-        btn.style.transition = 'none';
-        btn.style.left = newX + 'px';
-        btn.style.top = newY + 'px';
-        btn.style.right = 'auto';
-        btn.style.bottom = 'auto';
-    }
-    function onTouchEnd(e) {
-        if (!isDragging) return;
-        isDragging = false;
-        btn.classList.remove('dragging');
-        document.removeEventListener('touchmove', onTouchMove);
-        document.removeEventListener('touchend', onTouchEnd);
-        // Snap to nearest corner
-        let rect = btn.getBoundingClientRect();
-        winW = window.innerWidth; winH = window.innerHeight;
-        btnW = btn.offsetWidth; btnH = btn.offsetHeight;
-        const corner = getCorner(rect.left, rect.top);
-        btn.style.transition = '';
-        setBtnPosition(corner);
-        saveBtnPosition(corner);
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupQuickMenuDraggable);
-} else {
-    setupQuickMenuDraggable();
-}
-
-// Modern panel logic
-function closeAllModernPanels() {
-    // Close all modal backdrops
-    document.querySelectorAll('.noVNC_modal_backdrop').forEach(b => b.classList.remove('open'));
-    // Close all panels
-    document.querySelectorAll('.noVNC_modern_panel').forEach(p => p.classList.remove('open'));
-    // Close quick menu if it's open
-    const quickMenu = document.getElementById('noVNC_quick_menu');
-    if (quickMenu && quickMenu.classList.contains('open')) {
-        quickMenu.classList.remove('open');
-    }
-}
-
-function setupModernPanels() {
-    // Helper function to open a panel with animation
-    function openPanel(modalBackdrop, panel) {
-        // First ensure all other panels are closed
-        closeAllModernPanels();
-        
-        // Add a small delay to ensure smooth transition
-        setTimeout(() => {
-            modalBackdrop.classList.add('open');
-            panel.classList.add('open');
-            
-            // Focus the first input if there is one
-            const firstInput = panel.querySelector('input, textarea, select');
-            if (firstInput) firstInput.focus();
-        }, 10);
-    }
-    
-    // Helper function to close a panel with animation
-    function closePanel(modalBackdrop, panel) {
-        panel.classList.remove('open');
-        modalBackdrop.classList.remove('open');
-    }
-
-    // Settings panel
-    const settingsBtn = document.getElementById('noVNC_quick_settings');
-    const settingsModal = document.getElementById('noVNC_modern_settings_modal');
-    const settingsPanel = document.getElementById('noVNC_modern_settings');
-    const settingsClose = document.getElementById('noVNC_modern_settings_close');
-    
-    if (settingsBtn && settingsModal && settingsPanel && settingsClose) {
-        settingsBtn.onclick = () => {
-            openPanel(settingsModal, settingsPanel);
-            // Sync scaling dropdown value
-            const scalingSelect = document.getElementById('noVNC_setting_scaling');
-            if (scalingSelect) {
-                scalingSelect.value = UI.getSetting('resize') || 'off';
-            }
-        };
-        settingsClose.onclick = () => closePanel(settingsModal, settingsPanel);
-    }
-    
-    // Replace quality slider with dropdown
-    const qualityContainer = document.getElementById('noVNC_setting_quality_container');
-    if (qualityContainer) {
-        qualityContainer.innerHTML = '';
-        const select = document.createElement('select');
-        select.id = 'noVNC_setting_quality';
-        select.className = 'noVNC_setting_dropdown';
-        const options = [
-            { label: 'Low', value: 2 },
-            { label: 'Medium', value: 5 },
-            { label: 'High', value: 7 },
-            { label: 'Ultra', value: 9 }
-        ];
-        for (const opt of options) {
-            const o = document.createElement('option');
-            o.value = opt.value;
-            o.textContent = opt.label;
-            select.appendChild(o);
-        }
-        // Set initial value from settings
-        select.value = UI.getSetting('quality') || 5;
-        select.addEventListener('change', function() {
-            UI.saveSetting('quality', select.value);
-            UI.updateQuality && UI.updateQuality();
-        });
-        qualityContainer.appendChild(select);
-    }
-
-    // Modern settings panel scaling dropdown wiring
-    const scalingSelect = document.getElementById('noVNC_setting_scaling');
-    if (scalingSelect) {
-        // Set initial value from settings
-        scalingSelect.value = UI.getSetting('resize') || 'off';
-        scalingSelect.addEventListener('change', function() {
-            UI.saveSetting('resize', scalingSelect.value);
-            UI.applyResizeMode && UI.applyResizeMode();
-        });
-    }
-
-    // Clipboard panel
-    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
-    const clipboardModal = document.getElementById('noVNC_modern_clipboard_modal');
-    const clipboardPanel = document.getElementById('noVNC_modern_clipboard');
-    const clipboardClose = document.getElementById('noVNC_modern_clipboard_close');
-    
-    if (clipboardBtn && clipboardModal && clipboardPanel && clipboardClose) {
-        clipboardBtn.onclick = () => openPanel(clipboardModal, clipboardPanel);
-        clipboardClose.onclick = () => closePanel(clipboardModal, clipboardPanel);
-    }
-    
-    const clipboardSendBtn = document.getElementById('noVNC_modern_clipboard_send');
-    if (clipboardSendBtn) {
-        clipboardSendBtn.onclick = (e) => {
+    addQuickMenuHandlers() {
+        // Always use unified menu for both touch and desktop
+        const quickMenuBtn = document.getElementById('noVNC_quick_menu_button');
+        if (!quickMenuBtn) return;
+        // Remove any old event listeners if present
+        quickMenuBtn.onclick = null;
+        quickMenuBtn.ontouchstart = null;
+        // Use pointer events for both touch and mouse
+        quickMenuBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
-            const text = document.getElementById('noVNC_modern_clipboard_text').value;
-            if (UI.rfb && UI.rfb.clipboardPasteFrom) UI.rfb.clipboardPasteFrom(text);
-        };
-    }
-
-    // Power panel
-    const powerBtn = document.getElementById('noVNC_quick_power');
-    const powerModal = document.getElementById('noVNC_modern_power_modal');
-    const powerPanel = document.getElementById('noVNC_modern_power');
-    const powerClose = document.getElementById('noVNC_modern_power_close');
-    
-    if (powerBtn && powerModal && powerPanel && powerClose) {
-        powerBtn.onclick = () => openPanel(powerModal, powerPanel);
-        powerClose.onclick = () => closePanel(powerModal, powerPanel);
-    }
-    
-    const shutdownBtn = document.getElementById('noVNC_modern_shutdown');
-    const rebootBtn = document.getElementById('noVNC_modern_reboot');
-    const resetBtn = document.getElementById('noVNC_modern_reset');
-    
-    if (shutdownBtn) shutdownBtn.onclick = () => { if (UI.rfb) UI.rfb.machineShutdown(); closeAllModernPanels(); };
-    if (rebootBtn) rebootBtn.onclick = () => { if (UI.rfb) UI.rfb.machineReboot(); closeAllModernPanels(); };
-    if (resetBtn) resetBtn.onclick = () => { if (UI.rfb) UI.rfb.machineReset(); closeAllModernPanels(); };
-
-    // Close modal on backdrop click
-    document.querySelectorAll('.noVNC_modal_backdrop').forEach(backdrop => {
-        backdrop.addEventListener('mousedown', function(e) {
-            if (e.target === backdrop) closeAllModernPanels();
+            UI.openQuickMenuPanel(e);
         });
-        backdrop.addEventListener('touchend', function(e) {
-            if (e.target === backdrop) closeAllModernPanels();
+        // Close menu on outside click/tap
+        document.addEventListener('pointerdown', (e) => {
+            const quickMenu = document.getElementById('noVNC_quick_menu');
+            if (!quickMenu) return;
+            if (!quickMenu.contains(e.target) && e.target !== quickMenuBtn) {
+                UI.closeQuickMenuPanel();
+            }
         });
-    });
-    
-    // Close panels with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            // Only close if a panel is open
-            const openPanels = document.querySelectorAll('.noVNC_modern_panel.open');
-            if (openPanels.length > 0) {
-                closeAllModernPanels();
-                e.preventDefault();
-            }
-        }
-    });
-
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupModernPanels);
-} else {
-    setupModernPanels();
-}
-
-// Hide the connect button forever
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        const connectBtn = document.getElementById('noVNC_connect_button');
-        if (connectBtn) connectBtn.style.display = 'none';
-    });
-} else {
-    const connectBtn = document.getElementById('noVNC_connect_button');
-    if (connectBtn) connectBtn.style.display = 'none';
-}
-
-// --- LATENCY METER ---
-(function setupLatencyMeter() {
-    // Create the latency meter container
-    const meter = document.createElement('div');
-    meter.id = 'noVNC_latency_meter';
-    meter.style.position = 'fixed';
-    meter.style.top = '18px';
-    meter.style.right = '24px';
-    meter.style.zIndex = '9999';
-    meter.style.display = 'flex';
-    meter.style.alignItems = 'center';
-    meter.style.gap = '8px';
-    meter.style.background = 'rgba(30,32,36,0.82)';
-    meter.style.borderRadius = '10px';
-    meter.style.padding = '6px 16px 6px 12px';
-    meter.style.boxShadow = '0 2px 12px 0 rgba(0,0,0,0.10)';
-    meter.style.fontWeight = '600';
-    meter.style.fontSize = '1em';
-    meter.style.userSelect = 'none';
-    meter.style.pointerEvents = 'none';
-
-    // --- Transparency Slider ---
-    const transparencyWrap = document.createElement('div');
-    transparencyWrap.style.position = 'absolute';
-    transparencyWrap.style.top = '100%';
-    transparencyWrap.style.right = '0';
-    transparencyWrap.style.background = 'rgba(30,32,36,0.95)';
-    transparencyWrap.style.borderRadius = '8px';
-    transparencyWrap.style.padding = '8px 12px';
-    transparencyWrap.style.marginTop = '8px';
-    transparencyWrap.style.display = 'none';
-    transparencyWrap.style.zIndex = '10000';
-    transparencyWrap.style.boxShadow = '0 2px 12px 0 rgba(0,0,0,0.10)';
-    transparencyWrap.style.userSelect = 'auto';
-    transparencyWrap.style.pointerEvents = 'auto';
-    transparencyWrap.innerHTML = `<label style="font-size:0.95em;font-weight:500;">Ping Overlay Transparency <input id="noVNC_latency_transparency" type="range" min="0.2" max="1" step="0.01" value="0.82" style="vertical-align:middle;width:90px;margin-left:8px;"></label>`;
-    document.body.appendChild(transparencyWrap);
-    // Show/hide on click
-    meter.addEventListener('click', function() {
-        transparencyWrap.style.display = transparencyWrap.style.display === 'none' ? 'block' : 'none';
-    });
-    document.addEventListener('mousedown', function(e) {
-        if (!transparencyWrap.contains(e.target) && e.target !== meter) {
-            transparencyWrap.style.display = 'none';
-        }
-    });
-    // Persist transparency
-    function saveTransparency(val) {
-        if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
-            WebUtil.localStorageSet('noVNC_latency_transparency', val);
-        }
-        // Do nothing if not available; WebUtil handles all fallbacks
-    }
-    function safeGetLocalStorageItem(key, fallback) {
-        try {
-            if (typeof localStorage !== 'undefined' && localStorage !== null) {
-                const v = WebUtil.localStorageGet ? WebUtil.localStorageGet(key, fallback) : fallback;
-                return v !== null ? v : fallback;
-            }
-        } catch (e) {}
-        return fallback;
-    }
-    function loadTransparency() {
-        let v = safeGetLocalStorageItem('noVNC_latency_transparency', null);
-        if (!v) return 0.82;
-        return parseFloat(v);
-    }
-    const transparencySlider = transparencyWrap.querySelector('#noVNC_latency_transparency');
-    function setMeterAlpha(alpha) {
-        meter.style.background = `rgba(30,32,36,${alpha})`;
-    }
-    transparencySlider.value = loadTransparency();
-    setMeterAlpha(transparencySlider.value);
-    transparencySlider.addEventListener('input', function() {
-        setMeterAlpha(this.value);
-        saveTransparency(this.value);
-    });
-
-    // Inline SVG network icon
-    const icon = document.createElement('span');
-    icon.id = 'noVNC_latency_icon';
-    icon.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M6 15c1.5-2 8.5-2 10 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="15" r="1.5" fill="currentColor"/></svg>`;
-    icon.style.display = 'inline-flex';
-    icon.style.verticalAlign = 'middle';
-    icon.style.fontSize = '1.2em';
-    icon.style.transition = 'color 0.2s';
-
-    // Latency text
-    const text = document.createElement('span');
-    text.id = 'noVNC_latency_text';
-    text.textContent = '-- ms';
-    text.style.transition = 'color 0.2s';
-
-    meter.appendChild(icon);
-    meter.appendChild(text);
-    document.body.appendChild(meter);
-
-    // Color logic
-    function setMeterColor(latency) {
-        let color;
-        if (latency === null) {
-            color = '#aaa';
-        } else if (latency < 80) {
-            color = '#22c55e'; // green
-        } else if (latency < 200) {
-            color = '#eab308'; // yellow
-        } else {
-            color = '#ef4444'; // red
-        }
-        icon.style.color = color;
-        text.style.color = color;
-    }
-
-    // Ping logic
-    async function pingServer() {
-        const url = window.location.origin + window.location.pathname;
-        const start = performance.now();
-        let latency = null;
-        try {
-            // Use HEAD for minimal data
-            const resp = await fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' });
-            latency = Math.round(performance.now() - start);
-        } catch (e) {
-            latency = null;
-        }
-        if (latency !== null) {
-            text.textContent = latency + ' ms';
-        } else {
-            text.textContent = '-- ms';
-        }
-        setMeterColor(latency);
-    }
-
-    // Initial ping and interval
-    pingServer();
-    setInterval(pingServer, 2000);
-})();
-
-// Quick Menu open/close logic (like other panels, centered, no design change)
-function openQuickMenuPanel() {
-    const quickMenu = document.getElementById('noVNC_quick_menu');
-    if (quickMenu) quickMenu.classList.add('noVNC_open');
-}
-function closeQuickMenuPanel() {
-    const quickMenu = document.getElementById('noVNC_quick_menu');
-    if (quickMenu) quickMenu.classList.remove('noVNC_open');
-}
-function setupQuickMenuPanel() {
-    const quickMenu = document.getElementById('noVNC_quick_menu');
-    const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
-    const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
-    if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
-    quickMenuToggle.addEventListener('click', openQuickMenuPanel);
-    quickMenuClose.addEventListener('click', closeQuickMenuPanel);
-    // Close on outside click (optional, like other panels)
-    document.addEventListener('mousedown', (e) => {
-        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
-            closeQuickMenuPanel();
-        }
-    });
-    // Escape key closes
-    quickMenu.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeQuickMenuPanel();
-    });
-}
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupQuickMenuPanel);
-} else {
-    setupQuickMenuPanel();
-}
+    },
+};
 
 export default UI;
