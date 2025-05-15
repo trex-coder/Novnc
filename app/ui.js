@@ -88,6 +88,15 @@ const UI = {
         if (UI.getSetting('autoconnect', true)) {
             UI.connect();
         }
+
+        // Setup scaling dropdown
+        UI.setupScalingDropdown && UI.setupScalingDropdown();
+        const settingsBtn = document.getElementById('noVNC_quick_settings');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', function() {
+                UI.setupScalingDropdown && UI.setupScalingDropdown();
+            });
+        }
     },
 
     // Helper to add options to dropdown.
@@ -258,7 +267,7 @@ const UI = {
         UI.showStatus(msg);
         UI.updateVisualState('connected');
 
-        // Auto-enter fullscreen mode if supported
+        // Auto-enter fullscreen mode if supported (do not throw if not supported)
         const docEl = document.documentElement;
         const body = document.body;
         const canFullscreen = (
@@ -267,19 +276,29 @@ const UI = {
             docEl.webkitRequestFullscreen ||
             body.msRequestFullscreen
         );
-        if (canFullscreen) {
-            if (!document.fullscreenElement && docEl.requestFullscreen) {
-                docEl.requestFullscreen();
-            } else if (!document.mozFullScreenElement && docEl.mozRequestFullScreen) {
-                docEl.mozRequestFullScreen();
-            } else if (!document.webkitFullscreenElement && docEl.webkitRequestFullscreen) {
-                docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-            } else if (!document.msFullscreenElement && body.msRequestFullscreen) {
-                body.msRequestFullscreen();
+        try {
+            if (canFullscreen) {
+                if (!document.fullscreenElement && docEl.requestFullscreen) {
+                    docEl.requestFullscreen();
+                } else if (!document.mozFullScreenElement && docEl.mozRequestFullScreen) {
+                    docEl.mozRequestFullScreen();
+                } else if (!document.webkitFullscreenElement && docEl.webkitRequestFullscreen) {
+                    docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                } else if (!document.msFullscreenElement && body.msRequestFullscreen) {
+                    body.msRequestFullscreen();
+                }
             }
+        } catch (err) {
+            // Show a user-friendly message, but do not throw
+            UI.showStatus('Fullscreen is not supported on this device/browser.', 'error');
         }
         // Do this last because it can only be used on rendered elements
         UI.rfb.focus();
+        // Update scaling dropdown to match current setting
+        const scalingSelect = document.getElementById('noVNC_setting_scaling');
+        if (scalingSelect) {
+            scalingSelect.value = UI.getSetting('resize') || 'off';
+        }
     },
 
     disconnectFinished(e) {
@@ -1154,8 +1173,19 @@ const UI = {
     },
     applyResizeMode() {
         if (!UI.rfb) return;
-        UI.rfb.scaleViewport = UI.getSetting('resize') === 'scale';
-        UI.rfb.resizeSession = UI.getSetting('resize') === 'remote';
+        const mode = UI.getSetting('resize');
+        UI.rfb.scaleViewport = mode === 'scale';
+        UI.rfb.resizeSession = mode === 'remote';
+    },
+    setupScalingDropdown() {
+        const scalingSelect = document.getElementById('noVNC_setting_scaling');
+        if (!scalingSelect) return;
+        // Set initial value from settings
+        scalingSelect.value = UI.getSetting('resize') || 'off';
+        scalingSelect.onchange = function() {
+            UI.saveSetting('resize', scalingSelect.value);
+            UI.applyResizeMode && UI.applyResizeMode();
+        };
     },
     addControlbarHandlers() {
         document.getElementById("noVNC_control_bar")
