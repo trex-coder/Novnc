@@ -1192,24 +1192,41 @@ const UI = {
         const mode = UI.getSetting('resize');
         UI.rfb.scaleViewport = mode === 'scale';
         UI.rfb.resizeSession = mode === 'remote';
-        // For 'off', ensure the canvas fills the container and is not clipped/scaled
+        // For all modes, ensure the container and canvas fill the viewport
         const container = document.getElementById('noVNC_container');
         const canvas = container ? container.querySelector('canvas') : null;
         if (container && canvas) {
+            // Always fill viewport, but let scaling logic adjust canvas style in 'scale'/'remote'
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100vw';
+            container.style.height = '100vh';
+            container.style.overflow = 'hidden';
+            canvas.style.display = 'block';
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
             if (mode === 'off') {
-                container.style.overflow = 'hidden';
-                container.style.width = '100vw';
-                container.style.height = '100vh';
                 canvas.style.width = '100%';
                 canvas.style.height = '100%';
                 canvas.style.objectFit = 'contain';
             } else {
-                container.style.overflow = '';
-                container.style.width = '';
-                container.style.height = '';
+                // Let autoscale/_rescale handle width/height, but ensure no scrollbars
                 canvas.style.width = '';
                 canvas.style.height = '';
                 canvas.style.objectFit = '';
+            }
+        }
+        // In WebView, force scaling logic to re-apply on orientation change/resize
+        if (isWebView()) {
+            if (!window._noVNCResizeHandler) {
+                window._noVNCResizeHandler = () => {
+                    UI.applyResizeMode();
+                    if (UI.rfb && UI.rfb._updateScale) UI.rfb._updateScale();
+                };
+                window.addEventListener('resize', window._noVNCResizeHandler);
+                window.addEventListener('orientationchange', window._noVNCResizeHandler);
             }
         }
     },
@@ -1424,21 +1441,8 @@ function setupQuickMenuDraggable() {
     function saveBtnPosition(pos) {
         if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
             WebUtil.localStorageSet('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
-            return;
         }
-        try {
-            if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
-                localStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
-                return;
-            }
-        } catch (e) {}
-        try {
-            if (typeof sessionStorage !== 'undefined' && sessionStorage !== null && typeof sessionStorage.setItem === 'function') {
-                sessionStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
-                return;
-            }
-        } catch (e) {}
-        // If no storage available, do nothing
+        // Do nothing if not available; WebUtil handles all fallbacks
     }
     function loadBtnPosition() {
         try {
@@ -1780,21 +1784,8 @@ if (document.readyState === 'loading') {
     function saveTransparency(val) {
         if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
             WebUtil.localStorageSet('noVNC_latency_transparency', val);
-        } else {
-            try {
-                if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
-                    localStorage.setItem('noVNC_latency_transparency', val);
-                    return;
-                }
-            } catch (e) {}
-            try {
-                if (typeof sessionStorage !== 'undefined' && sessionStorage !== null && typeof sessionStorage.setItem === 'function') {
-                    sessionStorage.setItem('noVNC_latency_transparency', val);
-                    return;
-                }
-            } catch (e) {}
-            // If no storage available, do nothing
         }
+        // Do nothing if not available; WebUtil handles all fallbacks
     }
     function safeGetLocalStorageItem(key, fallback) {
         try {
