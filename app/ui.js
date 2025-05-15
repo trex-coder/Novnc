@@ -1192,6 +1192,26 @@ const UI = {
         const mode = UI.getSetting('resize');
         UI.rfb.scaleViewport = mode === 'scale';
         UI.rfb.resizeSession = mode === 'remote';
+        // For 'off', ensure the canvas fills the container and is not clipped/scaled
+        const container = document.getElementById('noVNC_container');
+        const canvas = container ? container.querySelector('canvas') : null;
+        if (container && canvas) {
+            if (mode === 'off') {
+                container.style.overflow = 'hidden';
+                container.style.width = '100vw';
+                container.style.height = '100vh';
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                canvas.style.objectFit = 'contain';
+            } else {
+                container.style.overflow = '';
+                container.style.width = '';
+                container.style.height = '';
+                canvas.style.width = '';
+                canvas.style.height = '';
+                canvas.style.objectFit = '';
+            }
+        }
     },
     setupScalingDropdown() {
         const scalingSelect = document.getElementById('noVNC_setting_scaling');
@@ -1402,7 +1422,19 @@ function setupQuickMenuDraggable() {
 
     // --- Position Persistence ---
     function saveBtnPosition(pos) {
-        localStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+        try {
+            if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
+                localStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+                return;
+            }
+        } catch (e) {}
+        try {
+            if (typeof sessionStorage !== 'undefined' && sessionStorage !== null && typeof sessionStorage.setItem === 'function') {
+                sessionStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+                return;
+            }
+        } catch (e) {}
+        // If no storage available, do nothing
     }
     function loadBtnPosition() {
         try {
