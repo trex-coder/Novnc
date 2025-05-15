@@ -190,20 +190,23 @@ function logOnce(msg, level = "warn") {
 
 let cookiesMsg = "Couldn't access noVNC settings, are cookies disabled?";
 
-function localStorageGet(name) {
-    let r;
+// Patch localStorageGet to be safe if localStorage/sessionStorage is null
+function localStorageGet(key, defVal) {
     try {
-        r = localStorage.getItem(name);
-    } catch (e) {
-        if (e instanceof DOMException) {
-            logOnce(cookiesMsg);
-            logOnce("'localStorage.getItem(" + name + ")' failed: " + e, "debug");
-        } else {
-            throw e;
+        if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.getItem === 'function') {
+            const v = localStorage.getItem(key);
+            if (v !== null && v !== undefined) return v;
         }
-    }
-    return r;
+    } catch (e) {}
+    try {
+        if (typeof sessionStorage !== 'undefined' && sessionStorage !== null && typeof sessionStorage.getItem === 'function') {
+            const v = sessionStorage.getItem(key);
+            if (v !== null && v !== undefined) return v;
+        }
+    } catch (e) {}
+    return typeof defVal !== 'undefined' ? defVal : null;
 }
+
 function localStorageSet(name, value) {
     try {
         localStorage.setItem(name, value);

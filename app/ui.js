@@ -1338,7 +1338,7 @@ function setupQuickMenuDraggable() {
     }
     function loadBtnPosition() {
         try {
-            return JSON.parse(localStorage.getItem('noVNC_quick_menu_btn_pos'));
+            return WebUtil.localStorageGet ? WebUtil.localStorageGet('noVNC_quick_menu_btn_pos', null) : null;
         } catch (e) { return null; }
     }
     function setBtnPosition(pos) {
@@ -1663,7 +1663,7 @@ if (document.readyState === 'loading') {
     function safeGetLocalStorageItem(key, fallback) {
         try {
             if (typeof localStorage !== 'undefined' && localStorage !== null) {
-                const v = localStorage.getItem(key);
+                const v = WebUtil.localStorageGet ? WebUtil.localStorageGet(key, fallback) : fallback;
                 return v !== null ? v : fallback;
             }
         } catch (e) {}
