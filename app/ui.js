@@ -21,6 +21,17 @@ const PAGE_TITLE = "noVNC";
 
 const LINGUAS = ["cs", "de", "el", "es", "fr", "it", "ja", "ko", "nl", "pl", "pt_BR", "ru", "sv", "tr", "zh_CN", "zh_TW"];
 
+// Utility: detect if running in a WebView (Android/iOS/Sketchware Pro)
+function isWebView() {
+    var standalone = window.navigator.standalone;
+    var userAgent = window.navigator.userAgent || '';
+    var isAndroidWebView = /; wv\)/.test(userAgent) || /Sketchware/i.test(userAgent);
+    var isIOSWebView = (
+        /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(userAgent)
+    );
+    return (standalone === false || isAndroidWebView || isIOSWebView);
+}
+
 const UI = {
 
     customSettings: {},
@@ -267,30 +278,32 @@ const UI = {
         UI.showStatus(msg);
         UI.updateVisualState('connected');
 
-        // Auto-enter fullscreen mode if supported (do not throw if not supported)
-        const docEl = document.documentElement;
-        const body = document.body;
-        const canFullscreen = (
-            docEl.requestFullscreen ||
-            docEl.mozRequestFullScreen ||
-            docEl.webkitRequestFullscreen ||
-            body.msRequestFullscreen
-        );
-        try {
-            if (canFullscreen) {
-                if (!document.fullscreenElement && docEl.requestFullscreen) {
-                    docEl.requestFullscreen();
-                } else if (!document.mozFullScreenElement && docEl.mozRequestFullScreen) {
-                    docEl.mozRequestFullScreen();
-                } else if (!document.webkitFullscreenElement && docEl.webkitRequestFullscreen) {
-                    docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-                } else if (!document.msFullscreenElement && body.msRequestFullscreen) {
-                    body.msRequestFullscreen();
+        // Prevent fullscreen logic in WebView
+        if (!isWebView()) {
+            // Auto-enter fullscreen mode if supported (do not throw if not supported)
+            const docEl = document.documentElement;
+            const body = document.body;
+            const canFullscreen = (
+                docEl.requestFullscreen ||
+                docEl.mozRequestFullScreen ||
+                docEl.webkitRequestFullscreen ||
+                body.msRequestFullscreen
+            );
+            try {
+                if (canFullscreen) {
+                    if (!document.fullscreenElement && docEl.requestFullscreen) {
+                        docEl.requestFullscreen();
+                    } else if (!document.mozFullScreenElement && docEl.mozRequestFullScreen) {
+                        docEl.mozRequestFullScreen();
+                    } else if (!document.webkitFullscreenElement && docEl.webkitRequestFullscreen) {
+                        docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                    } else if (!document.msFullscreenElement && body.msRequestFullscreen) {
+                        body.msRequestFullscreen();
+                    }
                 }
+            } catch (err) {
+                UI.showStatus('Fullscreen is not supported on this device/browser.', 'error');
             }
-        } catch (err) {
-            // Show a user-friendly message, but do not throw
-            UI.showStatus('Fullscreen is not supported on this device/browser.', 'error');
         }
         // Do this last because it can only be used on rendered elements
         UI.rfb.focus();
@@ -1128,7 +1141,10 @@ const UI = {
         }
     },
     toggleFullscreen() {
-        // Check for fullscreen API support before attempting
+        if (isWebView()) {
+            UI.showStatus('Fullscreen is not available in this environment.', 'error');
+            return;
+        }
         const docEl = document.documentElement;
         const body = document.body;
         const canFullscreen = (
