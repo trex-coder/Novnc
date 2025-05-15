@@ -1390,47 +1390,55 @@ const UI = {
     },
 
     openQuickMenuPanel(event) {
-        // Always use the latest desktop menu style for both touch and desktop
+        // Get menu elements
         const quickMenu = document.getElementById('noVNC_quick_menu');
-        if (!quickMenu) return;
-        // Remove any previous open state
+        const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
+        if (!quickMenu || !quickMenuBtn) return;
+
+        // Close any other open panels first
+        UI.closeAllPanels();
+
+        // Position menu near the button
+        const btnRect = quickMenuBtn.getBoundingClientRect();
+        quickMenu.style.position = 'fixed';
+        quickMenu.style.right = (window.innerWidth - btnRect.right) + 'px';
+        quickMenu.style.top = (btnRect.bottom + 8) + 'px'; // 8px gap
+
+        // Show the menu with modern style
         quickMenu.classList.remove('noVNC_quick_menu_touch');
         quickMenu.classList.add('noVNC_open');
-        // Position menu near the button or event
-        let x = 0, y = 0;
-        if (event && event.target) {
-            const rect = event.target.getBoundingClientRect();
-            x = rect.left + rect.width / 2;
-            y = rect.bottom;
-        } else {
-            // Fallback: center of screen
-            x = window.innerWidth / 2;
-            y = window.innerHeight / 2;
-        }
-        quickMenu.style.left = x + 'px';
-        quickMenu.style.top = y + 'px';
-        // Focus first menu item for accessibility
-        const firstItem = quickMenu.querySelector('.noVNC_menu_item, button, a, input, select');
+
+        // Focus first interactive element for accessibility
+        const firstItem = quickMenu.querySelector('button, a, input, select');
         if (firstItem) firstItem.focus();
     },
 
     closeQuickMenuPanel() {
         const quickMenu = document.getElementById('noVNC_quick_menu');
-        if (quickMenu) quickMenu.classList.remove('noVNC_open');
+        if (quickMenu) {
+            quickMenu.classList.remove('noVNC_open');
+            quickMenu.classList.remove('noVNC_quick_menu_touch');
+        }
+        // Re-focus the toggle button
+        const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
+        if (quickMenuBtn) quickMenuBtn.focus();
     },
 
     addQuickMenuHandlers() {
         // Always use unified menu for both touch and desktop
         const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
         if (!quickMenuBtn) return;
+        
         // Remove any old event listeners if present
         quickMenuBtn.onclick = null;
         quickMenuBtn.ontouchstart = null;
+        
         // Use pointer events for both touch and mouse
-        quickMenuBtn.addEventListener('pointerdown', (e) => {
+        quickMenuBtn.addEventListener('click', (e) => {
             e.preventDefault();
             UI.openQuickMenuPanel(e);
         });
+
         // Close menu on outside click/tap
         document.addEventListener('pointerdown', (e) => {
             const quickMenu = document.getElementById('noVNC_quick_menu');
