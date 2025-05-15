@@ -141,7 +141,7 @@ export async function initSettings() {
         settings = { ...settings, ...chromeSettings };
     } else {
         // Load from localStorage
-        for (let i = 0; i < localStorage.length; i++) {
+        for (let i = 0; i < (settings ? settings.length : 0); i++) {
             const key = localStorage.key(i);
             try {
                 const value = localStorage.getItem(key);
