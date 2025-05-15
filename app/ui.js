@@ -1421,7 +1421,7 @@ const UI = {
 
     addQuickMenuHandlers() {
         // Always use unified menu for both touch and desktop
-        const quickMenuBtn = document.getElementById('noVNC_quick_menu_button');
+        const quickMenuBtn = document.getElementById('noVNC_quick_menu_toggle');
         if (!quickMenuBtn) return;
         // Remove any old event listeners if present
         quickMenuBtn.onclick = null;
