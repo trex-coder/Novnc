@@ -851,7 +851,7 @@ const UI = {
         UI.closePowerPanel && UI.closePowerPanel();
         UI.closeClipboardPanel && UI.closeClipboardPanel();
         UI.closeExtraKeys && UI.closeExtraKeys();
-        closeQuickMenuPanel();
+        UI.closeQuickMenuPanel && UI.closeQuickMenuPanel();
     },
     openSettingsPanel() {
         UI.closeAllPanels && UI.closeAllPanels();
