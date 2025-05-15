@@ -258,17 +258,26 @@ const UI = {
         UI.showStatus(msg);
         UI.updateVisualState('connected');
 
-        // Auto-enter fullscreen mode
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-        } else if (!document.mozFullScreenElement && document.documentElement.mozRequestFullScreen) {
-            document.documentElement.mozRequestFullScreen();
-        } else if (!document.webkitFullscreenElement && document.documentElement.webkitRequestFullscreen) {
-            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        } else if (!document.msFullscreenElement && document.body.msRequestFullscreen) {
-            document.body.msRequestFullscreen();
+        // Auto-enter fullscreen mode if supported
+        const docEl = document.documentElement;
+        const body = document.body;
+        const canFullscreen = (
+            docEl.requestFullscreen ||
+            docEl.mozRequestFullScreen ||
+            docEl.webkitRequestFullscreen ||
+            body.msRequestFullscreen
+        );
+        if (canFullscreen) {
+            if (!document.fullscreenElement && docEl.requestFullscreen) {
+                docEl.requestFullscreen();
+            } else if (!document.mozFullScreenElement && docEl.mozRequestFullScreen) {
+                docEl.mozRequestFullScreen();
+            } else if (!document.webkitFullscreenElement && docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+            } else if (!document.msFullscreenElement && body.msRequestFullscreen) {
+                body.msRequestFullscreen();
+            }
         }
-
         // Do this last because it can only be used on rendered elements
         UI.rfb.focus();
     },
@@ -1100,6 +1109,19 @@ const UI = {
         }
     },
     toggleFullscreen() {
+        // Check for fullscreen API support before attempting
+        const docEl = document.documentElement;
+        const body = document.body;
+        const canFullscreen = (
+            docEl.requestFullscreen ||
+            docEl.mozRequestFullScreen ||
+            docEl.webkitRequestFullscreen ||
+            body.msRequestFullscreen
+        );
+        if (!canFullscreen) {
+            UI.showStatus('Fullscreen is not supported on this device/browser.', 'error');
+            return;
+        }
         if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
@@ -1111,14 +1133,14 @@ const UI = {
                 document.msExitFullscreen();
             }
         } else {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if (document.documentElement.mozRequestFullScreen) {
-                document.documentElement.mozRequestFullScreen();
-            } else if (document.documentElement.webkitRequestFullscreen) {
-                document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-            } else if (document.body.msRequestFullscreen) {
-                document.body.msRequestFullscreen();
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen();
+            } else if (docEl.mozRequestFullScreen) {
+                docEl.mozRequestFullScreen();
+            } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+            } else if (body.msRequestFullscreen) {
+                body.msRequestFullscreen();
             }
         }
         UI.updateFullscreenButton();
