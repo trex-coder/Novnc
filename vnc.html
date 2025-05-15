@@ -97,6 +97,29 @@
         UI.start({ settings: { defaults: defaults,
                                mandatory: mandatory } });
     </script>
+
+    <script>
+      // Detect if running in a WebView (Android/iOS/Sketchware Pro)
+      function isWebView() {
+        var standalone = window.navigator.standalone;
+        var userAgent = window.navigator.userAgent || '';
+        var isAndroidWebView = /; wv\)/.test(userAgent) || /Sketchware/i.test(userAgent);
+        var isIOSWebView = (
+          /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(userAgent)
+        );
+        return (standalone === false || isAndroidWebView || isIOSWebView);
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        if (isWebView()) {
+          // Hide fullscreen button in control bar
+          var fsBtn = document.getElementById('noVNC_fullscreen_button');
+          if (fsBtn) fsBtn.style.display = 'none';
+          // Hide fullscreen button in quick menu
+          var fsQuickBtn = document.getElementById('noVNC_quick_fullscreen');
+          if (fsQuickBtn) fsQuickBtn.style.display = 'none';
+        }
+      });
+    </script>
 </head>
 
 <body>
@@ -255,6 +278,14 @@
             <div class="noVNC_setting_group">
               <label for="noVNC_setting_quality">Quality <span id="noVNC_setting_quality_value">6</span></label>
               <input type="range" id="noVNC_setting_quality" min="0" max="9" value="6" step="1">
+            </div>
+            <div class="noVNC_setting_group">
+              <label for="noVNC_setting_scaling">Scaling mode</label>
+              <select id="noVNC_setting_scaling">
+                <option value="off">None (no scaling)</option>
+                <option value="scale">Local Scaling</option>
+                <option value="remote">Remote Resizing</option>
+              </select>
             </div>
             <!-- Add other settings fields as needed here -->
           </form>

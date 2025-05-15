@@ -1537,6 +1537,11 @@ function setupModernPanels() {
             const q = document.getElementById('noVNC_setting_quality');
             const qv = document.getElementById('noVNC_setting_quality_value');
             if (q && qv) qv.textContent = q.value;
+            // Sync scaling dropdown value
+            const scalingSelect = document.getElementById('noVNC_setting_scaling');
+            if (scalingSelect) {
+                scalingSelect.value = UI.getSetting('resize') || 'off';
+            }
         };
         settingsClose.onclick = () => closePanel(settingsModal, settingsPanel);
     }
@@ -1549,6 +1554,17 @@ function setupModernPanels() {
             qualityValue.textContent = this.value;
             UI.saveSetting('quality');
             UI.updateQuality && UI.updateQuality();
+        });
+    }
+
+    // Modern settings panel scaling dropdown wiring
+    const scalingSelect = document.getElementById('noVNC_setting_scaling');
+    if (scalingSelect) {
+        // Set initial value from settings
+        scalingSelect.value = UI.getSetting('resize') || 'off';
+        scalingSelect.addEventListener('change', function() {
+            UI.saveSetting('resize', scalingSelect.value);
+            UI.applyResizeMode && UI.applyResizeMode();
         });
     }
 
