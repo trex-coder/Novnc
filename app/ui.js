@@ -1422,6 +1422,10 @@ function setupQuickMenuDraggable() {
 
     // --- Position Persistence ---
     function saveBtnPosition(pos) {
+        if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
+            WebUtil.localStorageSet('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
+            return;
+        }
         try {
             if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
                 localStorage.setItem('noVNC_quick_menu_btn_pos', JSON.stringify(pos));
@@ -1774,7 +1778,23 @@ if (document.readyState === 'loading') {
     });
     // Persist transparency
     function saveTransparency(val) {
-        localStorage.setItem('noVNC_latency_transparency', val);
+        if (WebUtil && typeof WebUtil.localStorageSet === 'function') {
+            WebUtil.localStorageSet('noVNC_latency_transparency', val);
+        } else {
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null && typeof localStorage.setItem === 'function') {
+                    localStorage.setItem('noVNC_latency_transparency', val);
+                    return;
+                }
+            } catch (e) {}
+            try {
+                if (typeof sessionStorage !== 'undefined' && sessionStorage !== null && typeof sessionStorage.setItem === 'function') {
+                    sessionStorage.setItem('noVNC_latency_transparency', val);
+                    return;
+                }
+            } catch (e) {}
+            // If no storage available, do nothing
+        }
     }
     function safeGetLocalStorageItem(key, fallback) {
         try {
