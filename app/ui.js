@@ -1203,7 +1203,6 @@ const UI = {
         const container = document.getElementById('noVNC_container');
         const canvas = container ? container.querySelector('canvas') : null;
         if (container && canvas) {
-            // Always fill viewport, but let scaling logic adjust canvas style in 'scale'/'remote'
             container.style.position = 'fixed';
             container.style.top = '0';
             container.style.left = '0';
@@ -1215,8 +1214,14 @@ const UI = {
             canvas.style.top = '0';
             canvas.style.left = '0';
             if (mode === 'off') {
-                canvas.style.width = '100%';
-                canvas.style.height = '100%';
+                // Patch: force canvas to fill container exactly, no extra space
+                canvas.style.width = '100vw';
+                canvas.style.height = '100vh';
+                canvas.style.objectFit = 'fill';
+            } else if (mode === 'scale') {
+                // Patch: force canvas to fill container, but preserve aspect ratio
+                canvas.style.width = '100vw';
+                canvas.style.height = '100vh';
                 canvas.style.objectFit = 'contain';
             } else {
                 // Let autoscale/_rescale handle width/height, but ensure no scrollbars
@@ -1643,11 +1648,18 @@ function setupModernPanels() {
     const qualitySlider = document.getElementById('noVNC_setting_quality');
     const qualityValue = document.getElementById('noVNC_setting_quality_value');
     if (qualitySlider && qualityValue) {
+        qualitySlider.max = 9; // Ensure max is 9
         qualitySlider.addEventListener('input', function() {
             qualityValue.textContent = this.value;
             UI.saveSetting('quality');
             UI.updateQuality && UI.updateQuality();
+            // Fix bar fill for custom max
+            const percent = (this.value - this.min) / (this.max - this.min);
+            this.style.background = `linear-gradient(to right, #3fa9f5 0%, #3fa9f5 ${percent*100}%, #e0e0e0 ${percent*100}%, #e0e0e0 100%)`;
         });
+        // Set initial bar fill
+        const percent = (qualitySlider.value - qualitySlider.min) / (qualitySlider.max - qualitySlider.min);
+        qualitySlider.style.background = `linear-gradient(to right, #3fa9f5 0%, #3fa9f5 ${percent*100}%, #e0e0e0 ${percent*100}%, #e0e0e0 100%)`;
     }
 
     // Modern settings panel scaling dropdown wiring
