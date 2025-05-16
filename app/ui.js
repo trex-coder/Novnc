@@ -1018,23 +1018,28 @@ const UI = {
     updateShowDotCursor() {
         if (!UI.rfb) return;
         UI.rfb.showDotCursor = UI.getSetting('show_dot');
-    },
-    updateViewClip() {
+    },    updateViewClip() {
         if (!UI.rfb) return;
-        const scaling = UI.getSetting('resize') === 'scale';
+        const mode = UI.getSetting('resize');
+        const scaling = mode === 'scale';
+        const remote = mode === 'remote';
         let brokenScrollbars = false;
         if (!hasScrollbarGutter) {
             if (isIOS() || isAndroid() || isMac() || isChromeOS()) {
                 brokenScrollbars = true;
             }
         }
-        if (scaling) {
+
+        if (scaling || remote) {
+            // When scaling or using remote resize, disable clipping
             UI.forceSetting('view_clip', false);
-            UI.rfb.clipViewport  = false;
+            UI.rfb.clipViewport = false;
         } else if (brokenScrollbars) {
+            // Force clipping for devices with broken scrollbar handling
             UI.forceSetting('view_clip', true);
             UI.rfb.clipViewport = true;
         } else {
+            // Otherwise use the user's preference
             UI.enableSetting('view_clip');
             UI.rfb.clipViewport = UI.getSetting('view_clip');
         }
@@ -1186,32 +1191,57 @@ const UI = {
         } else {
             document.getElementById('noVNC_fullscreen_button')?.classList.remove("noVNC_selected");
         }
-    },
-    applyResizeMode() {
+    },    applyResizeMode() {
         if (!UI.rfb) return;
         const mode = UI.getSetting('resize');
         UI.rfb.scaleViewport = mode === 'scale';
         UI.rfb.resizeSession = mode === 'remote';
-        // For 'off', ensure the canvas fills the container and is not clipped/scaled
+        
+        // Update container and canvas styles based on mode
         const container = document.getElementById('noVNC_container');
         const canvas = container ? container.querySelector('canvas') : null;
         if (container && canvas) {
-            if (mode === 'off') {
+            if (mode === 'scale') {
+                // For local scaling, ensure the container fills the viewport
+                // and the canvas scales proportionally within it
                 container.style.overflow = 'hidden';
                 container.style.width = '100vw';
                 container.style.height = '100vh';
-                canvas.style.width = '100%';
-                canvas.style.height = '100%';
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+                container.style.justifyContent = 'center';
+                canvas.style.maxWidth = '100%';
+                canvas.style.maxHeight = '100%';
+                canvas.style.width = 'auto';
+                canvas.style.height = 'auto';
                 canvas.style.objectFit = 'contain';
-            } else {
-                container.style.overflow = '';
+            } else if (mode === 'remote') {
+                // For remote scaling, let the RFB handle sizing
+                container.style.overflow = 'auto';
                 container.style.width = '';
                 container.style.height = '';
+                container.style.display = '';
+                canvas.style.maxWidth = '';
+                canvas.style.maxHeight = '';
+                canvas.style.width = '';
+                canvas.style.height = '';
+                canvas.style.objectFit = '';
+            } else {
+                // For no scaling, show scrollbars if needed
+                container.style.overflow = 'auto';
+                container.style.width = '';
+                container.style.height = '';
+                container.style.display = '';
+                canvas.style.maxWidth = 'none';
+                canvas.style.maxHeight = 'none';
                 canvas.style.width = '';
                 canvas.style.height = '';
                 canvas.style.objectFit = '';
             }
         }
+
+        // Update clipping based on mode
+        UI.updateViewClip();
     },
     setupScalingDropdown() {
         const scalingSelect = document.getElementById('noVNC_setting_scaling');
