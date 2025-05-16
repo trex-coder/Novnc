@@ -1195,67 +1195,108 @@ select {
     pointer-events: auto;
 }
 .noVNC_quick_menu_content {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
     padding: 24px 24px 16px 24px;
-    width: 100%;
-    box-sizing: border-box;
 }
 .noVNC_quick_menu_header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
-    width: 100%;
+    align-items: center;
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 18px;
 }
 .noVNC_quick_menu_close {
-    background: #444;
-    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
     border: none;
-    border-radius: 8px;
-    font-size: 1.2em;
-    width: 32px;
-    height: 28px;
+    color: #fff;
+    font-size: 1.8em;
+    font-weight: 700;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
     cursor: pointer;
-    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.2s ease-out;
+    margin-left: 8px;
+}
+
+.noVNC_quick_menu_close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+.noVNC_quick_menu_close:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
 }
 .noVNC_quick_menu_close:hover {
-    background: #3b82f6;
-    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
 }
 .noVNC_quick_menu_group {
     display: flex;
-    flex-wrap: wrap;
     gap: 12px;
+    margin-bottom: 16px;
+}
+html.noVNC_connected .noVNC_quick_menu_group:first-child,
+html.noVNC_connecting .noVNC_quick_menu_group:first-child,
+html.noVNC_disconnecting .noVNC_quick_menu_group:first-child,
+html.noVNC_reconnecting .noVNC_quick_menu_group:first-child {
+    gap: 0;
+}
+html.noVNC_connected #noVNC_quick_disconnect,
+html.noVNC_connecting #noVNC_quick_disconnect,
+html.noVNC_disconnecting #noVNC_quick_disconnect,
+html.noVNC_reconnecting #noVNC_quick_disconnect {
+    flex: 1 1 0;
+}
+html.noVNC_connected #noVNC_quick_connect,
+html.noVNC_connecting #noVNC_quick_connect,
+html.noVNC_disconnecting #noVNC_quick_connect,
+html.noVNC_reconnecting #noVNC_quick_connect {
+    display: none !important;
+}
+#noVNC_quick_disconnect {
+    background: #ef4444;
+    color: #fff;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+}
+#noVNC_quick_disconnect:hover {
+    background: #b91c1c;
+    color: #fff;
+}
+#noVNC_quick_disconnect .disconnect-icon {
+    width: 1.2em;
+    height: 1.2em;
+    display: inline-block;
+    vertical-align: middle;
 }
 .noVNC_quick_btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #444;
+    flex: 1 1 0;
+    background: #23262b;
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
+    padding: 12px 0;
     font-size: 1em;
-    padding: 8px 18px;
-    min-width: 120px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .noVNC_quick_btn:hover {
-    background: #3b82f6;
-    color: #fff;
-}
-.quick_menu_icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
+    background: #3a3d42;
+    color: #e0e0e0;
 }
 .noVNC_quick_menu_toggle {
     position: fixed;
@@ -1298,8 +1339,8 @@ select {
 
 @media (max-width: 600px) {
     .noVNC_quick_menu_toggle {
-        top: 12px;
-        right: 12px;
+        top: 24px;
+        right: 24px;
         width: 44px;
         height: 44px;
         min-width: 44px;
@@ -1316,23 +1357,17 @@ select {
 
 @media (max-width: 600px) {
     .noVNC_quick_menu {
-        top: 0;
-        right: 0;
-        left: 0;
-        min-width: unset;
-        width: 100vw;
-        border-radius: 0 0 18px 18px;
-    }
-    .noVNC_quick_menu_toggle {
-        top: 12px;
-        right: 12px;
-        width: 40px;
-        height: 40px;
-        font-size: 1.5em;
+        top: 80px;
+        right: 24px;
+        left: auto;
+        min-width: 280px;
+        width: auto;
+        max-width: calc(100vw - 48px);
+        border-radius: 18px;
     }
 }
 
-.noVNC_quick_menu.noVNC_open {
+#noVNC_quick_menu.noVNC_open {
     display: flex !important;
     flex-direction: column;
     align-items: center;
@@ -1342,12 +1377,4 @@ select {
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 12000;
-    min-width: unset;
-    min-height: unset;
-    max-width: 95vw;
-    max-height: 95vh;
-    background: #23272f;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.18);
-    padding: 0;
 }

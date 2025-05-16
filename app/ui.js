@@ -219,12 +219,17 @@ const UI = {
         UI.rfb.addEventListener("clipboard", UI.clipboardReceive);
         UI.rfb.addEventListener("bell", UI.bell);
         UI.rfb.addEventListener("desktopname", UI.updateDesktopName);
-        UI.rfb.clipViewport = UI.getSetting('view_clip');
-        UI.rfb.scaleViewport = UI.getSetting('resize') === 'scale';
-        UI.rfb.resizeSession = UI.getSetting('resize') === 'remote';
-        UI.rfb.qualityLevel = parseInt(UI.getSetting('quality'));
-        UI.rfb.compressionLevel = parseInt(UI.getSetting('compression'));
-        UI.rfb.showDotCursor = UI.getSetting('show_dot');
+        if (UI.rfb) {
+            UI.rfb.clipViewport = UI.getSetting('view_clip');
+            const resizeMode = UI.getSetting('resize');
+            UI.rfb.scaleViewport = resizeMode === 'scale';
+            UI.rfb.resizeSession = UI.getSetting('resize') === 'remote';
+        }
+        if (UI.rfb) {
+            UI.rfb.qualityLevel = parseInt(UI.getSetting('quality'));
+            UI.rfb.compressionLevel = parseInt(UI.getSetting('compression'));
+            UI.rfb.showDotCursor = UI.getSetting('show_dot');
+        }
 
         UI.updateViewOnly(); // requires UI.rfb
     },
@@ -310,7 +315,8 @@ const UI = {
         // Update scaling dropdown to match current setting
         const scalingSelect = document.getElementById('noVNC_setting_scaling');
         if (scalingSelect) {
-            scalingSelect.value = UI.getSetting('resize') || 'off';
+            const resizeValue = UI.getSetting('resize');
+            scalingSelect.value = resizeValue || 'off';
         }
     },
 
@@ -546,12 +552,18 @@ const UI = {
     saveSetting(name) {
         const ctrl = document.getElementById('noVNC_setting_' + name);
         let val;
-        if (ctrl.type === 'checkbox') {
+        if (ctrl === null) {
+            // Element not found, use default or existing value
+            val = WebUtil.readSetting ? WebUtil.readSetting(name) : undefined;
+        } else if (ctrl.type === 'checkbox') {
             val = ctrl.checked;
-        } else if (typeof ctrl.options !== 'undefined') {
+        } else if (typeof ctrl.options !== 'undefined' && ctrl.selectedIndex !== undefined) {
             val = ctrl.options[ctrl.selectedIndex].value;
-        } else {
+        } else if (ctrl.value !== undefined) {
             val = ctrl.value;
+        } else {
+            // If we can't determine a value, use the existing setting
+            val = WebUtil.readSetting ? WebUtil.readSetting(name) : undefined;
         }
         if (WebUtil.writeSetting) WebUtil.writeSetting(name, val);
         return val;
@@ -1247,10 +1259,15 @@ const UI = {
         const scalingSelect = document.getElementById('noVNC_setting_scaling');
         if (!scalingSelect) return;
         // Set initial value from settings
-        scalingSelect.value = UI.getSetting('resize') || 'off';
+        const resizeValue = UI.getSetting('resize');
+        if (scalingSelect.value !== undefined) {
+            scalingSelect.value = resizeValue || 'off';
+        }
         scalingSelect.onchange = function() {
-            UI.saveSetting('resize', scalingSelect.value);
-            UI.applyResizeMode && UI.applyResizeMode();
+            if (scalingSelect && scalingSelect.value !== undefined) {
+                UI.saveSetting('resize', scalingSelect.value);
+                UI.applyResizeMode && UI.applyResizeMode();
+            }
         };
     },
     addControlbarHandlers() {
@@ -1488,16 +1505,24 @@ function setupQuickMenuDraggable() {
         if (pos.bottom !== undefined) btn.style.bottom = pos.bottom + 'px';
     }
     function getCorner(x, y) {
-        // Snap to nearest corner
+        // On mobile devices, always snap to top-right corner for consistency
+        if (window.innerWidth <= 600) {
+            return {top: 24, right: 24};
+        }
+        
+        // Snap to nearest corner on larger screens
         const corners = [
             {top: 24, left: 24}, // top-left
-            {top: 24, left: winW - btnW - 24}, // top-right
+            {top: 24, right: 24}, // top-right
             {top: winH - btnH - 24, left: 24}, // bottom-left
-            {top: winH - btnH - 24, left: winW - btnW - 24} // bottom-right
+            {top: winH - btnH - 24, right: 24} // bottom-right
         ];
-        let minDist = Infinity, best = corners[0];
+        let minDist = Infinity, best = corners[1]; // Default to top-right
         for (const c of corners) {
-            const dist = Math.hypot(x - c.left, y - c.top);
+            // Calculate position for comparison
+            const cLeft = c.left !== undefined ? c.left : (c.right !== undefined ? winW - btnW - c.right : 0);
+            const cTop = c.top;
+            const dist = Math.hypot(x - cLeft, y - cTop);
             if (dist < minDist) { minDist = dist; best = c; }
         }
         return best;
@@ -1505,10 +1530,15 @@ function setupQuickMenuDraggable() {
     // Restore position on load
     let pos = loadBtnPosition();
     if (pos) {
-        setBtnPosition(pos);
+        // On mobile devices, always position in the top right corner for consistency
+        if (window.innerWidth <= 600) {
+            setBtnPosition({top: 24, right: 24});
+        } else {
+            setBtnPosition(pos);
+        }
     } else {
-        // Default to top left
-        setBtnPosition({top: 24, left: 24});
+        // Default to top right on all devices for consistency
+        setBtnPosition({top: 24, right: 24});
     }
     function onMouseDown(e) {
         if (e.button !== 0) return;
@@ -1600,6 +1630,29 @@ if (document.readyState === 'loading') {
     setupQuickMenuDraggable();
 }
 
+// Handle window resize to maintain consistent positioning
+window.addEventListener('resize', function() {
+    const btn = document.getElementById('noVNC_quick_menu_toggle');
+    if (!btn) return;
+    
+    // On mobile devices, always position in the top right corner
+    if (window.innerWidth <= 600) {
+        btn.style.transition = '';
+        btn.style.left = '';
+        btn.style.top = '24px';
+        btn.style.right = '24px';
+        btn.style.bottom = '';
+    }
+    
+    // Update menu position as well
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (quickMenu && window.innerWidth <= 600) {
+        quickMenu.style.top = '80px';
+        quickMenu.style.right = '24px';
+        quickMenu.style.left = 'auto';
+    }
+});
+
 // Modern panel logic
 function closeAllModernPanels() {
     // Close all modal backdrops
@@ -1652,7 +1705,8 @@ function setupModernPanels() {
             // Sync scaling dropdown value
             const scalingSelect = document.getElementById('noVNC_setting_scaling');
             if (scalingSelect) {
-                scalingSelect.value = UI.getSetting('resize') || 'off';
+                const resizeValue = UI.getSetting('resize');
+                scalingSelect.value = resizeValue || 'off';
             }
         };
         settingsClose.onclick = () => closePanel(settingsModal, settingsPanel);
@@ -1673,10 +1727,13 @@ function setupModernPanels() {
     const scalingSelect = document.getElementById('noVNC_setting_scaling');
     if (scalingSelect) {
         // Set initial value from settings
-        scalingSelect.value = UI.getSetting('resize') || 'off';
+        const resizeValue = UI.getSetting('resize');
+        scalingSelect.value = resizeValue || 'off';
         scalingSelect.addEventListener('change', function() {
-            UI.saveSetting('resize', scalingSelect.value);
-            UI.applyResizeMode && UI.applyResizeMode();
+            if (scalingSelect && scalingSelect.value !== undefined) {
+                UI.saveSetting('resize', scalingSelect.value);
+                UI.applyResizeMode && UI.applyResizeMode();
+            }
         });
     }
 
