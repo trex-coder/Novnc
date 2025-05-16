@@ -1,9 +1,0 @@
-/* Hide connect/disconnect buttons */
-#noVNC_connect_button,
-#noVNC_disconnect_button,
-#noVNC_quick_connect,
-#noVNC_quick_disconnect,
-#noVNC_connect_dlg,
-#noVNC_cancel_reconnect_button {
-    display: none !important;
-}
