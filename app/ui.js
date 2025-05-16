@@ -100,12 +100,16 @@ const UI = {
             UI.connect();
         }
 
-        // Setup scaling dropdown
-        UI.setupScalingDropdown && UI.setupScalingDropdown();
+        // Setup scaling dropdown with proper null checks
+        if (typeof UI.setupScalingDropdown === 'function') {
+            UI.setupScalingDropdown();
+        }
         const settingsBtn = document.getElementById('noVNC_quick_settings');
         if (settingsBtn) {
             settingsBtn.addEventListener('click', function() {
-                UI.setupScalingDropdown && UI.setupScalingDropdown();
+                if (typeof UI.setupScalingDropdown === 'function') {
+                    UI.setupScalingDropdown();
+                }
             });
         }
     },
@@ -1206,48 +1210,55 @@ const UI = {
     },    applyResizeMode() {
         if (!UI.rfb) return;
         const mode = UI.getSetting('resize');
-        UI.rfb.scaleViewport = mode === 'scale';
-        UI.rfb.resizeSession = mode === 'remote';
+        if (UI.rfb.scaleViewport !== undefined) {
+            UI.rfb.scaleViewport = mode === 'scale';
+        }
+        if (UI.rfb.resizeSession !== undefined) {
+            UI.rfb.resizeSession = mode === 'remote';
+        }
         
         // Update container and canvas styles based on mode
         const container = document.getElementById('noVNC_container');
-        const canvas = container ? container.querySelector('canvas') : null;
-        if (container && canvas) {
-            if (mode === 'scale') {
-                // For local scaling, ensure the container fills the viewport
-                // and the canvas scales proportionally within it
-                container.style.overflow = 'hidden';
-                container.style.width = '100vw';
-                container.style.height = '100vh';
-                container.style.display = 'flex';
-                container.style.alignItems = 'center';
-                container.style.justifyContent = 'center';
-                canvas.style.maxWidth = '100%';
-                canvas.style.maxHeight = '100%';
-                canvas.style.width = 'auto';
-                canvas.style.height = 'auto';
-                canvas.style.objectFit = 'contain';
-            } else if (mode === 'remote') {
-                // For remote scaling, let the RFB handle sizing
-                container.style.overflow = 'auto';
-                container.style.width = '';
-                container.style.height = '';
-                container.style.display = '';
-                canvas.style.maxWidth = '';
-                canvas.style.maxHeight = '';
-                canvas.style.width = '';
-                canvas.style.height = '';
-                canvas.style.objectFit = '';
-            } else {
-                // For no scaling, show scrollbars if needed
-                container.style.overflow = 'auto';
-                container.style.width = '';
-                container.style.height = '';
-                container.style.display = '';
-                canvas.style.maxWidth = 'none';
-                canvas.style.maxHeight = 'none';
-                canvas.style.width = '';
-                canvas.style.height = '';
+        if (!container) return;
+        
+        const canvas = container.querySelector('canvas');
+        if (!canvas) return;
+        
+        if (mode === 'scale') {
+            // For local scaling, ensure the container fills the viewport
+            // and the canvas scales proportionally within it
+            container.style.overflow = 'hidden';
+            container.style.width = '100vw';
+            container.style.height = '100vh';
+            container.style.display = 'flex';
+            container.style.alignItems = 'center';
+            container.style.justifyContent = 'center';
+            canvas.style.maxWidth = '100%';
+            canvas.style.maxHeight = '100%';
+            canvas.style.width = 'auto';
+            canvas.style.height = 'auto';
+            canvas.style.objectFit = 'contain';
+        } else if (mode === 'remote') {
+            // For remote scaling, let the RFB handle sizing
+            container.style.overflow = 'auto';
+            container.style.width = '';
+            container.style.height = '';
+            container.style.display = '';
+            canvas.style.maxWidth = '';
+            canvas.style.maxHeight = '';
+            canvas.style.width = '';
+            canvas.style.height = '';
+            canvas.style.objectFit = '';
+        } else {
+            // For no scaling, show scrollbars if needed
+            container.style.overflow = 'auto';
+            container.style.width = '';
+            container.style.height = '';
+            container.style.display = '';
+            canvas.style.maxWidth = 'none';
+            canvas.style.maxHeight = 'none';
+            canvas.style.width = '';
+            canvas.style.height = '';
                 canvas.style.objectFit = '';
             }
         }
@@ -1266,7 +1277,9 @@ const UI = {
         scalingSelect.onchange = function() {
             if (scalingSelect && scalingSelect.value !== undefined) {
                 UI.saveSetting('resize', scalingSelect.value);
-                UI.applyResizeMode && UI.applyResizeMode();
+                if (typeof UI.applyResizeMode === 'function') {
+                    UI.applyResizeMode();
+                }
             }
         };
     },

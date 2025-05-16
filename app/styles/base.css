@@ -94,6 +94,7 @@ textarea:focus {
     border-radius: 8px;
     padding: 8px 16px;
     transition: all 0.2s ease;
+    touch-action: manipulation;
 }
 
 .noVNC_button:hover {
@@ -534,6 +535,20 @@ html.noVNC_reconnecting .noVNC_quick_menu_toggle {
         right: 0;
         left: 0;
         margin: auto;
+    }
+    
+    .noVNC_quick_menu {
+        top: 20px;
+        right: 20px;
+        left: 20px;
+        width: auto;
+        min-width: unset;
+    }
+    
+    /* Ensure menu toggle button is properly positioned on mobile */
+    .noVNC_quick_menu_toggle {
+        bottom: 20px;
+        right: 20px;
     }
 }
 
@@ -1180,6 +1195,7 @@ select {
     box-shadow: 0 8px 32px rgba(0,0,0,0.25);
     padding: 0;
     min-width: 320px;
+    max-width: 90vw;
     display: flex;
     flex-direction: column;
     font-family: 'Segoe UI', Arial, sans-serif;

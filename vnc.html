@@ -118,6 +118,38 @@
           var fsQuickBtn = document.getElementById('noVNC_quick_fullscreen');
           if (fsQuickBtn) fsQuickBtn.style.display = 'none';
         }
+        
+        // Setup menu toggle for both touch and click interactions
+        var menuToggle = document.getElementById('noVNC_quick_menu_toggle');
+        var quickMenu = document.getElementById('noVNC_quick_menu');
+        
+        if (menuToggle && quickMenu) {
+          // Use both click and touchend events for better cross-device compatibility
+          menuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            quickMenu.classList.toggle('open');
+          });
+          
+          menuToggle.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            quickMenu.classList.toggle('open');
+          });
+          
+          // Close menu when clicking outside
+          document.addEventListener('click', function(e) {
+            if (!quickMenu.contains(e.target) && e.target !== menuToggle) {
+              quickMenu.classList.remove('open');
+            }
+          });
+          
+          // Close button inside menu
+          var closeBtn = document.getElementById('noVNC_quick_menu_close');
+          if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+              quickMenu.classList.remove('open');
+            });
+          }
+        }
       });
     </script>
 </head>
