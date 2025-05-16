@@ -1349,8 +1349,9 @@ const UI = {
     applyResizeMode() {
         if (!UI.rfb) return;
 
-        UI.rfb.scaleViewport = UI.getSetting('resize') === 'scale';
-        UI.rfb.resizeSession = UI.getSetting('resize') === 'remote';
+        const resizeMode = UI.getSetting('resize') || 'off';
+        UI.rfb.scaleViewport = resizeMode === 'scale';
+        UI.rfb.resizeSession = resizeMode === 'remote';
     },
 
 /* ------^-------
