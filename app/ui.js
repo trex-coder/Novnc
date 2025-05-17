@@ -1270,10 +1270,9 @@ const UI = {
             canvas.style.maxHeight = 'none';
             canvas.style.width = '';
             canvas.style.height = '';
-                canvas.style.objectFit = '';
-            }
+            canvas.style.objectFit = '';
         }
-
+        
         // Update clipping based on mode
         UI.updateViewClip();
     },
