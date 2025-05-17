@@ -706,7 +706,10 @@ const UI = {
         document.getElementById('noVNC_control_bar').classList.add("noVNC_open");
     },
     closeControlbar() {
-        UI.closeAllPanels && UI.closeAllPanels();
+        // Check if closeAllPanels exists before calling it
+        if (typeof UI.closeAllPanels === 'function') {
+            UI.closeAllPanels();
+        }
         document.getElementById('noVNC_control_bar').classList.remove("noVNC_open");
         if (UI.rfb && UI.rfb.focus) UI.rfb.focus();
     },
@@ -855,27 +858,33 @@ const UI = {
         }
     },
     closeAllPanels() {
-        UI.closeSettingsPanel && UI.closeSettingsPanel();
-        UI.closePowerPanel && UI.closePowerPanel();
-        UI.closeClipboardPanel && UI.closeClipboardPanel();
-        UI.closeExtraKeys && UI.closeExtraKeys();
-        closeQuickMenuPanel();
+        if (typeof UI.closeSettingsPanel === 'function') UI.closeSettingsPanel();
+        if (typeof UI.closePowerPanel === 'function') UI.closePowerPanel();
+        if (typeof UI.closeClipboardPanel === 'function') UI.closeClipboardPanel();
+        if (typeof UI.closeExtraKeys === 'function') UI.closeExtraKeys();
+        if (typeof closeQuickMenuPanel === 'function') closeQuickMenuPanel();
     },
     openSettingsPanel() {
-        UI.closeAllPanels && UI.closeAllPanels();
-        UI.openControlbar && UI.openControlbar();
-        UI.updateSetting && UI.updateSetting('encrypt');
-        UI.updateSetting && UI.updateSetting('view_clip');
-        UI.updateSetting && UI.updateSetting('resize');
-        UI.updateSetting && UI.updateSetting('quality');
-        UI.updateSetting && UI.updateSetting('compression');
-        UI.updateSetting && UI.updateSetting('shared');
-        UI.updateSetting && UI.updateSetting('view_only');
-        UI.updateSetting && UI.updateSetting('path');
-        UI.updateSetting && UI.updateSetting('repeaterID');
-        UI.updateSetting && UI.updateSetting('logging');
-        UI.updateSetting && UI.updateSetting('reconnect');
-        UI.updateSetting && UI.updateSetting('reconnect_delay');
+        if (typeof UI.closeAllPanels === 'function') {
+            UI.closeAllPanels();
+        }
+        if (typeof UI.openControlbar === 'function') {
+            UI.openControlbar();
+        }
+        if (typeof UI.updateSetting === 'function') {
+            UI.updateSetting('encrypt');
+            UI.updateSetting('view_clip');
+            UI.updateSetting('resize');
+            UI.updateSetting('quality');
+            UI.updateSetting('compression');
+            UI.updateSetting('shared');
+            UI.updateSetting('view_only');
+            UI.updateSetting('path');
+            UI.updateSetting('repeaterID');
+            UI.updateSetting('logging');
+            UI.updateSetting('reconnect');
+            UI.updateSetting('reconnect_delay');
+        }
         document.getElementById('noVNC_settings')
             ?.classList.add("noVNC_open");
         document.getElementById('noVNC_settings_button')
@@ -896,8 +905,8 @@ const UI = {
         }
     },
     openPowerPanel() {
-        UI.closeAllPanels && UI.closeAllPanels();
-        UI.openControlbar && UI.openControlbar();
+        if (typeof UI.closeAllPanels === 'function') UI.closeAllPanels();
+        if (typeof UI.openControlbar === 'function') UI.openControlbar();
         document.getElementById('noVNC_power')
             ?.classList.add("noVNC_open");
         document.getElementById('noVNC_power_button')
@@ -918,8 +927,8 @@ const UI = {
         }
     },
     openClipboardPanel() {
-        UI.closeAllPanels && UI.closeAllPanels();
-        UI.openControlbar && UI.openControlbar();
+        if (typeof UI.closeAllPanels === 'function') UI.closeAllPanels();
+        if (typeof UI.openControlbar === 'function') UI.openControlbar();
         document.getElementById('noVNC_clipboard')
             ?.classList.add("noVNC_open");
         document.getElementById('noVNC_clipboard_button')
@@ -1207,7 +1216,9 @@ const UI = {
         } else {
             document.getElementById('noVNC_fullscreen_button')?.classList.remove("noVNC_selected");
         }
-    },    applyResizeMode() {
+    },
+    
+    applyResizeMode() {
         if (!UI.rfb) return;
         const mode = UI.getSetting('resize');
         if (UI.rfb.scaleViewport !== undefined) {
