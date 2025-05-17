@@ -1430,56 +1430,7 @@ const UI = {
     },
 };
 
-// Quick Menu UI logic
-function setupQuickMenu() {
-    const quickMenu = document.getElementById('noVNC_quick_menu');
-    const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
-    const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
-    if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
-    function openMenu() { 
-        // Close any open panels first
-        closeAllModernPanels();
-        // Then open the quick menu
-        const quickMenu = document.getElementById('noVNC_quick_menu');
-        if (quickMenu) quickMenu.classList.add('open');
-    }
-    function closeMenu() { 
-        const quickMenu = document.getElementById('noVNC_quick_menu');
-        if (quickMenu) quickMenu.classList.remove('open');
-    }
-    // Prevent double open on touch/click
-    let touchHandled = false;
-    quickMenuToggle.addEventListener('click', function(e) {
-        if (touchHandled) { touchHandled = false; return; }
-        openMenu();
-    });
-    quickMenuToggle.addEventListener('touchend', function(e) {
-        touchHandled = true;
-        openMenu();
-        e.preventDefault();
-    }, {passive: false});
-    quickMenuClose.addEventListener('click', closeMenu);
-    // Close menu on outside click
-    document.addEventListener('mousedown', (e) => {
-        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
-            closeMenu();
-        }
-    });
-    // Wire up quick menu buttons to existing UI actions
-    document.getElementById('noVNC_quick_connect').onclick = () => { closeMenu(); UI.connect(); };
-    document.getElementById('noVNC_quick_disconnect').onclick = () => { closeMenu(); UI.disconnect(); };
-    document.getElementById('noVNC_quick_settings').onclick = () => { closeMenu(); UI.openSettingsPanel(); };
-    document.getElementById('noVNC_quick_clipboard').onclick = () => { closeMenu(); UI.openClipboardPanel(); };
-    document.getElementById('noVNC_quick_power').onclick = () => { closeMenu(); UI.openPowerPanel(); };
-    document.getElementById('noVNC_quick_fullscreen').onclick = () => { closeMenu(); UI.toggleFullscreen(); };
-    document.getElementById('noVNC_quick_keyboard').onclick = () => { closeMenu(); UI.showTouchKeyboard && UI.showTouchKeyboard(); };
-}
-// Call setupQuickMenu after DOMContentLoaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupQuickMenu);
-} else {
-    setupQuickMenu();
-}
+// Quick Menu UI logic is now handled by setupQuickMenuPanel at the end of this file
 
 // Draggable quick menu toggle button
 function setupQuickMenuDraggable() {
@@ -2018,30 +1969,103 @@ if (document.readyState === 'loading') {
 
 // Quick Menu open/close logic (like other panels, centered, no design change)
 function openQuickMenuPanel() {
+    // Close any other open panels first
+    if (typeof closeAllModernPanels === 'function') {
+        closeAllModernPanels();
+    }
+    
     const quickMenu = document.getElementById('noVNC_quick_menu');
-    if (quickMenu) quickMenu.classList.add('noVNC_open');
+    if (quickMenu) {
+        // Use a consistent class name for the open state
+        quickMenu.classList.add('noVNC_open');
+        quickMenu.classList.add('open');
+    }
 }
+
 function closeQuickMenuPanel() {
     const quickMenu = document.getElementById('noVNC_quick_menu');
-    if (quickMenu) quickMenu.classList.remove('noVNC_open');
+    if (quickMenu) {
+        // Remove both class names used for the open state
+        quickMenu.classList.remove('noVNC_open');
+        quickMenu.classList.remove('open');
+    }
 }
+
+function toggleQuickMenuPanel(e) {
+    // Prevent default behavior to avoid double triggers
+    if (e) e.preventDefault();
+    
+    const quickMenu = document.getElementById('noVNC_quick_menu');
+    if (!quickMenu) return;
+    
+    // Toggle the menu state
+    if (quickMenu.classList.contains('open') || quickMenu.classList.contains('noVNC_open')) {
+        closeQuickMenuPanel();
+    } else {
+        openQuickMenuPanel();
+    }
+}
+
 function setupQuickMenuPanel() {
     const quickMenu = document.getElementById('noVNC_quick_menu');
     const quickMenuToggle = document.getElementById('noVNC_quick_menu_toggle');
     const quickMenuClose = document.getElementById('noVNC_quick_menu_close');
     if (!quickMenu || !quickMenuToggle || !quickMenuClose) return;
-    quickMenuToggle.addEventListener('click', openQuickMenuPanel);
+    
+    // Use a single handler for both click and touch events
+    // This prevents the issue where both handlers fire in sequence
+    let touchHandled = false;
+    
+    quickMenuToggle.addEventListener('click', function(e) {
+        if (touchHandled) {
+            touchHandled = false;
+            return;
+        }
+        toggleQuickMenuPanel(e);
+    });
+    
+    quickMenuToggle.addEventListener('touchend', function(e) {
+        touchHandled = true;
+        toggleQuickMenuPanel(e);
+    }, {passive: false});
+    
     quickMenuClose.addEventListener('click', closeQuickMenuPanel);
-    // Close on outside click (optional, like other panels)
+    
+    // Close on outside click
     document.addEventListener('mousedown', (e) => {
-        if (quickMenu.classList.contains('noVNC_open') && !quickMenu.contains(e.target) && e.target !== quickMenuToggle) {
+        if ((quickMenu.classList.contains('noVNC_open') || quickMenu.classList.contains('open')) && 
+            !quickMenu.contains(e.target) && 
+            e.target !== quickMenuToggle) {
             closeQuickMenuPanel();
         }
     });
+    
     // Escape key closes
     quickMenu.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeQuickMenuPanel();
     });
+    
+    // Wire up quick menu buttons to existing UI actions
+    const connectBtn = document.getElementById('noVNC_quick_connect');
+    if (connectBtn) connectBtn.onclick = () => { closeQuickMenuPanel(); UI.connect && UI.connect(); };
+    
+    const disconnectBtn = document.getElementById('noVNC_quick_disconnect');
+    if (disconnectBtn) disconnectBtn.onclick = () => { closeQuickMenuPanel(); UI.disconnect && UI.disconnect(); };
+    
+    const settingsBtn = document.getElementById('noVNC_quick_settings');
+    if (settingsBtn) settingsBtn.onclick = () => { closeQuickMenuPanel(); UI.openSettingsPanel && UI.openSettingsPanel(); };
+    
+    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
+    if (clipboardBtn) clipboardBtn.onclick = () => { closeQuickMenuPanel(); UI.openClipboardPanel && UI.openClipboardPanel(); };
+    
+    const powerBtn = document.getElementById('noVNC_quick_power');
+    if (powerBtn) powerBtn.onclick = () => { closeQuickMenuPanel(); UI.openPowerPanel && UI.openPowerPanel(); };
+    
+    const fullscreenBtn = document.getElementById('noVNC_quick_fullscreen');
+    if (fullscreenBtn) fullscreenBtn.onclick = () => { closeQuickMenuPanel(); UI.toggleFullscreen && UI.toggleFullscreen(); };
+    
+    const keyboardBtn = document.getElementById('noVNC_quick_keyboard');
+    if (keyboardBtn) keyboardBtn.onclick = () => { closeQuickMenuPanel(); UI.showTouchKeyboard && UI.showTouchKeyboard(); };
 }
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupQuickMenuPanel);
