@@ -1506,13 +1506,13 @@ function setupQuickMenuDraggable() {
     if (pos) {
         // On mobile devices, always position in the top right corner for consistency
         if (window.innerWidth <= 600) {
-            setBtnPosition({top: 24, right: 24});
+            setBtnPosition({top: 24, left: 24});
         } else {
             setBtnPosition(pos);
         }
     } else {
-        // Default to top right on all devices for consistency
-        setBtnPosition({top: 24, right: 24});
+        // Default to top left on all devices to avoid overlaying ping meter
+        setBtnPosition({top: 24, left: 24});
     }
     function onMouseDown(e) {
         if (e.button !== 0) return;
@@ -1609,12 +1609,12 @@ window.addEventListener('resize', function() {
     const btn = document.getElementById('noVNC_quick_menu_toggle');
     if (!btn) return;
     
-    // On mobile devices, always position in the top right corner
+    // On mobile devices, always position in the top left corner
     if (window.innerWidth <= 600) {
         btn.style.transition = '';
-        btn.style.left = '';
+        btn.style.left = '12px';
         btn.style.top = '24px';
-        btn.style.right = '24px';
+        btn.style.right = '';
         btn.style.bottom = '';
     }
     
@@ -1622,10 +1622,10 @@ window.addEventListener('resize', function() {
     const quickMenu = document.getElementById('noVNC_quick_menu');
     if (quickMenu && window.innerWidth <= 600) {
         quickMenu.style.top = '80px';
-        quickMenu.style.right = '24px';
-        quickMenu.style.left = 'auto';
+        quickMenu.style.left = '24px';
+        quickMenu.style.right = 'auto';
     }
-});
+}); 
 
 // Modern panel logic
 function closeAllModernPanels() {
@@ -1976,9 +1976,14 @@ function openQuickMenuPanel() {
     
     const quickMenu = document.getElementById('noVNC_quick_menu');
     if (quickMenu) {
-        // Use a consistent class name for the open state
-        quickMenu.classList.add('noVNC_open');
-        quickMenu.classList.add('open');
+        // First set display to flex before adding open classes to ensure smooth animation
+        quickMenu.style.display = 'flex';
+        
+        // Small delay to ensure the display change takes effect before animation
+        setTimeout(() => {
+            quickMenu.classList.add('noVNC_open');
+            quickMenu.classList.add('open');
+        }, 10);
     }
 }
 
@@ -1988,6 +1993,13 @@ function closeQuickMenuPanel() {
         // Remove both class names used for the open state
         quickMenu.classList.remove('noVNC_open');
         quickMenu.classList.remove('open');
+        
+        // Set display to none after animation completes to prevent flashing
+        setTimeout(() => {
+            if (!quickMenu.classList.contains('open') && !quickMenu.classList.contains('noVNC_open')) {
+                quickMenu.style.display = 'none';
+            }
+        }, 200); // Match the transition duration in CSS
     }
 }
 
@@ -2030,6 +2042,10 @@ function setupQuickMenuPanel() {
     }, {passive: false});
     
     quickMenuClose.addEventListener('click', closeQuickMenuPanel);
+    quickMenuClose.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        closeQuickMenuPanel();
+    }, {passive: false});
     
     // Close on outside click
     document.addEventListener('mousedown', (e) => {
@@ -2044,6 +2060,50 @@ function setupQuickMenuPanel() {
     quickMenu.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeQuickMenuPanel();
     });
+    
+    // Ensure settings, clipboard, and power buttons work with both click and touch
+    const settingsBtn = document.getElementById('noVNC_quick_settings');
+    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
+    const powerBtn = document.getElementById('noVNC_quick_power');
+    
+    if (settingsBtn) {
+        settingsBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            closeQuickMenuPanel();
+            const settingsModal = document.getElementById('noVNC_modern_settings_modal');
+            const settingsPanel = document.getElementById('noVNC_modern_settings');
+            if (settingsModal && settingsPanel) {
+                settingsModal.classList.add('open');
+                settingsPanel.classList.add('open');
+            }
+        }, {passive: false});
+    }
+    
+    if (clipboardBtn) {
+        clipboardBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            closeQuickMenuPanel();
+            const clipboardModal = document.getElementById('noVNC_clipboard_modal');
+            const clipboardPanel = document.getElementById('noVNC_clipboard');
+            if (clipboardModal && clipboardPanel) {
+                clipboardModal.classList.add('open');
+                clipboardPanel.classList.add('open');
+            }
+        }, {passive: false});
+    }
+    
+    if (powerBtn) {
+        powerBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            closeQuickMenuPanel();
+            const powerModal = document.getElementById('noVNC_power_modal');
+            const powerPanel = document.getElementById('noVNC_power');
+            if (powerModal && powerPanel) {
+                powerModal.classList.add('open');
+                powerPanel.classList.add('open');
+            }
+        }, {passive: false});
+    }
     
     // Wire up quick menu buttons to existing UI actions
     const connectBtn = document.getElementById('noVNC_quick_connect');

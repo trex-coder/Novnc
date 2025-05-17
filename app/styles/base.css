@@ -277,7 +277,7 @@ textarea:focus {
 .noVNC_quick_menu_toggle {
     position: fixed;
     top: 24px;
-    right: 24px;
+    left: 24px; /* Changed from right to left to avoid overlaying ping meter */
     z-index: 10011;
     background: #23262b;
     color: #fff;
@@ -295,7 +295,8 @@ textarea:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Removed transition to prevent old menu flashing */
+    /* No transition to prevent menu flashing */
+    transition: none;
     padding: 0;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -1188,7 +1189,7 @@ select {
 .noVNC_quick_menu {
     position: fixed;
     top: 40px;
-    right: 40px;
+    left: 40px; /* Changed from right to left to match button position */
     z-index: 10010;
     background: rgba(30, 32, 36, 0.98);
     border-radius: 18px;
@@ -1196,14 +1197,15 @@ select {
     padding: 0;
     min-width: 320px;
     max-width: 90vw;
-    display: flex;
+    display: none; /* Start with display none to prevent flashing */
     flex-direction: column;
     font-family: 'Segoe UI', Arial, sans-serif;
     color: #fff;
     opacity: 0;
     transform: translateY(-10px);
     pointer-events: none;
-    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    /* Simplified transition to avoid animation issues */
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 }
 .noVNC_quick_menu.open {
     opacity: 1;
@@ -1317,7 +1319,7 @@ html.noVNC_reconnecting #noVNC_quick_connect {
 .noVNC_quick_menu_toggle {
     position: fixed;
     top: 24px;
-    right: 24px;
+    left: 24px; /* Changed from right to left to avoid overlaying ping meter */
     z-index: 10011;
     background: #23262b;
     color: #fff;
@@ -1335,7 +1337,8 @@ html.noVNC_reconnecting #noVNC_quick_connect {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Removed transition to prevent old menu flashing */
+    /* No transition to prevent menu flashing */
+    transition: none;
     padding: 0;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -1356,7 +1359,7 @@ html.noVNC_reconnecting #noVNC_quick_connect {
 @media (max-width: 600px) {
     .noVNC_quick_menu_toggle {
         top: 24px;
-        right: 24px;
+        left: 24px; /* Changed from right to left */
         width: 44px;
         height: 44px;
         min-width: 44px;
@@ -1374,8 +1377,8 @@ html.noVNC_reconnecting #noVNC_quick_connect {
 @media (max-width: 600px) {
     .noVNC_quick_menu {
         top: 80px;
-        right: 24px;
-        left: auto;
+        left: 24px; /* Changed from right to left */
+        right: auto;
         min-width: 280px;
         width: auto;
         max-width: calc(100vw - 48px);
