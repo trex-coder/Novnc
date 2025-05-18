@@ -1665,13 +1665,13 @@ function setupModernPanels() {
     }
 
     // Settings panel
-    const settingsBtn = document.getElementById('noVNC_quick_settings');
+    const settingsPanelBtn = document.getElementById('noVNC_quick_settings');
     const settingsModal = document.getElementById('noVNC_modern_settings_modal');
     const settingsPanel = document.getElementById('noVNC_modern_settings');
     const settingsClose = document.getElementById('noVNC_modern_settings_close');
     
-    if (settingsBtn && settingsModal && settingsPanel && settingsClose) {
-        settingsBtn.onclick = () => {
+    if (settingsPanelBtn && settingsModal && settingsPanel && settingsClose) {
+        settingsPanelBtn.onclick = () => {
             openPanel(settingsModal, settingsPanel);
             // Sync quality value display
             const q = document.getElementById('noVNC_setting_quality');
@@ -2063,12 +2063,12 @@ function setupQuickMenuPanel() {
     });
     
     // Ensure settings, clipboard, and power buttons work with both click and touch
-    const settingsBtn = document.getElementById('noVNC_quick_settings');
+    const settingsTouchBtn = document.getElementById('noVNC_quick_settings');
     const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
     const powerBtn = document.getElementById('noVNC_quick_power');
     
-    if (settingsBtn) {
-        settingsBtn.addEventListener('touchend', function(e) {
+    if (settingsTouchBtn) {
+        settingsTouchBtn.addEventListener('touchend', function(e) {
             e.preventDefault();
             closeQuickMenuPanel();
             const settingsModal = document.getElementById('noVNC_modern_settings_modal');
@@ -2113,8 +2113,8 @@ function setupQuickMenuPanel() {
     const disconnectBtn = document.getElementById('noVNC_quick_disconnect');
     if (disconnectBtn) disconnectBtn.onclick = () => { closeQuickMenuPanel(); UI.disconnect && UI.disconnect(); };
     
-    const settingsBtn = document.getElementById('noVNC_quick_settings');
-    if (settingsBtn) settingsBtn.onclick = () => { closeQuickMenuPanel(); UI.openSettingsPanel && UI.openSettingsPanel(); };
+    const settingsQuickBtn = document.getElementById('noVNC_quick_settings');
+    if (settingsQuickBtn) settingsQuickBtn.onclick = () => { closeQuickMenuPanel(); UI.openSettingsPanel && UI.openSettingsPanel(); };
     
     const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
     if (clipboardBtn) clipboardBtn.onclick = () => { closeQuickMenuPanel(); UI.openClipboardPanel && UI.openClipboardPanel(); };
