@@ -1733,13 +1733,13 @@ function setupModernPanels() {
     }
 
     // Power panel
-    const powerBtn = document.getElementById('noVNC_quick_power');
-    const powerModal = document.getElementById('noVNC_modern_power_modal');
-    const powerPanel = document.getElementById('noVNC_modern_power');
-    const powerClose = document.getElementById('noVNC_modern_power_close');
+    const quickPowerBtn = document.getElementById('noVNC_quick_power');
+const powerModal = document.getElementById('noVNC_modern_power_modal');
+const powerPanel = document.getElementById('noVNC_modern_power');
+const powerClose = document.getElementById('noVNC_modern_power_close');
     
-    if (powerBtn && powerModal && powerPanel && powerClose) {
-        powerBtn.onclick = () => openPanel(powerModal, powerPanel);
+    if (quickPowerBtn && powerModal && powerPanel && powerClose) {
+        quickPowerBtn.onclick = () => openPanel(powerModal, powerPanel);
         powerClose.onclick = () => closePanel(powerModal, powerPanel);
     }
     
@@ -1784,12 +1784,12 @@ if (document.readyState === 'loading') {
 // Hide the connect button forever
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        const connectBtn = document.getElementById('noVNC_connect_button');
-        if (connectBtn) connectBtn.style.display = 'none';
+        const domLoadedConnectBtn = document.getElementById('noVNC_connect_button');
+        if (domLoadedConnectBtn) domLoadedConnectBtn.style.display = 'none';
     });
 } else {
-    const connectBtn = document.getElementById('noVNC_connect_button');
-    if (connectBtn) connectBtn.style.display = 'none';
+    const fallbackConnectBtn = document.getElementById('noVNC_connect_button');
+    if (fallbackConnectBtn) fallbackConnectBtn.style.display = 'none';
 }
 
 // --- LATENCY METER ---
@@ -2065,7 +2065,7 @@ function setupQuickMenuPanel() {
     // Ensure settings, clipboard, and power buttons work with both click and touch
     const settingsTouchBtn = document.getElementById('noVNC_quick_settings');
     const clipboardBtnTouch = document.getElementById('noVNC_quick_clipboard');
-    const powerBtn = document.getElementById('noVNC_quick_power');
+    const touchPowerBtn = document.getElementById('noVNC_quick_power');
     
     if (settingsTouchBtn) {
         settingsTouchBtn.addEventListener('touchend', function(e) {
@@ -2093,8 +2093,8 @@ function setupQuickMenuPanel() {
         }, {passive: false});
     }
     
-    if (powerBtn) {
-        powerBtn.addEventListener('touchend', function(e) {
+    if (touchPowerBtn) {
+        touchPowerBtn.addEventListener('touchend', function(e) {
             e.preventDefault();
             closeQuickMenuPanel();
             const powerModal = document.getElementById('noVNC_power_modal');
@@ -2119,8 +2119,8 @@ function setupQuickMenuPanel() {
     const clipboardBtnMenu = document.getElementById('noVNC_quick_clipboard');
     if (clipboardBtnMenu) clipboardBtnMenu.onclick = () => { closeQuickMenuPanel(); UI.openClipboardPanel && UI.openClipboardPanel(); };
     
-    const powerBtn = document.getElementById('noVNC_quick_power');
-    if (powerBtn) powerBtn.onclick = () => { closeQuickMenuPanel(); UI.openPowerPanel && UI.openPowerPanel(); };
+    const menuPowerBtn = document.getElementById('noVNC_quick_power');
+    if (menuPowerBtn) menuPowerBtn.onclick = () => { closeQuickMenuPanel(); UI.openPowerPanel && UI.openPowerPanel(); };
     
     const fullscreenBtn = document.getElementById('noVNC_quick_fullscreen');
     if (fullscreenBtn) fullscreenBtn.onclick = () => { closeQuickMenuPanel(); UI.toggleFullscreen && UI.toggleFullscreen(); };
