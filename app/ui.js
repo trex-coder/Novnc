@@ -104,9 +104,10 @@ const UI = {
         if (typeof UI.setupScalingDropdown === 'function') {
             UI.setupScalingDropdown();
         }
-        const settingsBtn = document.getElementById('noVNC_quick_settings');
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', function() {
+        // Add event listener to settings button for scaling dropdown
+        const quickSettingsBtn = document.getElementById('noVNC_quick_settings');
+        if (quickSettingsBtn) {
+            quickSettingsBtn.addEventListener('click', function() {
                 if (typeof UI.setupScalingDropdown === 'function') {
                     UI.setupScalingDropdown();
                 }
