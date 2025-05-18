@@ -1371,8 +1371,8 @@ const UI = {
     },
 
     addClipboardHandlers() {
-        const clipboardBtn = document.getElementById("noVNC_clipboard_button");
-        if (clipboardBtn) clipboardBtn.addEventListener('click', UI.toggleClipboardPanel);
+        const clipboardButtonMain = document.getElementById("noVNC_clipboard_button");
+        if (clipboardButtonMain) clipboardButtonMain.addEventListener('click', UI.toggleClipboardPanel);
         const clipboardText = document.getElementById("noVNC_clipboard_text");
         if (clipboardText) clipboardText.addEventListener('change', UI.clipboardSend);
     },
@@ -1713,13 +1713,13 @@ function setupModernPanels() {
     }
 
     // Clipboard panel
-    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
+    const clipboardBtnQuick = document.getElementById('noVNC_quick_clipboard');
     const clipboardModal = document.getElementById('noVNC_modern_clipboard_modal');
     const clipboardPanel = document.getElementById('noVNC_modern_clipboard');
     const clipboardClose = document.getElementById('noVNC_modern_clipboard_close');
     
-    if (clipboardBtn && clipboardModal && clipboardPanel && clipboardClose) {
-        clipboardBtn.onclick = () => openPanel(clipboardModal, clipboardPanel);
+    if (clipboardBtnQuick && clipboardModal && clipboardPanel && clipboardClose) {
+        clipboardBtnQuick.onclick = () => openPanel(clipboardModal, clipboardPanel);
         clipboardClose.onclick = () => closePanel(clipboardModal, clipboardPanel);
     }
     
@@ -2064,7 +2064,7 @@ function setupQuickMenuPanel() {
     
     // Ensure settings, clipboard, and power buttons work with both click and touch
     const settingsTouchBtn = document.getElementById('noVNC_quick_settings');
-    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
+    const clipboardBtnTouch = document.getElementById('noVNC_quick_clipboard');
     const powerBtn = document.getElementById('noVNC_quick_power');
     
     if (settingsTouchBtn) {
@@ -2080,8 +2080,8 @@ function setupQuickMenuPanel() {
         }, {passive: false});
     }
     
-    if (clipboardBtn) {
-        clipboardBtn.addEventListener('touchend', function(e) {
+    if (clipboardBtnTouch) {
+        clipboardBtnTouch.addEventListener('touchend', function(e) {
             e.preventDefault();
             closeQuickMenuPanel();
             const clipboardModal = document.getElementById('noVNC_clipboard_modal');
@@ -2116,8 +2116,8 @@ function setupQuickMenuPanel() {
     const settingsQuickBtn = document.getElementById('noVNC_quick_settings');
     if (settingsQuickBtn) settingsQuickBtn.onclick = () => { closeQuickMenuPanel(); UI.openSettingsPanel && UI.openSettingsPanel(); };
     
-    const clipboardBtn = document.getElementById('noVNC_quick_clipboard');
-    if (clipboardBtn) clipboardBtn.onclick = () => { closeQuickMenuPanel(); UI.openClipboardPanel && UI.openClipboardPanel(); };
+    const clipboardBtnMenu = document.getElementById('noVNC_quick_clipboard');
+    if (clipboardBtnMenu) clipboardBtnMenu.onclick = () => { closeQuickMenuPanel(); UI.openClipboardPanel && UI.openClipboardPanel(); };
     
     const powerBtn = document.getElementById('noVNC_quick_power');
     if (powerBtn) powerBtn.onclick = () => { closeQuickMenuPanel(); UI.openPowerPanel && UI.openPowerPanel(); };
