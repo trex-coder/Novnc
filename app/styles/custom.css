@@ -10,13 +10,15 @@ html.noVNC_reconnecting #noVNC_quick_disconnect {
     display: none !important;
 }
 
-/* Position quick menu at the bottom of the screen and remove animations */
+/* Position quick menu in the center of the screen like other menus */
 .noVNC_quick_menu {
     transition: none !important;
     transform: none !important;
-    top: auto !important;
-    bottom: 40px !important;
-    left: 40px !important;
+    top: 50% !important;
+    left: 50% !important;
+    bottom: auto !important;
+    margin-left: -150px !important;
+    margin-top: -150px !important;
 }
 
 .noVNC_quick_menu.open {
