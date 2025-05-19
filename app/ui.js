@@ -2075,6 +2075,8 @@ function setupQuickMenuPanel() {
             if (settingsModal && settingsPanel) {
                 settingsModal.classList.add('open');
                 settingsPanel.classList.add('open');
+            } else if (UI && typeof UI.toggleSettingsPanel === 'function') {
+                UI.toggleSettingsPanel();
             }
         }, {passive: false});
     }
@@ -2088,6 +2090,8 @@ function setupQuickMenuPanel() {
             if (clipboardModal && clipboardPanel) {
                 clipboardModal.classList.add('open');
                 clipboardPanel.classList.add('open');
+            } else if (UI && typeof UI.toggleClipboardPanel === 'function') {
+                UI.toggleClipboardPanel();
             }
         }, {passive: false});
     }
@@ -2101,8 +2105,11 @@ function setupQuickMenuPanel() {
             if (powerModal && powerPanel) {
                 powerModal.classList.add('open');
                 powerPanel.classList.add('open');
+            } else if (UI && typeof UI.togglePowerPanel === 'function') {
+                UI.togglePowerPanel();
             }
         }, {passive: false});
+    }
     }
     
     // Wire up quick menu buttons to existing UI actions

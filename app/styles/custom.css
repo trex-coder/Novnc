@@ -17,8 +17,9 @@ html.noVNC_reconnecting #noVNC_quick_disconnect {
     top: 50% !important;
     left: 50% !important;
     bottom: auto !important;
-    margin-left: -150px !important;
-    margin-top: -150px !important;
+    transform: translate(-50%, -50%) !important;
+    margin-left: 0 !important;
+    margin-top: 0 !important;
 }
 
 .noVNC_quick_menu.open {
@@ -75,4 +76,34 @@ html.noVNC_reconnecting #noVNC_quick_disconnect {
 #noVNC_keyboard_button,
 #noVNC_quick_keyboard {
     pointer-events: none;
+}
+
+/* Enable power and clipboard buttons on mobile */
+#noVNC_power_button,
+#noVNC_clipboard_button,
+#noVNC_settings_button {
+    pointer-events: auto !important;
+}
+
+/* Fix scaling options */
+.noVNC_option input[type="radio"],
+.noVNC_option label {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    touch-action: manipulation;
+}
+
+/* Improve touch targets for scaling options */
+#noVNC_setting_resize {
+    pointer-events: auto !important;
+}
+
+.noVNC_option {
+    padding: 5px 0;
+    touch-action: manipulation;
+}
+
+/* Ensure touch events work properly on mobile */
+.noVNC_button {
+    touch-action: manipulation;
 }
