@@ -10,10 +10,13 @@ html.noVNC_reconnecting #noVNC_quick_disconnect {
     display: none !important;
 }
 
-/* Remove quick menu animations */
+/* Position quick menu at the bottom of the screen and remove animations */
 .noVNC_quick_menu {
     transition: none !important;
     transform: none !important;
+    top: auto !important;
+    bottom: 40px !important;
+    left: 40px !important;
 }
 
 .noVNC_quick_menu.open {
@@ -22,9 +25,12 @@ html.noVNC_reconnecting #noVNC_quick_disconnect {
     pointer-events: auto;
 }
 
-/* Make close buttons perfect circles in the right corner */
+/* Make all close buttons perfect circles in the right corner */
 .noVNC_modern_panel_close,
-.noVNC_quick_menu_close {
+.noVNC_quick_menu_close,
+#noVNC_modern_settings_close,
+#noVNC_modern_clipboard_close,
+#noVNC_modern_power_close {
     background: rgba(255, 255, 255, 0.15);
     border: none;
     color: #fff;
@@ -46,12 +52,19 @@ html.noVNC_reconnecting #noVNC_quick_disconnect {
     position: absolute;
     top: 10px;
     right: 10px;
+    z-index: 1;
 }
 
 .noVNC_modern_panel_close:hover,
 .noVNC_quick_menu_close:hover,
+#noVNC_modern_settings_close:hover,
+#noVNC_modern_clipboard_close:hover,
+#noVNC_modern_power_close:hover,
 .noVNC_modern_panel_close:active,
-.noVNC_quick_menu_close:active {
+.noVNC_quick_menu_close:active,
+#noVNC_modern_settings_close:active,
+#noVNC_modern_clipboard_close:active,
+#noVNC_modern_power_close:active {
     background: rgba(255, 255, 255, 0.25);
     transform: none;
 }
