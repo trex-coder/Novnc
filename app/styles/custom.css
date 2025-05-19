@@ -1,0 +1,63 @@
+/* Custom CSS to modify noVNC interface */
+
+/* Hide disconnect option */
+#noVNC_disconnect_button,
+#noVNC_quick_disconnect,
+html.noVNC_connected #noVNC_quick_disconnect,
+html.noVNC_connecting #noVNC_quick_disconnect,
+html.noVNC_disconnecting #noVNC_quick_disconnect,
+html.noVNC_reconnecting #noVNC_quick_disconnect {
+    display: none !important;
+}
+
+/* Remove quick menu animations */
+.noVNC_quick_menu {
+    transition: none !important;
+    transform: none !important;
+}
+
+.noVNC_quick_menu.open {
+    opacity: 1;
+    transform: none !important;
+    pointer-events: auto;
+}
+
+/* Make close buttons perfect circles in the right corner */
+.noVNC_modern_panel_close,
+.noVNC_quick_menu_close {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    font-size: 1.5em;
+    font-weight: 700;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: none;
+    margin-left: auto;
+    padding: 0;
+    line-height: 1;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.noVNC_modern_panel_close:hover,
+.noVNC_quick_menu_close:hover,
+.noVNC_modern_panel_close:active,
+.noVNC_quick_menu_close:active {
+    background: rgba(255, 255, 255, 0.25);
+    transform: none;
+}
+
+/* Fix keyboard button to prevent Android keyboard from opening */
+#noVNC_keyboard_button,
+#noVNC_quick_keyboard {
+    pointer-events: none;
+}

@@ -1425,9 +1425,18 @@ const UI = {
     },
 
     showTouchKeyboard() {
-        // Show the on-screen keyboard panel (same as clicking the keyboard button)
+        // Show the on-screen keyboard panel but prevent Android keyboard from opening
         const keyboardBtn = document.getElementById('noVNC_keyboard_button');
-        if (keyboardBtn) keyboardBtn.click();
+        if (keyboardBtn) {
+            // Prevent default behavior that would trigger the Android keyboard
+            const event = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+            // Dispatch the event directly instead of using click()
+            keyboardBtn.dispatchEvent(event);
+        }
     },
 };
 
@@ -1970,37 +1979,27 @@ if (document.readyState === 'loading') {
 
 // Quick Menu open/close logic (like other panels, centered, no design change)
 function openQuickMenuPanel() {
-    // Close any other open panels first
-    if (typeof closeAllModernPanels === 'function') {
-        closeAllModernPanels();
-    }
-    
-    const quickMenu = document.getElementById('noVNC_quick_menu');
-    if (quickMenu) {
-        // First set display to flex before adding open classes to ensure smooth animation
-        quickMenu.style.display = 'flex';
+        // Close any other open panels first
+        if (typeof closeAllModernPanels === 'function') {
+            closeAllModernPanels();
+        }
         
-        // Small delay to ensure the display change takes effect before animation
-        setTimeout(() => {
+        const quickMenu = document.getElementById('noVNC_quick_menu');
+        if (quickMenu) {
+            // Set display to flex and immediately add open classes without animation delay
+            quickMenu.style.display = 'flex';
             quickMenu.classList.add('noVNC_open');
             quickMenu.classList.add('open');
-        }, 10);
+        }
     }
-}
 
 function closeQuickMenuPanel() {
     const quickMenu = document.getElementById('noVNC_quick_menu');
     if (quickMenu) {
-        // Remove both class names used for the open state
+        // Remove both class names used for the open state and immediately hide without animation delay
         quickMenu.classList.remove('noVNC_open');
         quickMenu.classList.remove('open');
-        
-        // Set display to none after animation completes to prevent flashing
-        setTimeout(() => {
-            if (!quickMenu.classList.contains('open') && !quickMenu.classList.contains('noVNC_open')) {
-                quickMenu.style.display = 'none';
-            }
-        }, 200); // Match the transition duration in CSS
+        quickMenu.style.display = 'none';
     }
 }
 
@@ -2150,7 +2149,7 @@ function setupQuickMenuPanel() {
     if (fullscreenBtn) fullscreenBtn.onclick = () => { closeQuickMenuPanel(); UI.toggleFullscreen && UI.toggleFullscreen(); };
     
     const keyboardBtn = document.getElementById('noVNC_quick_keyboard');
-    if (keyboardBtn) keyboardBtn.onclick = () => { closeQuickMenuPanel(); UI.showTouchKeyboard && UI.showTouchKeyboard(); };
+    if (keyboardBtn) keyboardBtn.onclick = (e) => { e.preventDefault(); closeQuickMenuPanel(); UI.showTouchKeyboard && UI.showTouchKeyboard(); return false; };
 }
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupQuickMenuPanel);

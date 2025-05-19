@@ -39,6 +39,7 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="app/styles/constants.css">
     <link rel="stylesheet" href="app/styles/base.css">
+    <link rel="stylesheet" href="app/styles/custom.css">
     <link rel="stylesheet" href="app/styles/input.css">
 
     <!-- Images that will later appear via CSS -->
@@ -150,7 +151,8 @@
                     <!--noVNC touch device only buttons-->
                     <div id="noVNC_mobile_buttons">
                         <input type="image" alt="Keyboard" src="app/images/keyboard.svg"
-                            id="noVNC_keyboard_button" class="noVNC_button" title="Show keyboard">
+            id="noVNC_keyboard_button" class="noVNC_button" title="Show keyboard"
+            onclick="event.preventDefault(); return false;">
                     </div>
                 </div>
 
@@ -235,7 +237,7 @@
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#3b82f6" stroke-width="2"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.42 1.42M14.07 14.07l1.42 1.42M4.93 15.07l1.42-1.42M14.07 5.93l1.42-1.42" stroke="#3b82f6" stroke-width="2"/></svg>
                   </span>Settings
                 </button>
-                <button id="noVNC_quick_keyboard" class="noVNC_quick_btn" title="Keyboard">
+                <button id="noVNC_quick_keyboard" class="noVNC_quick_btn" title="Keyboard" onclick="event.preventDefault(); return false;">
                   <span class="quick_menu_icon">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="10" rx="2" stroke="#3b82f6" stroke-width="2"/><rect x="5" y="8" width="2" height="2" rx="1" fill="#3b82f6"/><rect x="9" y="8" width="2" height="2" rx="1" fill="#3b82f6"/><rect x="13" y="8" width="2" height="2" rx="1" fill="#3b82f6"/><rect x="7" y="12" width="6" height="2" rx="1" fill="#3b82f6"/></svg>
                   </span>Keyboard
