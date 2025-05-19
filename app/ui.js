@@ -2114,13 +2114,37 @@ function setupQuickMenuPanel() {
     if (disconnectBtn) disconnectBtn.onclick = () => { closeQuickMenuPanel(); UI.disconnect && UI.disconnect(); };
     
     const settingsQuickBtn = document.getElementById('noVNC_quick_settings');
-    if (settingsQuickBtn) settingsQuickBtn.onclick = () => { closeQuickMenuPanel(); UI.openSettingsPanel && UI.openSettingsPanel(); };
+    if (settingsQuickBtn) settingsQuickBtn.onclick = () => { 
+        closeQuickMenuPanel(); 
+        const settingsModal = document.getElementById('noVNC_modern_settings_modal');
+        const settingsPanel = document.getElementById('noVNC_modern_settings');
+        if (settingsModal && settingsPanel) {
+            settingsModal.classList.add('open');
+            settingsPanel.classList.add('open');
+        }
+    };
     
     const clipboardBtnMenu = document.getElementById('noVNC_quick_clipboard');
-    if (clipboardBtnMenu) clipboardBtnMenu.onclick = () => { closeQuickMenuPanel(); UI.openClipboardPanel && UI.openClipboardPanel(); };
+    if (clipboardBtnMenu) clipboardBtnMenu.onclick = () => { 
+        closeQuickMenuPanel(); 
+        const clipboardModal = document.getElementById('noVNC_modern_clipboard_modal');
+        const clipboardPanel = document.getElementById('noVNC_modern_clipboard');
+        if (clipboardModal && clipboardPanel) {
+            clipboardModal.classList.add('open');
+            clipboardPanel.classList.add('open');
+        }
+    };
     
     const menuPowerBtn = document.getElementById('noVNC_quick_power');
-    if (menuPowerBtn) menuPowerBtn.onclick = () => { closeQuickMenuPanel(); UI.openPowerPanel && UI.openPowerPanel(); };
+    if (menuPowerBtn) menuPowerBtn.onclick = () => { 
+        closeQuickMenuPanel(); 
+        const powerModal = document.getElementById('noVNC_modern_power_modal');
+        const powerPanel = document.getElementById('noVNC_modern_power');
+        if (powerModal && powerPanel) {
+            powerModal.classList.add('open');
+            powerPanel.classList.add('open');
+        }
+    };
     
     const fullscreenBtn = document.getElementById('noVNC_quick_fullscreen');
     if (fullscreenBtn) fullscreenBtn.onclick = () => { closeQuickMenuPanel(); UI.toggleFullscreen && UI.toggleFullscreen(); };
