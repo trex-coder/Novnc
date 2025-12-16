@@ -97,15 +97,19 @@
 
         // See docs/EMBEDDING.md for a list of possible settings.
 
+        console.log('[VNC] Starting UI initialization...');
+        
         // Initialize UI and hook into RFB for LoudWave integration
         await UI.start({ settings: { defaults: defaults,
                                        mandatory: mandatory } });
         
+        console.log('[VNC] UI.start completed, UI.rfb ready');
+        
         // Expose UI.rfb to window.rfb for LoudWave integration access
         // and set up RFB connection monitoring
         let lastRFBState = false;
-        let welcomeShown = localStorage.getItem('loudwave_welcome_seen') === 'true';
-        console.log('Initial welcomeShown state:', welcomeShown);
+        let sessionWelcomeShown = false; // Session-specific flag (not persistent)
+        console.log('[VNC] Initializing RFB monitoring');
         
         const monitorRFB = setInterval(() => {
             // Check if UI.rfb exists and has a different connection state than last check
@@ -114,44 +118,25 @@
             // Expose to window for LoudWave integration
             window.rfb = UI.rfb;
             
-            // If connection state changed to connected, show the pill and welcome dialog
+            // If connection state changed to connected, notify integration
             if (isConnected && !lastRFBState) {
-                console.log('RFB connected, LoudWave integration ready');
+                console.log('[VNC] RFB connected, LoudWave integration ready');
                 
                 // Notify LoudWave integration
                 window.dispatchEvent(new CustomEvent('rfbCreated', { detail: UI.rfb }));
-                
-                // Show pill when first connected
-                if (typeof window.showPillLW === 'function') {
-                    console.log('Calling showPillLW');
-                    setTimeout(() => window.showPillLW(), 100);
-                }
-                
-                // Show welcome dialog if not shown before
-                if (!welcomeShown && typeof window.showWelcomeDialog === 'function') {
-                    console.log('Will show welcome dialog, welcomeShown=', welcomeShown);
-                    setTimeout(() => {
-                        console.log('About to call showWelcomeDialog');
-                        window.showWelcomeDialog();
-                        welcomeShown = true;
-                        localStorage.setItem('loudwave_welcome_seen', 'true');
-                    }, 800);
-                } else if (welcomeShown) {
-                    console.log('Welcome dialog already shown, skipping');
-                }
                 
                 lastRFBState = true;
             } else if (!isConnected && lastRFBState) {
                 // Connection was lost
                 lastRFBState = false;
-                console.log('RFB disconnected');
+                console.log('[VNC] RFB disconnected');
             }
         }, 300);
         
         // Clear check after 120 seconds (2 minutes for reliability)
         setTimeout(() => {
             clearInterval(monitorRFB);
-            console.log('RFB connection monitor stopped');
+            console.log('[VNC] RFB connection monitor stopped');
         }, 120000);
     </script>
 
@@ -913,6 +898,23 @@
                 console.warn('Welcome dialog element not found');
             }
         };
+
+        // New function specifically for on-connect welcome dialog (session-based)
+        window.showWelcomeDialogOnConnect = function() {
+            console.log('showWelcomeDialogOnConnect called');
+            // Always show on connection (session-based, not persistent)
+            const dialog = document.getElementById('welcomeDialog');
+            if (dialog) {
+                // Check if already shown in this session
+                if (!dialog.hasAttribute('data-shown-this-session')) {
+                    dialog.setAttribute('data-shown-this-session', 'true');
+                    dialog.classList.add('active');
+                    console.log('Welcome dialog shown for this session');
+                }
+            } else {
+                console.warn('Welcome dialog element not found');
+            }
+        };
         
         window.closeWelcomeDialogLW = function() {
             const dialog = document.getElementById('welcomeDialog');
@@ -1130,26 +1132,36 @@
             // Check for Ctrl+V (or Cmd+V on Mac)
             if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
                 e.preventDefault();
+                console.log('Ctrl+V pressed');
                 
                 if (window.rfb && window.rfb.connected) {
                     const pill = document.getElementById('pillNav');
                     if (pill) {
                         // Check actual classes to determine state
                         const isVisible = pill.classList.contains('visible');
+                        console.log('Pill visible state:', isVisible, 'Classes:', pill.className);
                         
                         if (isVisible) {
                             // Pill is visible, hide it
                             console.log('Ctrl+V: Hiding pill');
-                            hidePillLW();
+                            if (typeof hidePillLW === 'function') {
+                                hidePillLW();
+                            }
                         } else {
                             // Pill is not visible, show it
                             console.log('Ctrl+V: Showing pill');
-                            showPillLW();
+                            if (typeof showPillLW === 'function') {
+                                showPillLW();
+                            }
                         }
+                    } else {
+                        console.warn('Pill element not found');
                     }
+                } else {
+                    console.warn('RFB not connected, cannot toggle pill');
                 }
             }
-        }, false);
+        }, true); // Use capture phase to ensure it fires
         
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {

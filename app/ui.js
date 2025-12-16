@@ -279,6 +279,7 @@ const UI = {
     },
 
     connectFinished(e) {
+        console.log('[UI] connectFinished called');
         UI.connected = true;
         UI.inhibitReconnect = false;
 
@@ -290,6 +291,7 @@ const UI = {
         }
         UI.showStatus(msg);
         UI.updateVisualState('connected');
+        console.log('[UI] updateVisualState called with connected');
 
         // Prevent fullscreen logic in WebView
         if (!isWebView()) {
@@ -328,7 +330,28 @@ const UI = {
         }
 
         // Start ping meter monitoring for the new pill navigation
+        console.log('[UI] Starting ping meter monitoring');
         UI.startPingMeterMonitoring();
+
+        // Show the nav pill immediately when connected
+        console.log('[UI] Attempting to show pill');
+        if (typeof window.showPillLW === 'function') {
+            console.log('[UI] connectFinished: Showing pill immediately');
+            window.showPillLW();
+        } else {
+            console.warn('[UI] showPillLW function not available');
+        }
+
+        // Show welcome dialog when connected
+        console.log('[UI] Attempting to show welcome dialog');
+        if (typeof window.showWelcomeDialogOnConnect === 'function') {
+            setTimeout(() => {
+                console.log('[UI] connectFinished: Showing welcome dialog');
+                window.showWelcomeDialogOnConnect();
+            }, 500);
+        } else {
+            console.warn('[UI] showWelcomeDialogOnConnect function not available');
+        }
     },
 
     startPingMeterMonitoring() {
