@@ -184,7 +184,7 @@
     </div>
 
     <!-- Glassy Pill Navigation -->
-    <div class="pill-nav hidden-completely" id="pillNav" style="opacity: 0 !important; bottom: -200px !important;">
+    <div class="pill-nav hidden-completely" id="pillNav" style="display: none !important;">
         <div class="pill-handle"></div>
         
         <!-- Server Info Header -->
@@ -1153,7 +1153,13 @@
             if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
                 e.preventDefault();
                 console.log('[Keyboard] Ctrl+V pressed');
-                console.log('[Keyboard] RFB state:', window.rfb ? 'exists' : 'missing', window.rfb?.connected ? 'connected' : 'disconnected');
+                console.log('[Keyboard] RFB connected:', window.rfb && window.rfb.connected);
+                
+                // Only toggle if RFB is connected
+                if (!window.rfb || !window.rfb.connected) {
+                    console.warn('[Keyboard] Cannot toggle pill - RFB not connected');
+                    return;
+                }
                 
                 const pill = document.getElementById('pillNav');
                 if (!pill) {
@@ -1167,19 +1173,23 @@
                 console.log('[Keyboard] Pill classes:', pill.className);
                 console.log('[Keyboard] Hidden-completely:', isHiddenCompletely, 'Visible:', isVisible);
                 
-                // Toggle based on current state
+                // Toggle based on current state - directly manipulate classes
                 if (isHiddenCompletely || !isVisible) {
                     // Pill is hidden, show it
                     console.log('[Keyboard] Showing pill via Ctrl+V');
                     pill.classList.remove('hidden-completely');
                     pill.classList.add('visible');
-                    window.isPillVisibleLW = true;
-                    clearTimeout(window.pillTimeoutLW);
+                    
+                    // Update connection status
+                    const connectionStatusEl = document.getElementById('connectionStatus');
+                    if (connectionStatusEl) {
+                        connectionStatusEl.textContent = 'Connected';
+                        connectionStatusEl.style.color = '#66ea9b';
+                    }
                 } else {
                     // Pill is visible, hide it
                     console.log('[Keyboard] Hiding pill via Ctrl+V');
                     pill.classList.remove('visible');
-                    window.isPillVisibleLW = false;
                     setTimeout(() => {
                         if (pill && !pill.classList.contains('visible')) {
                             pill.classList.add('hidden-completely');
