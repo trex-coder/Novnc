@@ -340,27 +340,27 @@ const UI = {
             const htmlEl = document.documentElement;
             // Check if the loading class has been removed
             if (!htmlEl.classList.contains('noVNC_loading') && !htmlEl.classList.contains('noVNC_connecting')) {
-                console.log('[UI] Session screen ready, showing pill');
+                console.log('[UI] Session screen ready, scheduling pill and welcome dialog');
                 clearInterval(showPillAfterLoad);
                 
-                // Show the nav pill
-                if (typeof window.showPillLW === 'function') {
-                    console.log('[UI] Calling showPillLW');
-                    // Don't auto-hide - let user control with Ctrl+V
-                    window.showPillLW();
-                } else {
-                    console.warn('[UI] showPillLW function not available');
-                }
+                // Show both pill and welcome dialog after 500ms with same timing
+                setTimeout(() => {
+                    // Show the nav pill
+                    if (typeof window.showPillLW === 'function') {
+                        console.log('[UI] Calling showPillLW');
+                        window.showPillLW();
+                    } else {
+                        console.warn('[UI] showPillLW function not available');
+                    }
 
-                // Show welcome dialog
-                if (typeof window.showWelcomeDialogOnConnect === 'function') {
-                    setTimeout(() => {
+                    // Show welcome dialog at the same time
+                    if (typeof window.showWelcomeDialogOnConnect === 'function') {
                         console.log('[UI] Calling showWelcomeDialogOnConnect');
                         window.showWelcomeDialogOnConnect();
-                    }, 500);
-                } else {
-                    console.warn('[UI] showWelcomeDialogOnConnect function not available');
-                }
+                    } else {
+                        console.warn('[UI] showWelcomeDialogOnConnect function not available');
+                    }
+                }, 500);
             }
         }, 100);
 

@@ -605,19 +605,21 @@ html.noVNC_connecting .pill-nav {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid rgba(200, 200, 200, 0.4);
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     text-align: center;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .dialog-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(200, 200, 200, 0.6);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(128, 128, 128, 0.7);
 }
 
 .dialog-btn:active {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .dialog-btn:active {
