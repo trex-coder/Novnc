@@ -124,18 +124,22 @@ body {
     z-index: 2900;
     transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    visibility: hidden;
 }
 
 .pill-nav.visible {
     bottom: 30px;
     display: block !important;
     pointer-events: auto !important;
+    visibility: visible !important;
 }
 
 .pill-nav.hidden-completely {
     bottom: -180px;
     display: none !important;
     pointer-events: none !important;
+    visibility: hidden !important;
 }
 
 /* Hide pill during loading state - but allow visible class to override */
