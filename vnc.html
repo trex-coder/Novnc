@@ -1226,25 +1226,7 @@
             }
         }, true);
 
-        // ENFORCE: Monitor and keep pill in correct state based on classes only
-        setInterval(function() {
-            const pill = document.getElementById('pillNav');
-            if (pill) {
-                const isVisible = pill.classList.contains('visible');
-                const isHidden = pill.classList.contains('hidden-completely');
-                
-                // If visible class is present, ensure hidden-completely is removed
-                if (isVisible && isHidden) {
-                    console.log('[Monitor] Pill has both classes, removing hidden-completely');
-                    pill.classList.remove('hidden-completely');
-                }
-                // If neither class is present, add hidden-completely
-                if (!isVisible && !isHidden) {
-                    console.log('[Monitor] Pill missing classes, adding hidden-completely');
-                    pill.classList.add('hidden-completely');
-                }
-            }
-        }, 500);
+
         
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
