@@ -196,7 +196,9 @@ textarea:focus {
     visibility: hidden;
     /* Put a dark background in front of everything but the error,
        and don't let mouse events pass through */
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     pointer-events: all;
 }
 #noVNC_fallback_error.noVNC_open {
@@ -208,7 +210,7 @@ textarea:focus {
     max-height: calc(100vh - 30px - 30px);
     overflow: auto;
 
-    padding: 15px;
+    padding: 24px;
 
     transition: 0.5s ease-in-out;
 
@@ -219,9 +221,12 @@ textarea:focus {
     font-weight: bold;
     color: #fff;
 
-    border-radius: 12px;
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
-    background: rgba(200,55,55,0.8);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    background: rgba(200, 55, 55, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 #noVNC_fallback_error.noVNC_open > div {
     transform: translateY(0);
@@ -230,6 +235,11 @@ textarea:focus {
 
 #noVNC_fallback_errormsg {
     font-weight: normal;
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    font-size: 14px;
 }
 
 #noVNC_fallback_errormsg .noVNC_message {
@@ -237,6 +247,7 @@ textarea:focus {
     text-align: left;
     font-family: monospace;
     white-space: pre-wrap;
+    word-break: break-word;
 }
 
 #noVNC_fallback_error .noVNC_location {
