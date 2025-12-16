@@ -1153,13 +1153,6 @@
             if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
                 e.preventDefault();
                 console.log('[Keyboard] Ctrl+V pressed');
-                console.log('[Keyboard] RFB connected:', window.rfb && window.rfb.connected);
-                
-                // Only toggle if RFB is connected
-                if (!window.rfb || !window.rfb.connected) {
-                    console.warn('[Keyboard] Cannot toggle pill - RFB not connected');
-                    return;
-                }
                 
                 const pill = document.getElementById('pillNav');
                 if (!pill) {
