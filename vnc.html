@@ -105,6 +105,7 @@
         // and set up RFB connection monitoring
         let lastRFBState = false;
         let welcomeShown = localStorage.getItem('loudwave_welcome_seen') === 'true';
+        console.log('Initial welcomeShown state:', welcomeShown);
         
         const monitorRFB = setInterval(() => {
             // Check if UI.rfb exists and has a different connection state than last check
@@ -122,15 +123,21 @@
                 
                 // Show pill when first connected
                 if (typeof window.showPillLW === 'function') {
+                    console.log('Calling showPillLW');
                     setTimeout(() => window.showPillLW(), 100);
                 }
                 
                 // Show welcome dialog if not shown before
                 if (!welcomeShown && typeof window.showWelcomeDialog === 'function') {
+                    console.log('Will show welcome dialog, welcomeShown=', welcomeShown);
                     setTimeout(() => {
+                        console.log('About to call showWelcomeDialog');
                         window.showWelcomeDialog();
                         welcomeShown = true;
+                        localStorage.setItem('loudwave_welcome_seen', 'true');
                     }, 800);
+                } else if (welcomeShown) {
+                    console.log('Welcome dialog already shown, skipping');
                 }
                 
                 lastRFBState = true;
@@ -897,9 +904,13 @@
         
         // Welcome dialog functions
         window.showWelcomeDialog = function() {
+            console.log('Showing welcome dialog');
             const dialog = document.getElementById('welcomeDialog');
             if (dialog) {
                 dialog.classList.add('active');
+                console.log('Welcome dialog activated');
+            } else {
+                console.warn('Welcome dialog element not found');
             }
         };
         
@@ -917,7 +928,12 @@
             const indicator = document.getElementById('pingIndicator');
             const pingMsEl = document.getElementById('pingMs');
             
-            if (!indicator) return;
+            if (!indicator) {
+                console.warn('pingIndicator element not found');
+                return;
+            }
+            
+            console.log('Updating ping indicator:', pingMs);
             
             // Remove all ping classes
             indicator.classList.remove('ping-excellent', 'ping-good', 'ping-fair', 'ping-poor', 'ping-bad');
@@ -1065,11 +1081,14 @@
                 connectionStatusEl.style.color = '#66ea9b';
             }
             
+            // Ensure pill is visible
             pill.classList.remove('hidden-completely');
             pill.classList.add('visible');
             isPillVisibleLW = true;
             
+            // Clear any existing timeout
             clearTimeout(pillTimeoutLW);
+            // Auto-hide after 4 seconds only when not toggled manually
             pillTimeoutLW = setTimeout(hidePillLW, 4000);
         };
         
@@ -1081,16 +1100,20 @@
             if (!pill) return;
             
             // Don't hide if keyboard or menu is open
-            if (keyboard.classList.contains('active') || menu.classList.contains('active')) {
+            if (keyboard && keyboard.classList.contains('active')) {
+                return;
+            }
+            if (menu && menu.classList.contains('active')) {
                 return;
             }
             
+            // Remove visible class to trigger animation
             pill.classList.remove('visible');
             isPillVisibleLW = false;
             
-            // Completely hide after animation
+            // Completely hide after animation completes
             setTimeout(() => {
-                if (!isPillVisibleLW && pill) {
+                if (pill && !pill.classList.contains('visible')) {
                     pill.classList.add('hidden-completely');
                     // Update connection status to show Disconnected when hidden
                     const connectionStatusEl = document.getElementById('connectionStatus');
@@ -1111,9 +1134,16 @@
                 if (window.rfb && window.rfb.connected) {
                     const pill = document.getElementById('pillNav');
                     if (pill) {
-                        if (isPillVisibleLW) {
+                        // Check actual classes to determine state
+                        const isVisible = pill.classList.contains('visible');
+                        
+                        if (isVisible) {
+                            // Pill is visible, hide it
+                            console.log('Ctrl+V: Hiding pill');
                             hidePillLW();
                         } else {
+                            // Pill is not visible, show it
+                            console.log('Ctrl+V: Showing pill');
                             showPillLW();
                         }
                     }

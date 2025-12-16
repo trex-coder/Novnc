@@ -134,6 +134,13 @@ body {
     bottom: -180px;
 }
 
+/* Hide pill during loading state */
+html.noVNC_loading .pill-nav,
+html.noVNC_connecting .pill-nav {
+    display: none !important;
+    pointer-events: none !important;
+}
+
 .pill-handle {
     width: 40px;
     height: 4px;

@@ -337,9 +337,12 @@ const UI = {
             clearInterval(UI.pingMeterInterval);
         }
 
+        console.log('Starting ping meter monitoring');
+
         // Function to update the ping indicator
         const updatePing = () => {
             if (!UI.rfb || !UI.rfb.connected) {
+                console.warn('RFB not connected, skipping ping update');
                 return;
             }
 
@@ -349,16 +352,20 @@ const UI = {
             fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
                 .then(() => {
                     const latency = Math.round(performance.now() - start);
+                    console.log('Ping latency:', latency);
                     // Update the pill navigation ping indicator if the function exists
                     if (typeof window.updatePingIndicator === 'function') {
                         window.updatePingIndicator(latency);
+                    } else {
+                        console.warn('updatePingIndicator function not found');
                     }
                     // Also update the loudwave integration if available
                     if (window.loudwaveIntegration) {
                         window.loudwaveIntegration.setLatency(latency);
                     }
                 })
-                .catch(() => {
+                .catch((err) => {
+                    console.error('Ping error:', err);
                     // On error, update with -- ms
                     if (typeof window.updatePingIndicator === 'function') {
                         window.updatePingIndicator(999);
