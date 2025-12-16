@@ -1,4 +1,4 @@
-<!DOCTYPE html> //hi
+<!DOCTYPE html>
 <html lang="en" class="noVNC_loading">
 <head>
 
@@ -51,9 +51,6 @@
 
     <script type="module" crossorigin="anonymous" src="app/error-handler.js"></script>
 
-    <!-- LoudWave Integration Module -->
-    <script src="app/loudwave-integration.js"></script>
-
     <script type="module">
         import UI from "./app/ui.js";
         import * as Log from './core/util/logging.js';
@@ -101,34 +98,28 @@
         // See docs/EMBEDDING.md for a list of possible settings.
 
         // Initialize UI and hook into RFB for LoudWave integration
-        const uiPromise = UI.start({ settings: { defaults: defaults,
+        UI.start({ settings: { defaults: defaults,
                                        mandatory: mandatory } });
         
-        // When UI is ready, hook the RFB connection
-        uiPromise.then(() => {
-            // Monitor for RFB creation
-            const checkRFB = setInterval(() => {
-                if (window.rfb) {
-                    // Notify LoudWave integration
-                    window.dispatchEvent(new CustomEvent('rfbCreated', { detail: window.rfb }));
-                    clearInterval(checkRFB);
-                    
-                    // Hook disconnect event
-                    const originalDisconnect = window.rfb.disconnect;
-                    if (originalDisconnect) {
-                        window.rfb.disconnect = function(...args) {
-                            window.dispatchEvent(new Event('rfbDisconnected'));
-                            return originalDisconnect.apply(this, args);
-                        };
-                    }
+        // Monitor for RFB connection (with multiple attempts)
+        const checkRFB = setInterval(() => {
+            if (window.rfb && window.rfb.connected) {
+                console.log('RFB connected, LoudWave integration ready');
+                
+                // Notify LoudWave integration
+                window.dispatchEvent(new CustomEvent('rfbCreated', { detail: window.rfb }));
+                
+                // Show pill when first connected
+                if (typeof window.showPillLW === 'function') {
+                    window.showPillLW();
                 }
-            }, 100);
-            
-            // Clear check after 5 seconds
-            setTimeout(() => clearInterval(checkRFB), 5000);
-        }).catch(err => {
-            Log.Error("UI initialization failed: " + err);
-        });
+                
+                clearInterval(checkRFB);
+            }
+        }, 500);
+        
+        // Clear check after 30 seconds
+        setTimeout(() => clearInterval(checkRFB), 30000);
     </script>
 
     <script>
@@ -941,6 +932,12 @@
         let isPillVisibleLW = false;
         
         window.showPillLW = function() {
+            // Only show if RFB is connected
+            if (!window.rfb || !window.rfb.connected) {
+                console.log('Cannot show pill: RFB not connected');
+                return;
+            }
+            
             const pill = document.getElementById('pillNav');
             
             if (!pill) return;
@@ -976,16 +973,19 @@
             }, 400);
         };
         
-        // Show pill on click
+        // Show pill on click (only if connected)
         document.addEventListener('click', function(e) {
             const pill = document.getElementById('pillNav');
             if (!pill) return;
             
-            if (!isPillVisibleLW && !e.target.closest('.pill-nav') && 
-                !e.target.closest('.side-menu') && 
-                !e.target.closest('.dialog-overlay') &&
-                !e.target.closest('.virtual-keyboard')) {
-                showPillLW();
+            // Only show pill if RFB is connected
+            if (window.rfb && window.rfb.connected) {
+                if (!isPillVisibleLW && !e.target.closest('.pill-nav') && 
+                    !e.target.closest('.side-menu') && 
+                    !e.target.closest('.dialog-overlay') &&
+                    !e.target.closest('.virtual-keyboard')) {
+                    showPillLW();
+                }
             }
         }, false);
         
