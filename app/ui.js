@@ -333,45 +333,20 @@ const UI = {
         console.log('[UI] Starting ping meter monitoring');
         UI.startPingMeterMonitoring();
 
-        // Wait for the actual session screen to be rendered before showing the pill
-        // This happens when the loading class is removed
-        console.log('[UI] Scheduling pill display');
-        const showPillAfterLoad = setInterval(() => {
-            const htmlEl = document.documentElement;
-            // Check if the loading class has been removed
-            if (!htmlEl.classList.contains('noVNC_loading') && !htmlEl.classList.contains('noVNC_connecting')) {
-                console.log('[UI] Session screen ready, scheduling pill and welcome dialog');
-                clearInterval(showPillAfterLoad);
-                
-                // Show both pill and welcome dialog after 1.5 seconds to ensure full render
-                setTimeout(() => {
-                    // Show the nav pill
-                    if (typeof window.showPillLW === 'function') {
-                        console.log('[UI] Calling showPillLW');
-                        window.showPillLW();
-                    } else {
-                        console.warn('[UI] showPillLW function not available');
-                    }
-
-                    // Show welcome dialog at the same time
-                    if (typeof window.showWelcomeDialogOnConnect === 'function') {
-                        console.log('[UI] Calling showWelcomeDialogOnConnect');
-                        window.showWelcomeDialogOnConnect();
-                    } else {
-                        console.warn('[UI] showWelcomeDialogOnConnect function not available');
-                    }
-                }, 1500);
-            }
-        }, 100);
-
-        // Timeout after 8 seconds if screen never shows
-        setTimeout(() => {
-            clearInterval(showPillAfterLoad);
-            console.warn('[UI] Timeout waiting for session screen, showing pill anyway');
-            if (typeof window.showPillLW === 'function') {
-                window.showPillLW();
-            }
-        }, 8000);
+        // Pill navigation will be shown on demand with Ctrl+V
+        // No need to auto-show it - user can toggle with keyboard shortcut
+        console.log('[UI] Pill navigation ready - press Ctrl+V to toggle');
+        
+        // Show welcome dialog to inform about Ctrl+V shortcut
+        console.log('[UI] Showing welcome dialog');
+        if (typeof window.showWelcomeDialogOnConnect === 'function') {
+            setTimeout(() => {
+                console.log('[UI] Calling showWelcomeDialogOnConnect');
+                window.showWelcomeDialogOnConnect();
+            }, 1000);
+        } else {
+            console.warn('[UI] showWelcomeDialogOnConnect function not available');
+        }
     },
 
     startPingMeterMonitoring() {
@@ -389,68 +364,49 @@ const UI = {
                 return;
             }
 
-            // Try to get latency from WebSocket if available
-            let latency = null;
-            
-            if (UI.rfb && UI.rfb._sock) {
-                // Try various websocket properties
-                const sock = UI.rfb._sock;
-                if (sock._latency !== undefined && sock._latency !== null) {
-                    latency = Math.round(sock._latency);
-                    console.log('[Ping] WebSocket latency:', latency + 'ms');
-                } else if (sock.latency !== undefined && sock.latency !== null) {
-                    latency = Math.round(sock.latency);
-                    console.log('[Ping] WebSocket latency property:', latency + 'ms');
-                }
-            }
-            
-            // If we have latency from socket, use it
-            if (latency !== null && latency >= 0) {
-                if (typeof window.updatePingIndicator === 'function') {
-                    console.log('[Ping] Updating indicator with measured latency:', latency + 'ms');
-                    window.updatePingIndicator(latency);
-                }
-                if (window.loudwaveIntegration) {
-                    window.loudwaveIntegration.setLatency(latency);
-                }
-                return;
-            }
-            
-            // Fallback: measure network latency with simple fetch to same host
             const start = performance.now();
             
-            // Use a simple dummy file request
-            fetch(window.location.origin + '/favicon.ico', { 
-                method: 'HEAD', 
-                cache: 'no-store',
-                mode: 'cors'
+            // Simple ping using a basic fetch to server root
+            fetch(window.location.href.split('?')[0], { 
+                method: 'GET', 
+                cache: 'no-store'
             })
                 .then(() => {
-                    const networkLatency = Math.round(performance.now() - start);
-                    console.log('[Ping] Network latency measured:', networkLatency + 'ms');
+                    const latency = Math.round(performance.now() - start);
+                    console.log('[Ping] Ping latency:', latency + 'ms');
                     
                     if (typeof window.updatePingIndicator === 'function') {
-                        console.log('[Ping] Updating indicator with network latency:', networkLatency + 'ms');
-                        window.updatePingIndicator(networkLatency);
+                        console.log('[Ping] Calling updatePingIndicator with', latency + 'ms');
+                        window.updatePingIndicator(latency);
+                    } else {
+                        console.warn('[Ping] updatePingIndicator function not found');
                     }
                     
-                    if (window.loudwaveIntegration) {
-                        window.loudwaveIntegration.setLatency(networkLatency);
+                    if (window.loudwaveIntegration && typeof window.loudwaveIntegration.setLatency === 'function') {
+                        window.loudwaveIntegration.setLatency(latency);
                     }
                 })
                 .catch((err) => {
-                    console.error('[Ping] Fetch error:', err);
+                    console.error('[Ping] Fetch failed:', err.message);
+                    // Show error state
                     if (typeof window.updatePingIndicator === 'function') {
                         window.updatePingIndicator(999);
                     }
                 });
         };
 
-        // Initial update after a short delay
-        setTimeout(updatePing, 500);
+        // Initial update after connection is established
+        console.log('[Ping] Scheduling initial ping update in 1 second');
+        setTimeout(() => {
+            console.log('[Ping] Running initial ping update');
+            updatePing();
+        }, 1000);
 
-        // Update every 2 seconds
-        UI.pingMeterInterval = setInterval(updatePing, 2000);
+        // Update every 3 seconds for more stable measurements
+        UI.pingMeterInterval = setInterval(() => {
+            console.log('[Ping] Running periodic ping update');
+            updatePing();
+        }, 3000);
     },
 
     stopPingMeterMonitoring() {

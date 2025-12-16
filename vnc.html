@@ -929,12 +929,14 @@
             const indicator = document.getElementById('pingIndicator');
             const pingMsEl = document.getElementById('pingMs');
             
+            console.log('[UpdatePing] Called with pingMs:', pingMs);
+            console.log('[UpdatePing] pingIndicator element:', indicator ? 'found' : 'NOT FOUND');
+            console.log('[UpdatePing] pingMs element:', pingMsEl ? 'found' : 'NOT FOUND');
+            
             if (!indicator) {
-                console.warn('pingIndicator element not found');
+                console.warn('[UpdatePing] pingIndicator element not found');
                 return;
             }
-            
-            console.log('Updating ping indicator:', pingMs);
             
             // Remove all ping classes
             indicator.classList.remove('ping-excellent', 'ping-good', 'ping-fair', 'ping-poor', 'ping-bad');
@@ -943,25 +945,35 @@
             if (pingMsEl) {
                 if (pingMs === 999 || pingMs === null || isNaN(pingMs)) {
                     pingMsEl.textContent = '--ms';
+                    console.log('[UpdatePing] Set to --ms');
                 } else {
                     pingMsEl.textContent = pingMs + 'ms';
+                    console.log('[UpdatePing] Updated to', pingMs + 'ms');
                 }
+            } else {
+                console.warn('[UpdatePing] pingMs element not found, cannot update value');
             }
             
             // Add appropriate class based on latency
             if (pingMs === 999 || pingMs === null || isNaN(pingMs)) {
                 // Unknown/error state
                 indicator.classList.add('ping-poor');
+                console.log('[UpdatePing] Added ping-poor class');
             } else if (pingMs < 50) {
                 indicator.classList.add('ping-excellent');
+                console.log('[UpdatePing] Added ping-excellent class');
             } else if (pingMs < 100) {
                 indicator.classList.add('ping-good');
+                console.log('[UpdatePing] Added ping-good class');
             } else if (pingMs < 150) {
                 indicator.classList.add('ping-fair');
+                console.log('[UpdatePing] Added ping-fair class');
             } else if (pingMs < 250) {
                 indicator.classList.add('ping-poor');
+                console.log('[UpdatePing] Added ping-poor class');
             } else {
                 indicator.classList.add('ping-bad');
+                console.log('[UpdatePing] Added ping-bad class');
             }
         };
         
