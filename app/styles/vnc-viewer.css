@@ -109,10 +109,10 @@ body {
     opacity: 1;
 }
 
-/* Glassy Pill Navigation */
+/* Glassy Pill Navigation - Initially hidden off-screen below viewport */
 .pill-nav {
     position: fixed;
-    bottom: -180px;
+    bottom: -200px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(30, 30, 50, 0.7);
@@ -124,22 +124,22 @@ body {
     z-index: 2900;
     transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    pointer-events: none;
-    visibility: hidden;
-}
-
-.pill-nav.visible {
-    bottom: 30px;
-    display: block !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-}
-
-.pill-nav.hidden-completely {
-    bottom: -180px;
-    display: none !important;
+    opacity: 0;
     pointer-events: none !important;
-    visibility: hidden !important;
+}
+
+/* Show pill when visible class is added */
+.pill-nav.visible {
+    bottom: 30px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* Completely hide pill with hidden-completely class */
+.pill-nav.hidden-completely {
+    bottom: -200px;
+    opacity: 0;
+    pointer-events: none !important;
 }
 
 /* Hide pill during loading state - but allow visible class to override */
