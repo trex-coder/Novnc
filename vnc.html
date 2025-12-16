@@ -98,28 +98,45 @@
         // See docs/EMBEDDING.md for a list of possible settings.
 
         // Initialize UI and hook into RFB for LoudWave integration
-        UI.start({ settings: { defaults: defaults,
+        await UI.start({ settings: { defaults: defaults,
                                        mandatory: mandatory } });
         
-        // Monitor for RFB connection (with multiple attempts)
-        const checkRFB = setInterval(() => {
-            if (window.rfb && window.rfb.connected) {
+        // Expose UI.rfb to window.rfb for LoudWave integration access
+        // and set up RFB connection monitoring
+        let lastRFBState = false;
+        
+        const monitorRFB = setInterval(() => {
+            // Check if UI.rfb exists and has a different connection state than last check
+            const isConnected = (UI.rfb && UI.rfb.connected) ? true : false;
+            
+            // Expose to window for LoudWave integration
+            window.rfb = UI.rfb;
+            
+            // If connection state changed to connected, show the pill
+            if (isConnected && !lastRFBState) {
                 console.log('RFB connected, LoudWave integration ready');
                 
                 // Notify LoudWave integration
-                window.dispatchEvent(new CustomEvent('rfbCreated', { detail: window.rfb }));
+                window.dispatchEvent(new CustomEvent('rfbCreated', { detail: UI.rfb }));
                 
                 // Show pill when first connected
                 if (typeof window.showPillLW === 'function') {
-                    window.showPillLW();
+                    setTimeout(() => window.showPillLW(), 100);
                 }
                 
-                clearInterval(checkRFB);
+                lastRFBState = true;
+            } else if (!isConnected && lastRFBState) {
+                // Connection was lost
+                lastRFBState = false;
+                console.log('RFB disconnected');
             }
-        }, 500);
+        }, 300);
         
-        // Clear check after 30 seconds
-        setTimeout(() => clearInterval(checkRFB), 30000);
+        // Clear check after 120 seconds (2 minutes for reliability)
+        setTimeout(() => {
+            clearInterval(monitorRFB);
+            console.log('RFB connection monitor stopped');
+        }, 120000);
     </script>
 
     <script>
