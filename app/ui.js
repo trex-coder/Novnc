@@ -55,6 +55,9 @@ const UI = {
     inhibitReconnect: true,
     reconnectCallback: null,
     reconnectPassword: null,
+    
+    pingMeterInterval: null,
+    lastPingTime: 0,
 
     async start(options={}) {
         UI.customSettings = options.settings || {};
@@ -323,10 +326,65 @@ const UI = {
             const resizeValue = UI.getSetting('resize');
             scalingSelect.value = resizeValue || 'off';
         }
+
+        // Start ping meter monitoring for the new pill navigation
+        UI.startPingMeterMonitoring();
+    },
+
+    startPingMeterMonitoring() {
+        // Clear any existing interval
+        if (UI.pingMeterInterval) {
+            clearInterval(UI.pingMeterInterval);
+        }
+
+        // Function to update the ping indicator
+        const updatePing = () => {
+            if (!UI.rfb || !UI.rfb.connected) {
+                return;
+            }
+
+            const url = window.location.origin + window.location.pathname;
+            const start = performance.now();
+
+            fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
+                .then(() => {
+                    const latency = Math.round(performance.now() - start);
+                    // Update the pill navigation ping indicator if the function exists
+                    if (typeof window.updatePingIndicator === 'function') {
+                        window.updatePingIndicator(latency);
+                    }
+                    // Also update the loudwave integration if available
+                    if (window.loudwaveIntegration) {
+                        window.loudwaveIntegration.setLatency(latency);
+                    }
+                })
+                .catch(() => {
+                    // On error, update with -- ms
+                    if (typeof window.updatePingIndicator === 'function') {
+                        window.updatePingIndicator(999);
+                    }
+                });
+        };
+
+        // Initial update
+        updatePing();
+
+        // Update every 2 seconds
+        UI.pingMeterInterval = setInterval(updatePing, 2000);
+    },
+
+    stopPingMeterMonitoring() {
+        if (UI.pingMeterInterval) {
+            clearInterval(UI.pingMeterInterval);
+            UI.pingMeterInterval = null;
+        }
     },
 
     disconnectFinished(e) {
         const wasConnected = UI.connected;
+
+        // Stop ping meter monitoring
+        UI.stopPingMeterMonitoring();
 
         // This variable is ideally set when disconnection starts, but
         // when the disconnection isn't clean or if it is initiated by

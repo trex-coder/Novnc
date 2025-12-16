@@ -192,7 +192,7 @@
     </div>
 
     <!-- Glassy Pill Navigation -->
-    <div class="pill-nav" id="pillNav">
+    <div class="pill-nav hidden-completely" id="pillNav">
         <div class="pill-handle"></div>
         
         <!-- Server Info Header -->
@@ -208,7 +208,7 @@
             </div>
             <div class="server-text-info">
                 <span class="pill-server-name">Remote Desktop</span>
-                <span class="connection-status-pill" id="connectionStatus">Connected</span>
+                <span class="connection-status-pill" id="connectionStatus">Disconnected</span>
             </div>
         </div>
         
@@ -924,11 +924,18 @@
             
             // Update ping display
             if (pingMsEl) {
-                pingMsEl.textContent = pingMs + 'ms';
+                if (pingMs === 999 || pingMs === null || isNaN(pingMs)) {
+                    pingMsEl.textContent = '--ms';
+                } else {
+                    pingMsEl.textContent = pingMs + 'ms';
+                }
             }
             
             // Add appropriate class based on latency
-            if (pingMs < 50) {
+            if (pingMs === 999 || pingMs === null || isNaN(pingMs)) {
+                // Unknown/error state
+                indicator.classList.add('ping-poor');
+            } else if (pingMs < 50) {
                 indicator.classList.add('ping-excellent');
             } else if (pingMs < 100) {
                 indicator.classList.add('ping-good');
@@ -968,6 +975,20 @@
             }
             
             closeDisconnectDialogLW();
+            
+            // Update connection status immediately on disconnect
+            const connectionStatusEl = document.getElementById('connectionStatus');
+            if (connectionStatusEl) {
+                connectionStatusEl.textContent = 'Disconnected';
+                connectionStatusEl.style.color = '#ff6b6b';
+            }
+            
+            // Hide the pill when disconnecting
+            const pill = document.getElementById('pillNav');
+            if (pill) {
+                pill.classList.remove('visible');
+                pill.classList.add('hidden-completely');
+            }
             
             setTimeout(() => {
                 window.history.back();
@@ -1034,8 +1055,15 @@
             }
             
             const pill = document.getElementById('pillNav');
+            const connectionStatusEl = document.getElementById('connectionStatus');
             
             if (!pill) return;
+            
+            // Update connection status to show Connected when showing pill
+            if (connectionStatusEl) {
+                connectionStatusEl.textContent = 'Connected';
+                connectionStatusEl.style.color = '#66ea9b';
+            }
             
             pill.classList.remove('hidden-completely');
             pill.classList.add('visible');
@@ -1064,6 +1092,12 @@
             setTimeout(() => {
                 if (!isPillVisibleLW && pill) {
                     pill.classList.add('hidden-completely');
+                    // Update connection status to show Disconnected when hidden
+                    const connectionStatusEl = document.getElementById('connectionStatus');
+                    if (connectionStatusEl) {
+                        connectionStatusEl.textContent = 'Disconnected';
+                        connectionStatusEl.style.color = '#ff6b6b';
+                    }
                 }
             }, 400);
         };

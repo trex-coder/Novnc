@@ -7,7 +7,9 @@
 .noVNC_button,
 .noVNC_logo,
 #noVNC_status,
-#noVNC_keyboard_button {
+#noVNC_keyboard_button,
+#noVNC_quick_menu_toggle,
+#noVNC_latency_meter {
     display: none !important;
 }
 
