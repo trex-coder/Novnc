@@ -389,30 +389,53 @@ const UI = {
                 return;
             }
 
-            const url = window.location.origin + window.location.pathname;
+            // Try to get latency from RFB stats
+            let latency = null;
+            
+            // Check various RFB latency properties
+            if (UI.rfb && typeof UI.rfb.latency !== 'undefined' && UI.rfb.latency !== null) {
+                latency = Math.round(UI.rfb.latency);
+                console.log('[Ping] RFB latency property:', latency + 'ms');
+            } else if (UI.rfb && UI.rfb._latency) {
+                latency = Math.round(UI.rfb._latency);
+                console.log('[Ping] RFB _latency property:', latency + 'ms');
+            } else if (UI.rfb && UI.rfb.get_latency && typeof UI.rfb.get_latency === 'function') {
+                latency = Math.round(UI.rfb.get_latency());
+                console.log('[Ping] RFB get_latency() method:', latency + 'ms');
+            }
+            
+            // If we have latency from RFB, use it
+            if (latency !== null && latency >= 0) {
+                if (typeof window.updatePingIndicator === 'function') {
+                    console.log('[Ping] Updating indicator with RFB latency:', latency + 'ms');
+                    window.updatePingIndicator(latency);
+                }
+                if (window.loudwaveIntegration) {
+                    window.loudwaveIntegration.setLatency(latency);
+                }
+                return;
+            }
+            
+            // Fallback: use network-based measurement
             const start = performance.now();
-
+            const url = window.location.origin + window.location.pathname;
+            
             fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
                 .then(() => {
-                    const latency = Math.round(performance.now() - start);
-                    console.log('[Ping] Latency measured:', latency + 'ms');
+                    const networkLatency = Math.round(performance.now() - start);
+                    console.log('[Ping] Network latency measured:', networkLatency + 'ms');
                     
-                    // Update the pill navigation ping indicator if the function exists
                     if (typeof window.updatePingIndicator === 'function') {
-                        console.log('[Ping] Calling updatePingIndicator with', latency);
-                        window.updatePingIndicator(latency);
-                    } else {
-                        console.warn('[Ping] updatePingIndicator function not found');
+                        console.log('[Ping] Updating indicator with network latency:', networkLatency + 'ms');
+                        window.updatePingIndicator(networkLatency);
                     }
                     
-                    // Also update the loudwave integration if available
                     if (window.loudwaveIntegration) {
-                        window.loudwaveIntegration.setLatency(latency);
+                        window.loudwaveIntegration.setLatency(networkLatency);
                     }
                 })
                 .catch((err) => {
                     console.error('[Ping] Fetch error:', err);
-                    // On error, update with -- ms
                     if (typeof window.updatePingIndicator === 'function') {
                         window.updatePingIndicator(999);
                     }

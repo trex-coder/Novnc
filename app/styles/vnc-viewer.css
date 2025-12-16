@@ -128,15 +128,19 @@ body {
 
 .pill-nav.visible {
     bottom: 30px;
+    display: block !important;
+    pointer-events: auto !important;
 }
 
 .pill-nav.hidden-completely {
     bottom: -180px;
+    display: none !important;
+    pointer-events: none !important;
 }
 
-/* Hide pill during loading state */
-html.noVNC_loading .pill-nav,
-html.noVNC_connecting .pill-nav {
+/* Hide pill during loading state - but allow visible class to override */
+html.noVNC_loading .pill-nav:not(.visible),
+html.noVNC_connecting .pill-nav:not(.visible) {
     display: none !important;
     pointer-events: none !important;
 }
