@@ -185,6 +185,15 @@
     </div>
 
     <!-- Glassy Pill Navigation -->
+    <style>
+        /* CRITICAL INLINE: Pill MUST start hidden before any CSS or JS loads */
+        #pillNav {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+    </style>
     <div class="pill-nav hidden-completely" id="pillNav">
         <div class="pill-handle"></div>
     
@@ -1191,8 +1200,10 @@
                     console.log('[Keyboard] Showing pill via Ctrl+V');
                     pill.classList.remove('hidden-completely');
                     pill.classList.add('visible');
+                    // Let CSS handle all styling and animations
                     pill.style.display = '';
                     pill.style.visibility = '';
+                    pill.style.opacity = '';
                     
                     // Update connection status
                     const connectionStatusEl = document.getElementById('connectionStatus');
@@ -1201,14 +1212,26 @@
                         connectionStatusEl.style.color = '#66ea9b';
                     }
                 } else {
-                    // Pill is visible, hide it
+                    // Pill is visible, hide it - just remove visible class, CSS handles animation
                     console.log('[Keyboard] Hiding pill via Ctrl+V');
                     pill.classList.remove('visible');
+                    // Let CSS transition handle the animation (0.4s)
+                    // Don't set inline styles - let the transition CSS work
+                    
                     setTimeout(() => {
                         if (pill && !pill.classList.contains('visible')) {
                             pill.classList.add('hidden-completely');
-                            pill.style.display = 'none';
-                            pill.style.visibility = 'hidden';
+                            // Update connection status after animation
+                            const connectionStatusEl = document.getElementById('connectionStatus');
+                            if (connectionStatusEl) {
+                                connectionStatusEl.textContent = 'Disconnected';
+                                connectionStatusEl.style.color = '#ff6b6b';
+                            }
+                        }
+                    }, 400);
+                }
+            }
+        }, true);
                         }
                     }, 400);
                 }

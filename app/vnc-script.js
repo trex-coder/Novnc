@@ -283,8 +283,8 @@ canvas.addEventListener('touchend', (e) => {
     }
 });
 
-// Initialize pill as visible
-showPill();
+// DISABLED: Initialize pill as visible - pill now shows ONLY via Ctrl+V
+// showPill();
 
 // Info Menu functions
 window.openInfoMenu = function() {
@@ -295,7 +295,7 @@ window.openInfoMenu = function() {
         navigator.vibrate(10);
     }
     
-    showPill(); // Keep pill visible
+    // DISABLED: showPill(); // Keep pill visible - only show via Ctrl+V
 }
 
 window.closeInfoMenu = function() {
@@ -317,7 +317,7 @@ window.openQualitySettings = function() {
         navigator.vibrate(10);
     }
     
-    showPill();
+    // DISABLED: showPill(); // only show via Ctrl+V
 }
 
 window.closeQualitySettings = function() {
