@@ -1,0 +1,17 @@
+/* ENFORCED: Pill MUST be hidden on page load - adds final override layer */
+.pill-nav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    bottom: -200px !important;
+}
+
+/* Only show when .visible class is explicitly added */
+.pill-nav.visible {
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    bottom: 30px !important;
+}

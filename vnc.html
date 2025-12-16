@@ -43,6 +43,7 @@
     <link rel="stylesheet" href="app/styles/input.css">
     <!-- LoudWave VNC Viewer UI Styles -->
     <link rel="stylesheet" href="app/styles/vnc-viewer.css">
+    <link rel="stylesheet" href="app/styles/pill-enforced.css">
 
     <!-- Images that will later appear via CSS -->
     <link rel="preload" as="image" href="app/images/info.svg">
@@ -186,6 +187,21 @@
     <!-- Glassy Pill Navigation -->
     <div class="pill-nav hidden-completely" id="pillNav">
         <div class="pill-handle"></div>
+    
+    <script>
+        // IMMEDIATE: Force pill to stay hidden at startup - run before anything else
+        (function() {
+            const pill = document.getElementById('pillNav');
+            if (pill) {
+                pill.classList.add('hidden-completely');
+                pill.classList.remove('visible');
+                pill.style.display = 'none';
+                pill.style.opacity = '0';
+                pill.style.visibility = 'hidden';
+                console.log('[Init] Pill forced to hidden state');
+            }
+        })();
+    </script>
         
         <!-- Server Info Header -->
         <div class="pill-server-info">
@@ -1175,6 +1191,8 @@
                     console.log('[Keyboard] Showing pill via Ctrl+V');
                     pill.classList.remove('hidden-completely');
                     pill.classList.add('visible');
+                    pill.style.display = '';
+                    pill.style.visibility = '';
                     
                     // Update connection status
                     const connectionStatusEl = document.getElementById('connectionStatus');
@@ -1189,11 +1207,27 @@
                     setTimeout(() => {
                         if (pill && !pill.classList.contains('visible')) {
                             pill.classList.add('hidden-completely');
+                            pill.style.display = 'none';
+                            pill.style.visibility = 'hidden';
                         }
                     }, 400);
                 }
             }
-        }, true); // Use capture phase to ensure it fires
+        }, true);
+
+        // ENFORCE: Monitor and force pill to stay hidden unless explicitly shown
+        setInterval(function() {
+            const pill = document.getElementById('pillNav');
+            if (pill && !pill.classList.contains('visible')) {
+                // Pill should be hidden - enforce it
+                if (pill.style.display !== 'none' || pill.style.visibility !== 'hidden') {
+                    console.log('[Monitor] Forcing pill to hidden state');
+                    pill.style.display = 'none';
+                    pill.style.visibility = 'hidden';
+                    pill.classList.add('hidden-completely');
+                }
+            }
+        }, 300); // Use capture phase to ensure it fires
         
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
