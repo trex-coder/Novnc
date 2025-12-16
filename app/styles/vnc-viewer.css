@@ -130,15 +130,6 @@ body {
     display: none !important;
 }
 
-/* Show pill when visible class is added */
-.pill-nav.visible {
-    bottom: 30px !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-    display: block !important;
-}
-
 /* Completely hide pill with hidden-completely class */
 .pill-nav.hidden-completely {
     bottom: -200px !important;
@@ -146,6 +137,15 @@ body {
     pointer-events: none !important;
     visibility: hidden !important;
     display: none !important;
+}
+
+/* Show pill when visible class is added - MUST COME LAST TO OVERRIDE OTHER RULES */
+.pill-nav.visible {
+    bottom: 30px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    display: block !important;
 }
 
 /* Hide pill during loading state - but allow visible class to override */
