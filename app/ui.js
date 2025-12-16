@@ -452,8 +452,6 @@ const UI = {
         // Update every 2 seconds
         UI.pingMeterInterval = setInterval(updatePing, 2000);
     },
-        UI.pingMeterInterval = setInterval(updatePing, 2000);
-    },
 
     stopPingMeterMonitoring() {
         if (UI.pingMeterInterval) {
