@@ -2110,7 +2110,6 @@ function setupQuickMenuPanel() {
             }
         }, {passive: false});
     }
-    }
     
     // Wire up quick menu buttons to existing UI actions
     const connectBtn = document.getElementById('noVNC_quick_connect');
