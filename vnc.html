@@ -104,6 +104,7 @@
         // Expose UI.rfb to window.rfb for LoudWave integration access
         // and set up RFB connection monitoring
         let lastRFBState = false;
+        let welcomeShown = localStorage.getItem('loudwave_welcome_seen') === 'true';
         
         const monitorRFB = setInterval(() => {
             // Check if UI.rfb exists and has a different connection state than last check
@@ -112,7 +113,7 @@
             // Expose to window for LoudWave integration
             window.rfb = UI.rfb;
             
-            // If connection state changed to connected, show the pill
+            // If connection state changed to connected, show the pill and welcome dialog
             if (isConnected && !lastRFBState) {
                 console.log('RFB connected, LoudWave integration ready');
                 
@@ -122,6 +123,14 @@
                 // Show pill when first connected
                 if (typeof window.showPillLW === 'function') {
                     setTimeout(() => window.showPillLW(), 100);
+                }
+                
+                // Show welcome dialog if not shown before
+                if (!welcomeShown && typeof window.showWelcomeDialog === 'function') {
+                    setTimeout(() => {
+                        window.showWelcomeDialog();
+                        welcomeShown = true;
+                    }, 800);
                 }
                 
                 lastRFBState = true;
@@ -188,13 +197,14 @@
         
         <!-- Server Info Header -->
         <div class="pill-server-info">
-            <div class="ping-indicator">
+            <div class="ping-indicator" id="pingIndicator" title="Latency">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
                     <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
                     <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
                     <line x1="12" y1="20" x2="12.01" y2="20"></line>
                 </svg>
+                <span class="ping-ms" id="pingMs" style="font-size: 11px; margin-left: 4px; color: #66ea9b;">--ms</span>
             </div>
             <div class="server-text-info">
                 <span class="pill-server-name">Remote Desktop</span>
@@ -440,6 +450,28 @@
             <div class="dialog-buttons">
                 <button class="dialog-btn cancel" onclick="closeDisconnectDialogLW()">Cancel</button>
                 <button class="dialog-btn confirm" onclick="confirmDisconnectLW()">Disconnect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome/Shortcut Info Dialog -->
+    <div class="dialog-overlay" id="welcomeDialog">
+        <div class="dialog">
+            <div class="dialog-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                </svg>
+            </div>
+            <h3>Remote Desktop Viewer</h3>
+            <p style="text-align: center; margin-bottom: 16px;">
+                <strong>Quick Tip:</strong><br>
+                Press <kbd style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl + V</kbd> 
+                to show/hide the control panel
+            </p>
+            <div class="dialog-buttons">
+                <button class="dialog-btn confirm" onclick="closeWelcomeDialogLW()" style="width: 100%;">Okay, got it!</button>
             </div>
         </div>
     </div>
@@ -863,6 +895,52 @@
             }
         };
         
+        // Welcome dialog functions
+        window.showWelcomeDialog = function() {
+            const dialog = document.getElementById('welcomeDialog');
+            if (dialog) {
+                dialog.classList.add('active');
+            }
+        };
+        
+        window.closeWelcomeDialogLW = function() {
+            const dialog = document.getElementById('welcomeDialog');
+            if (dialog) {
+                dialog.classList.remove('active');
+            }
+            // Remember that user has seen the welcome
+            localStorage.setItem('loudwave_welcome_seen', 'true');
+        };
+        
+        // Update ping indicator color based on latency
+        window.updatePingIndicator = function(pingMs) {
+            const indicator = document.getElementById('pingIndicator');
+            const pingMsEl = document.getElementById('pingMs');
+            
+            if (!indicator) return;
+            
+            // Remove all ping classes
+            indicator.classList.remove('ping-excellent', 'ping-good', 'ping-fair', 'ping-poor', 'ping-bad');
+            
+            // Update ping display
+            if (pingMsEl) {
+                pingMsEl.textContent = pingMs + 'ms';
+            }
+            
+            // Add appropriate class based on latency
+            if (pingMs < 50) {
+                indicator.classList.add('ping-excellent');
+            } else if (pingMs < 100) {
+                indicator.classList.add('ping-good');
+            } else if (pingMs < 150) {
+                indicator.classList.add('ping-fair');
+            } else if (pingMs < 250) {
+                indicator.classList.add('ping-poor');
+            } else {
+                indicator.classList.add('ping-bad');
+            }
+        };
+        
         window.disconnectLW = function() {
             document.getElementById('disconnectDialog').classList.add('active');
             
@@ -990,18 +1068,21 @@
             }, 400);
         };
         
-        // Show pill on click (only if connected)
-        document.addEventListener('click', function(e) {
-            const pill = document.getElementById('pillNav');
-            if (!pill) return;
-            
-            // Only show pill if RFB is connected
-            if (window.rfb && window.rfb.connected) {
-                if (!isPillVisibleLW && !e.target.closest('.pill-nav') && 
-                    !e.target.closest('.side-menu') && 
-                    !e.target.closest('.dialog-overlay') &&
-                    !e.target.closest('.virtual-keyboard')) {
-                    showPillLW();
+        // Keyboard shortcut: Ctrl+V to show/hide pill
+        document.addEventListener('keydown', function(e) {
+            // Check for Ctrl+V (or Cmd+V on Mac)
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
+                e.preventDefault();
+                
+                if (window.rfb && window.rfb.connected) {
+                    const pill = document.getElementById('pillNav');
+                    if (pill) {
+                        if (isPillVisibleLW) {
+                            hidePillLW();
+                        } else {
+                            showPillLW();
+                        }
+                    }
                 }
             }
         }, false);

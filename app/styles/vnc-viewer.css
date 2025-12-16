@@ -1,6 +1,16 @@
 /* LoudWave VNC Viewer UI Styles - Integrated with noVNC */
 /* These styles are specific to the LoudWave UI overlay and don't conflict with noVNC */
 
+/* Hide old noVNC control bar and menu elements */
+#noVNC_control_bar_anchor,
+#noVNC_control_bar,
+.noVNC_button,
+.noVNC_logo,
+#noVNC_status,
+#noVNC_keyboard_button {
+    display: none !important;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -145,6 +155,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: filter 0.3s ease;
 }
 
 .ping-indicator svg {
@@ -152,6 +163,33 @@ body {
     height: 24px;
     stroke: #66ea9b;
     filter: drop-shadow(0 0 4px rgba(102, 234, 155, 0.6));
+    transition: stroke 0.3s ease, filter 0.3s ease;
+}
+
+/* Ping color indicators */
+.ping-indicator.ping-excellent svg {
+    stroke: #00ff00;
+    filter: drop-shadow(0 0 4px rgba(0, 255, 0, 0.8));
+}
+
+.ping-indicator.ping-good svg {
+    stroke: #80ff00;
+    filter: drop-shadow(0 0 4px rgba(128, 255, 0, 0.8));
+}
+
+.ping-indicator.ping-fair svg {
+    stroke: #ffff00;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 0, 0.8));
+}
+
+.ping-indicator.ping-poor svg {
+    stroke: #ff8800;
+    filter: drop-shadow(0 0 4px rgba(255, 136, 0, 0.8));
+}
+
+.ping-indicator.ping-bad svg {
+    stroke: #ff0000;
+    filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.8));
 }
 
 .server-text-info {
