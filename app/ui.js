@@ -343,7 +343,7 @@ const UI = {
                 console.log('[UI] Session screen ready, scheduling pill and welcome dialog');
                 clearInterval(showPillAfterLoad);
                 
-                // Show both pill and welcome dialog after 500ms with same timing
+                // Show both pill and welcome dialog after 1.5 seconds to ensure full render
                 setTimeout(() => {
                     // Show the nav pill
                     if (typeof window.showPillLW === 'function') {
@@ -360,18 +360,18 @@ const UI = {
                     } else {
                         console.warn('[UI] showWelcomeDialogOnConnect function not available');
                     }
-                }, 500);
+                }, 1500);
             }
         }, 100);
 
-        // Timeout after 5 seconds if screen never shows
+        // Timeout after 8 seconds if screen never shows
         setTimeout(() => {
             clearInterval(showPillAfterLoad);
             console.warn('[UI] Timeout waiting for session screen, showing pill anyway');
             if (typeof window.showPillLW === 'function') {
                 window.showPillLW();
             }
-        }, 5000);
+        }, 8000);
     },
 
     startPingMeterMonitoring() {
@@ -389,25 +389,25 @@ const UI = {
                 return;
             }
 
-            // Try to get latency from RFB stats
+            // Try to get latency from WebSocket if available
             let latency = null;
             
-            // Check various RFB latency properties
-            if (UI.rfb && typeof UI.rfb.latency !== 'undefined' && UI.rfb.latency !== null) {
-                latency = Math.round(UI.rfb.latency);
-                console.log('[Ping] RFB latency property:', latency + 'ms');
-            } else if (UI.rfb && UI.rfb._latency) {
-                latency = Math.round(UI.rfb._latency);
-                console.log('[Ping] RFB _latency property:', latency + 'ms');
-            } else if (UI.rfb && UI.rfb.get_latency && typeof UI.rfb.get_latency === 'function') {
-                latency = Math.round(UI.rfb.get_latency());
-                console.log('[Ping] RFB get_latency() method:', latency + 'ms');
+            if (UI.rfb && UI.rfb._sock) {
+                // Try various websocket properties
+                const sock = UI.rfb._sock;
+                if (sock._latency !== undefined && sock._latency !== null) {
+                    latency = Math.round(sock._latency);
+                    console.log('[Ping] WebSocket latency:', latency + 'ms');
+                } else if (sock.latency !== undefined && sock.latency !== null) {
+                    latency = Math.round(sock.latency);
+                    console.log('[Ping] WebSocket latency property:', latency + 'ms');
+                }
             }
             
-            // If we have latency from RFB, use it
+            // If we have latency from socket, use it
             if (latency !== null && latency >= 0) {
                 if (typeof window.updatePingIndicator === 'function') {
-                    console.log('[Ping] Updating indicator with RFB latency:', latency + 'ms');
+                    console.log('[Ping] Updating indicator with measured latency:', latency + 'ms');
                     window.updatePingIndicator(latency);
                 }
                 if (window.loudwaveIntegration) {
@@ -416,11 +416,15 @@ const UI = {
                 return;
             }
             
-            // Fallback: use network-based measurement
+            // Fallback: measure network latency with simple fetch to same host
             const start = performance.now();
-            const url = window.location.origin + window.location.pathname;
             
-            fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
+            // Use a simple dummy file request
+            fetch(window.location.origin + '/favicon.ico', { 
+                method: 'HEAD', 
+                cache: 'no-store',
+                mode: 'cors'
+            })
                 .then(() => {
                     const networkLatency = Math.round(performance.now() - start);
                     console.log('[Ping] Network latency measured:', networkLatency + 'ms');
@@ -442,10 +446,12 @@ const UI = {
                 });
         };
 
-        // Initial update
-        updatePing();
+        // Initial update after a short delay
+        setTimeout(updatePing, 500);
 
         // Update every 2 seconds
+        UI.pingMeterInterval = setInterval(updatePing, 2000);
+    },
         UI.pingMeterInterval = setInterval(updatePing, 2000);
     },
 
