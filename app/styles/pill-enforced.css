@@ -1,17 +1,26 @@
-/* ENFORCED: Pill MUST be hidden on page load - adds final override layer */
+/* ENFORCED: Class-based pill visibility control */
+
+/* Base hidden state */
 .pill-nav {
     display: none !important;
     visibility: hidden !important;
-    pointer-events: none !important;
     opacity: 0 !important;
-    bottom: -200px !important;
+    pointer-events: none !important;
 }
 
 /* Only show when .visible class is explicitly added */
 .pill-nav.visible {
     display: block !important;
     visibility: visible !important;
-    pointer-events: auto !important;
     opacity: 1 !important;
+    pointer-events: auto !important;
     bottom: 30px !important;
+}
+
+/* Make sure hidden-completely reinforces the hidden state */
+.pill-nav.hidden-completely {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }

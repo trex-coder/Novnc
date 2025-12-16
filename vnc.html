@@ -43,7 +43,6 @@
     <link rel="stylesheet" href="app/styles/input.css">
     <!-- LoudWave VNC Viewer UI Styles -->
     <link rel="stylesheet" href="app/styles/vnc-viewer.css">
-    <link rel="stylesheet" href="app/styles/pill-enforced.css">
 
     <!-- Images that will later appear via CSS -->
     <link rel="preload" as="image" href="app/images/info.svg">
@@ -185,15 +184,6 @@
     </div>
 
     <!-- Glassy Pill Navigation -->
-    <style>
-        /* CRITICAL INLINE: Pill MUST start hidden before any CSS or JS loads */
-        #pillNav {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-    </style>
     <div class="pill-nav hidden-completely" id="pillNav">
         <div class="pill-handle"></div>
     
@@ -204,9 +194,7 @@
             if (pill) {
                 pill.classList.add('hidden-completely');
                 pill.classList.remove('visible');
-                pill.style.display = 'none';
-                pill.style.opacity = '0';
-                pill.style.visibility = 'hidden';
+                // Don't set inline styles - let CSS handle it
                 console.log('[Init] Pill forced to hidden state');
             }
         })();
@@ -1238,19 +1226,25 @@
             }
         }, true);
 
-        // ENFORCE: Monitor and force pill to stay hidden unless explicitly shown
+        // ENFORCE: Monitor and keep pill in correct state based on classes only
         setInterval(function() {
             const pill = document.getElementById('pillNav');
-            if (pill && !pill.classList.contains('visible')) {
-                // Pill should be hidden - enforce it
-                if (pill.style.display !== 'none' || pill.style.visibility !== 'hidden') {
-                    console.log('[Monitor] Forcing pill to hidden state');
-                    pill.style.display = 'none';
-                    pill.style.visibility = 'hidden';
+            if (pill) {
+                const isVisible = pill.classList.contains('visible');
+                const isHidden = pill.classList.contains('hidden-completely');
+                
+                // If visible class is present, ensure hidden-completely is removed
+                if (isVisible && isHidden) {
+                    console.log('[Monitor] Pill has both classes, removing hidden-completely');
+                    pill.classList.remove('hidden-completely');
+                }
+                // If neither class is present, add hidden-completely
+                if (!isVisible && !isHidden) {
+                    console.log('[Monitor] Pill missing classes, adding hidden-completely');
                     pill.classList.add('hidden-completely');
                 }
             }
-        }, 300); // Use capture phase to ensure it fires
+        }, 500);
         
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
