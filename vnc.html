@@ -1065,10 +1065,10 @@
         let pillTimeoutLW;
         let isPillVisibleLW = false;
         
-        window.showPillLW = function() {
+        window.showPillLW = function(autoHideDelay) {
             // Only show if RFB is connected
             if (!window.rfb || !window.rfb.connected) {
-                console.log('Cannot show pill: RFB not connected');
+                console.log('[Pill] Cannot show pill: RFB not connected');
                 return;
             }
             
@@ -1076,6 +1076,8 @@
             const connectionStatusEl = document.getElementById('connectionStatus');
             
             if (!pill) return;
+            
+            console.log('[Pill] Showing pill');
             
             // Update connection status to show Connected when showing pill
             if (connectionStatusEl) {
@@ -1090,8 +1092,15 @@
             
             // Clear any existing timeout
             clearTimeout(pillTimeoutLW);
-            // Auto-hide after 4 seconds only when not toggled manually
-            pillTimeoutLW = setTimeout(hidePillLW, 4000);
+            
+            // Only auto-hide if explicitly requested (with autoHideDelay param)
+            // Otherwise pill stays visible until user hides it with Ctrl+V
+            if (typeof autoHideDelay === 'number' && autoHideDelay > 0) {
+                pillTimeoutLW = setTimeout(() => {
+                    window.hidePillLW();
+                }, autoHideDelay);
+                console.log('[Pill] Will auto-hide after', autoHideDelay, 'ms');
+            }
         };
         
         window.hidePillLW = function() {
@@ -1132,33 +1141,39 @@
             // Check for Ctrl+V (or Cmd+V on Mac)
             if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
                 e.preventDefault();
-                console.log('Ctrl+V pressed');
+                console.log('[Keyboard] Ctrl+V pressed');
+                console.log('[Keyboard] RFB state:', window.rfb ? 'exists' : 'missing', window.rfb?.connected ? 'connected' : 'disconnected');
                 
-                if (window.rfb && window.rfb.connected) {
-                    const pill = document.getElementById('pillNav');
-                    if (pill) {
-                        // Check actual classes to determine state
-                        const isVisible = pill.classList.contains('visible');
-                        console.log('Pill visible state:', isVisible, 'Classes:', pill.className);
-                        
-                        if (isVisible) {
-                            // Pill is visible, hide it
-                            console.log('Ctrl+V: Hiding pill');
-                            if (typeof hidePillLW === 'function') {
-                                hidePillLW();
-                            }
-                        } else {
-                            // Pill is not visible, show it
-                            console.log('Ctrl+V: Showing pill');
-                            if (typeof showPillLW === 'function') {
-                                showPillLW();
-                            }
-                        }
-                    } else {
-                        console.warn('Pill element not found');
-                    }
+                const pill = document.getElementById('pillNav');
+                if (!pill) {
+                    console.warn('[Keyboard] Pill element not found');
+                    return;
+                }
+                
+                // Check actual classes to determine state
+                const isHiddenCompletely = pill.classList.contains('hidden-completely');
+                const isVisible = pill.classList.contains('visible');
+                console.log('[Keyboard] Pill classes:', pill.className);
+                console.log('[Keyboard] Hidden-completely:', isHiddenCompletely, 'Visible:', isVisible);
+                
+                // Toggle based on current state
+                if (isHiddenCompletely || !isVisible) {
+                    // Pill is hidden, show it
+                    console.log('[Keyboard] Showing pill via Ctrl+V');
+                    pill.classList.remove('hidden-completely');
+                    pill.classList.add('visible');
+                    window.isPillVisibleLW = true;
+                    clearTimeout(window.pillTimeoutLW);
                 } else {
-                    console.warn('RFB not connected, cannot toggle pill');
+                    // Pill is visible, hide it
+                    console.log('[Keyboard] Hiding pill via Ctrl+V');
+                    pill.classList.remove('visible');
+                    window.isPillVisibleLW = false;
+                    setTimeout(() => {
+                        if (pill && !pill.classList.contains('visible')) {
+                            pill.classList.add('hidden-completely');
+                        }
+                    }, 400);
                 }
             }
         }, true); // Use capture phase to ensure it fires

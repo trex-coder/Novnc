@@ -333,25 +333,45 @@ const UI = {
         console.log('[UI] Starting ping meter monitoring');
         UI.startPingMeterMonitoring();
 
-        // Show the nav pill immediately when connected
-        console.log('[UI] Attempting to show pill');
-        if (typeof window.showPillLW === 'function') {
-            console.log('[UI] connectFinished: Showing pill immediately');
-            window.showPillLW();
-        } else {
-            console.warn('[UI] showPillLW function not available');
-        }
+        // Wait for the actual session screen to be rendered before showing the pill
+        // This happens when the loading class is removed
+        console.log('[UI] Scheduling pill display');
+        const showPillAfterLoad = setInterval(() => {
+            const htmlEl = document.documentElement;
+            // Check if the loading class has been removed
+            if (!htmlEl.classList.contains('noVNC_loading') && !htmlEl.classList.contains('noVNC_connecting')) {
+                console.log('[UI] Session screen ready, showing pill');
+                clearInterval(showPillAfterLoad);
+                
+                // Show the nav pill
+                if (typeof window.showPillLW === 'function') {
+                    console.log('[UI] Calling showPillLW');
+                    // Don't auto-hide - let user control with Ctrl+V
+                    window.showPillLW();
+                } else {
+                    console.warn('[UI] showPillLW function not available');
+                }
 
-        // Show welcome dialog when connected
-        console.log('[UI] Attempting to show welcome dialog');
-        if (typeof window.showWelcomeDialogOnConnect === 'function') {
-            setTimeout(() => {
-                console.log('[UI] connectFinished: Showing welcome dialog');
-                window.showWelcomeDialogOnConnect();
-            }, 500);
-        } else {
-            console.warn('[UI] showWelcomeDialogOnConnect function not available');
-        }
+                // Show welcome dialog
+                if (typeof window.showWelcomeDialogOnConnect === 'function') {
+                    setTimeout(() => {
+                        console.log('[UI] Calling showWelcomeDialogOnConnect');
+                        window.showWelcomeDialogOnConnect();
+                    }, 500);
+                } else {
+                    console.warn('[UI] showWelcomeDialogOnConnect function not available');
+                }
+            }
+        }, 100);
+
+        // Timeout after 5 seconds if screen never shows
+        setTimeout(() => {
+            clearInterval(showPillAfterLoad);
+            console.warn('[UI] Timeout waiting for session screen, showing pill anyway');
+            if (typeof window.showPillLW === 'function') {
+                window.showPillLW();
+            }
+        }, 5000);
     },
 
     startPingMeterMonitoring() {
@@ -360,12 +380,12 @@ const UI = {
             clearInterval(UI.pingMeterInterval);
         }
 
-        console.log('Starting ping meter monitoring');
+        console.log('[Ping] Starting ping meter monitoring');
 
         // Function to update the ping indicator
         const updatePing = () => {
             if (!UI.rfb || !UI.rfb.connected) {
-                console.warn('RFB not connected, skipping ping update');
+                console.debug('[Ping] RFB not connected, skipping ping update');
                 return;
             }
 
@@ -375,20 +395,23 @@ const UI = {
             fetch(url, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
                 .then(() => {
                     const latency = Math.round(performance.now() - start);
-                    console.log('Ping latency:', latency);
+                    console.log('[Ping] Latency measured:', latency + 'ms');
+                    
                     // Update the pill navigation ping indicator if the function exists
                     if (typeof window.updatePingIndicator === 'function') {
+                        console.log('[Ping] Calling updatePingIndicator with', latency);
                         window.updatePingIndicator(latency);
                     } else {
-                        console.warn('updatePingIndicator function not found');
+                        console.warn('[Ping] updatePingIndicator function not found');
                     }
+                    
                     // Also update the loudwave integration if available
                     if (window.loudwaveIntegration) {
                         window.loudwaveIntegration.setLatency(latency);
                     }
                 })
                 .catch((err) => {
-                    console.error('Ping error:', err);
+                    console.error('[Ping] Fetch error:', err);
                     // On error, update with -- ms
                     if (typeof window.updatePingIndicator === 'function') {
                         window.updatePingIndicator(999);

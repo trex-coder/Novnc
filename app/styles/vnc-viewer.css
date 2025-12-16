@@ -520,14 +520,14 @@ html.noVNC_connecting .pill-nav {
 }
 
 .dialog {
-    background: rgba(30, 30, 50, 0.95);
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 20px;
     padding: 24px;
     max-width: 340px;
     width: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     animation: slideUp 0.3s ease;
 }
@@ -586,7 +586,7 @@ html.noVNC_connecting .pill-nav {
 
 .dialog p {
     font-size: 14px;
-    color: #b0b0d0;
+    color: #ffffff;
     text-align: center;
     line-height: 1.5;
     margin-bottom: 24px;
@@ -605,8 +605,19 @@ html.noVNC_connecting .pill-nav {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: none;
+    border: 1px solid rgba(200, 200, 200, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
     text-align: center;
+}
+
+.dialog-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(200, 200, 200, 0.6);
+}
+
+.dialog-btn:active {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .dialog-btn:active {
