@@ -799,7 +799,8 @@
         window.openInfoMenuLW = function() {
             const menu = document.getElementById('sideMenu');
             menu.classList.add('active');
-            showPillLW();
+            // Don't auto-show pill - let user control with Ctrl+V
+            // showPillLW();
             
             if (navigator.vibrate) {
                 navigator.vibrate(10);
@@ -828,12 +829,14 @@
                 navigator.vibrate(10);
             }
             
-            showPillLW();
+            // Don't auto-show pill - let user control with Ctrl+V
+            // showPillLW();
         };
         
         window.openQualitySettingsLW = function() {
             document.getElementById('qualityDialog').classList.add('active');
-            showPillLW();
+            // Don't auto-show pill - let user control with Ctrl+V
+            // showPillLW();
             
             if (navigator.vibrate) {
                 navigator.vibrate(10);
